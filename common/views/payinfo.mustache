@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    {{>head}}
+  </head>
+  <body id="samples">
+
+    {{>menu}}
+    {{>payinfo_right}}
+
+    <div id="content" class="ui grid">
+      <div id="doc" class="column twelve wide" style="overflow-y:auto;white-space:nowrap;">
+        <div class="doc-overview">
+          <h2 class="ui dividing header" data-se="overview-doc-header">
+            Beneficiary EFT Setup
+          </h2>
+          <p>Hello, {{userinfo.name}}.</p>
+          <table id="searchFilter" class="ui very compact celled table" style="width:400px;">
+            <thead>
+                <th>ID</th>
+                <th>Workflow</th>
+                <th>Type</th>
+                <th>Source</th>
+                <th>Vendor</th>
+                <th>Bank</th>
+            </thead>
+            <tbody>
+              <tr>
+                <td><input type="text" value="" id="filter_id"/></td>
+                <td>
+                  <select name="filterstep" id="filter_step">
+                    <option value="" selected></option>
+                    <option value="Entry">Entry</option>
+                    <option value="Review">Review</option>
+                    <option value="Reject">Reject</option>
+                    <option value="Hold">Hold</option>
+                    <option value="Approved">Approved</option>
+                  </select>
+                </td>
+                <td>
+                  <select name="filtertype" id="filter_type">
+                    <option value="" selected></option>
+                    <option value="ACH">ACH</option>
+                    <option value="Wire">Wire</option>
+                  </select>
+                </td>
+              <td><input type="text" value="" id="filter_source"/></td>
+                <td><input type="text" value="" id="filter_vendor"/></td>
+                <td><input type="text" value="" id="filter_bank"/></td>
+              </tr>
+              <tr>
+                <td><button type="button" id="btnFilter">Search</button></td>
+              </tr>
+            </tbody>
+          </table>
+          <table id="userList" class="ui very compact celled selectable table striped">
+            <thead>
+              <th>#</th>
+              <th>Workflow</th>
+              <th>Type</th>
+              <th>Source</th>
+              <th>Vendor</th>
+              <th>Name</th>
+              <th>Address</th>
+              <th>Bank</th>
+              <th>Bank Address</th>
+              <th>Routing</th>
+              <th>Account</th>
+              <th>Swift</th>
+              <th>Int Bank</th>
+              <th>Int Bank Address</th>
+              <th>Int Routing</th>
+              <th>Int Swift</th>
+              <th>Notes</th>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+
+      </div>
+
+    </div>
+  </body>
+</html>

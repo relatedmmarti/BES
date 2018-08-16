@@ -1,0 +1,150 @@
+<div id="rightbar" class="ui very wide right sidebar vertical visible">
+  <h3>Record Info</h3>
+  <table class="ui table compact" id="payinfofields">
+    <thead>
+      <tr>
+        <th>Setting</th>
+        <th>Value</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Record ID</td>
+        <td id="rowid">**New**</td>
+      </tr>
+      <tr>
+        <td>Workflow Status</td>
+        <td id="wfstatus"></td>
+      </tr>
+      <tr>
+        <td>Pay Type</td>
+        <td>
+            <select name="paytype" id="paytype">
+              <option value="ACH">ACH</option>
+              <option value="Wire">Wire</option>
+            </select>
+        </td>
+      </tr>
+      <tr>
+        <td>Source System</td>
+        <td><input type="text" value="EXAMPLE" id="sourcesystem"/></td>
+      </tr>
+      <tr>
+        <td>Vendor ID</td>
+        <td><input type="text" value="V000000" id="vendorid"/></td>
+      </tr>
+      <tr>
+        <td>Beneficiary Name</td>
+        <td><input type="text" value="VENDOR NAME HERE" id="payeename"/></td>
+      </tr>
+      <tr>
+        <td>Beneficiary Address</td>
+        <td><input type="text" value="123 MAIN STREET ANYWHERE, CA 92000" id="payeeaddress"/></td>
+      </tr>
+      <tr>
+        <td>Bank Name</td>
+        <td><input type="text" value="INSTITUTION NAME HERE" id="bankname"/></td>
+      </tr>
+      <tr>
+        <td>Bank Address</td>
+        <td><input type="text" value="9000 WALL STREET ANYWHERE, NY 10101" id="bankaddress"/></td>
+      </tr>
+      <tr>
+        <td>Routing Number</td>
+        <td><input type="text" value="123456789" id="routing"/></td>
+      </tr>
+      <tr>
+        <td>Account Number</td>
+        <td><input type="text" value="1000200030004000" id="account"/></td>
+      </tr>
+      <tr>
+        <td>Swift</td>
+        <td><input type="text" value="ABCDEFGHIJK" id="swift"/></td>
+      </tr>
+      <tr>
+        <td>Intermediary Bank Name</td>
+        <td><input type="text" value="INTERMED BANK" id="interbankname"/></td>
+      </tr>
+      <tr>
+        <td>Intermediary Bank Address</td>
+        <td><input type="text" value="5YJ INTERNATIONAL ST SOMEWHERE, NS XJY5YA CANADA" id="interbankaddress"/></td>
+      </tr>
+      <tr>
+        <td>Intermediary Bank Routing</td>
+        <td><input type="text" value="ABC123456XYZ" id="interrouting"/></td>
+      </tr>
+      <tr>
+        <td>Intermediary Bank Swift</td>
+        <td><input type="text" value="ABABABABABA" id="interswift"/></td>
+      </tr>
+      <tr>
+        <td>Notes</td>
+        <td><input type="text" value="Some notes here" id="notes"/></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <table class="ui table compact collapsing" id="payinfoactions">
+    <tbody>
+        <tr>
+          <td>
+            Action
+          </td>
+          <td>
+            <select name="action" id="action">
+              <option value="New">New</option>
+            </select>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+
+  <table class="ui table compact collapsing" id="workflow">
+    <tbody>
+      <tr>
+        <td>Workflow</td>
+        <td id="wf_name"></td>
+      </tr>
+      <tr>
+        <td>Current Step</td>
+        <td id="wf_currentstep"></td>
+      </tr>
+      <tr>
+        <td>
+          Next Step
+        </td>
+        <td>
+          <select name="wf_stepnext" id="wf_stepnext">
+            <option value="Entry">Entry</option>
+            <option value="Review">Review</option>
+            <option value="Reject">Reject</option>
+            <option value="Approved">Approved</option>
+          </select>
+        </td>
+      </tr>
+      <tr>
+        <td>WF Notes</td>
+        <td><input type="text" value="" id="wf_notes"/></td>
+      </tr>
+      <tr>
+        <td>
+          <button type="button" id="btnSave">Save</button>
+        </td>
+      </tr>
+    </tbody>
+
+
+  <table class="ui table compact collapsing" id="wf_history">
+    <thead>
+      <tr>
+        <th>Step</th>
+        <th>User</th>
+        <th>Date</th>
+        <th>Notes</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+</div>

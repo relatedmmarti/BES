@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    {{>head}}
+  </head>
+  <body id="samples">
+
+    {{>menu}}
+
+    <div id="content" class="ui padded grid relaxed">
+      <div id="doc" class="column eight wide">
+        <div class="doc-overview">
+          <h2 class="ui dividing header" data-se="overview-doc-header">
+            My Profile
+          </h2>
+          <p>Hello, {{userinfo.name}}. Below is your single sign on information used in this application.</p>
+          
+        </div>
+        <table class="ui table compact collapsing">
+          <thead>
+            <tr>
+              <th>Claim</th>
+              <th>Value</th>
+            </tr>
+          </thead>
+          <tbody>
+            {{#attributes}}
+              <tr>
+                <td>{{0}}</td><td id="claim-{{0}}">{{1}}</td>
+              </tr>
+            {{/attributes}}
+          </tbody>
+        </table>
+        <p>Attrib: {{userinfo.email}}</p>
+      </div>
+
+      {{>server-config}}
+
+    </div>
+  </body>
+</html>
