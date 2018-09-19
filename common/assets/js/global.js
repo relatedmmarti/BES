@@ -5,21 +5,33 @@ var userListData = [];
 $(document).ready(function() {
 
   // Populate the user table on initial page load
-  populateTable();
+  //populateTable();
 
   $('#btnSave').on('click', doAction);
-  $('#btnFilter').on('click', doFilter);
+  $('#btnFilter').on('click', populateTable);
 
   $(document).on('click', '#userList button' , function() {
     getEdit($(this).val());
   });
+
+
+  $(document).on('click', '#btnAuditLog' , function() {
+
+    $('.modal').modal('show');
+
+  });
+
+
+
 
 });
 
 
 // Functions =============================================================
 
-function doFilter(event) {
+
+// Fill table with data
+function populateTable() {
 
   //build a list of filter values
   var filters = {
@@ -40,11 +52,11 @@ function doFilter(event) {
     return encodeURIComponent(key) + '=' + encodeURIComponent(filters[key]);
   }).join('&');
 
-  console.log('queryString:' + queryString);
-
   if (queryString !== '') {
     queryString = '?' + queryString;
   };
+
+  console.log('queryString:' + queryString);
 
   $.getJSON( '/payinfo/list' + queryString, function( data ) {
 
@@ -78,73 +90,9 @@ function doFilter(event) {
     $('#userList tbody').html(tableContent);
   });
 
-}
-
-
-
-
-
-
-
-
-
-
-
-// Fill table with data
-function populateTable() {
-
-  // Empty content string
-  var tableContent = '';
-
-  $.getJSON( '/payinfo/list', function( data ) {
-
-    // For each item in our JSON, add a table row and cells to the content string
-    $.each(data, function(){
-      tableContent += '<tr id="row_' + this.id + '">';
-      tableContent += '<td><button class="ui button" value="'+ this.id + '">' + this.id + '</button></td>';
-      tableContent += '<td>' + this.wfstep_name + '</td>';
-      tableContent += '<td>' + this.paytype + '</td>';
-      tableContent += '<td>' + this.sourcesystem + '</td>';
-      tableContent += '<td>' + this.vendorid + '</td>';
-      tableContent += '<td>' + this.payeename + '</td>';
-      tableContent += '<td>' + this.payeeaddress + '</td>';
-      tableContent += '<td>' + this.bankname + '</td>';
-      tableContent += '<td>' + this.bankaddress + '</td>';
-      tableContent += '<td>' + this.routing + '</td>';
-      tableContent += '<td>' + this.account + '</td>';
-      tableContent += '<td>' + this.swift + '</td>';
-      tableContent += '<td>' + this.interbankname + '</td>';
-      tableContent += '<td>' + this.interbankaddress + '</td>';
-      tableContent += '<td>' + this.interrouting + '</td>';
-      tableContent += '<td>' + this.interswift + '</td>';
-      tableContent += '<td>' + this.notes + '</td>';
-      tableContent += '</tr>';
-    });
-
-    // Inject the whole content string into our existing HTML table
-    $('#userList tbody').html(tableContent);
-  });
-
-/*
-    $.ajax({
-        url: '/helloworld/data',
-        type: 'GET',
-        dataType: 'json',
-        success: function (result) {
-            var insert = '';
-            $.each(result, function (index, item) {
-
-                  insert += '<tr>';
-                  insert += '<td>' + item.id + '</td>';
-                  insert += '<td>' + item.name + '</td>';
-                  insert += '</tr>'
-            });
-            $('#userList table tbody').html(tableContent);
-        }
-    });
-*/
 
 };
+
 
 
 
@@ -307,6 +255,8 @@ function doAction(event) {
 
           // Clear the form inputs
           $('#payinfofields input').val('');
+          $('#rowid').html('');
+          $('#action').html(`<option value="New">New</option>`);
 
           //clear the workflow history
           $('#wf_history tbody').html('');

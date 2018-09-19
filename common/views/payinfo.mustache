@@ -3,18 +3,19 @@
   <head>
     {{>head}}
   </head>
-  <body id="samples">
+  <body>
 
     {{>menu}}
-    {{>payinfo_right}}
 
     <div id="content" class="ui grid">
+
+      {{>payinfo_right}}
+
       <div id="doc" class="column twelve wide" style="overflow-y:auto;white-space:nowrap;">
         <div class="doc-overview">
           <h2 class="ui dividing header" data-se="overview-doc-header">
             Beneficiary EFT Setup
           </h2>
-          <p>Hello, {{userinfo.name}}.</p>
           <table id="searchFilter" class="ui very compact celled table" style="width:400px;">
             <thead>
                 <th>ID</th>
@@ -80,5 +81,25 @@
       </div>
 
     </div>
+
+    <div class="ui modal">
+      <i class="close icon"></i>
+      <div class="header">
+        Title
+      </div>
+      <div class="image content">
+        <div class="image">
+          Y
+        </div>
+        <div class="description">
+          X
+        </div>
+      </div>
+      <div class="actions">
+        <div class="ui button">Cancel</div>
+        <div class="ui button">OK</div>
+      </div>
+    </div>
+
   </body>
 </html>
