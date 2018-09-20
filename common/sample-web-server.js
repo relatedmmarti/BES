@@ -56,7 +56,7 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
       var result = new Query('INSERT INTO auditlog ("action","username","payload","status") values (?,?,?,?);',
         [
           req.method + ' ' + req.url,
-          req.userinfo.preferred_username,
+          req.userContext.userinfo.preferred_username,
           JSON.stringify(data),
           status
         ]).run();
@@ -104,27 +104,36 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
 
   app.use(oidc.router);
 
+  /* this is broken with the Okta OIDC connector 1.0.0 from 0.1.3
   app.get('/', (req, res) => {
     const template = homePageTemplateName || 'home';
     res.render(template, {
-      isLoggedIn: !!req.userinfo,
-      userinfo: req.userinfo
+      isLoggedIn: !! req.userContext.userinfo,
+      userinfo: req.userContext.userinfo
+    });
+  });
+  */
+
+  app.get('/', oidc.ensureAuthenticated(), (req, res) => {
+    res.render('home', {
+      isLoggedIn: !!req.userContext.userinfo,
+      userinfo: req.userContext.userinfo
     });
   });
 
   app.get('/profile', oidc.ensureAuthenticated(), (req, res) => {
     // Convert the userinfo object into an attribute array, for rendering with mustache
-    //const attributes = Object.entries(req.userinfo);
+    //const attributes = Object.entries(req.userContext.userinfo);
     res.render('profile', {
-      isLoggedIn: !!req.userinfo,
-      userinfo: req.userinfo
+      isLoggedIn: !!req.userContext.userinfo,
+      userinfo: req.userContext.userinfo
     });
   });
 
   app.get('/payinfo', oidc.ensureAuthenticated(), (req, res) => {
     res.render('payinfo', {
-      isLoggedIn: !!req.userinfo,
-      userinfo: req.userinfo
+      isLoggedIn: !!req.userContext.userinfo,
+      userinfo: req.userContext.userinfo
     });
   });
 
@@ -173,7 +182,7 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
       }
       */
 
-  	  //console.log(req.method + ' ' + req.url + ' ' + req.userinfo.preferred_username);
+  	  //console.log(req.method + ' ' + req.url + ' ' + req.userContext.userinfo.preferred_username);
   	  //console.log(payload);
 
       /* check to see if the selected step is valid for the current object */
@@ -249,7 +258,7 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
         objtype: 1,
       };
 
-  	  console.log(req.method + ' ' + req.url + ' ' + req.userinfo.preferred_username);
+  	  console.log(req.method + ' ' + req.url + ' ' + req.userContext.userinfo.preferred_username);
   	  //console.log(payload);
 
       /* check to see if the selected step is valid for the current object */
@@ -289,7 +298,7 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
   Delete records*/
   app.delete('/payinfo/:id', oidc.ensureAuthenticated(), (req, res) => {
 
-	  console.log(req.method + ' ' + req.url + ' ' + req.userinfo.preferred_username);
+	  console.log(req.method + ' ' + req.url + ' ' + req.userContext.userinfo.preferred_username);
 
     var del = new Query('DELETE FROM eftpayee WHERE id=?;', [req.params.id]).run();
     //console.log(del);
@@ -309,7 +318,7 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
   */
   app.get('/payinfo/list', oidc.ensureAuthenticated(), (req, res) => {
 
-    console.log(req.method + ' ' + req.url + ' ' + req.userinfo.preferred_username);
+    console.log(req.method + ' ' + req.url + ' ' + req.userContext.userinfo.preferred_username);
     var where = '';
 
     if (req.query.id !== undefined && req.query.id !== '') {
@@ -394,7 +403,7 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
 
     var objType = 1;
 
-    console.log(req.method + ' ' + req.url + ' ' + req.userinfo.preferred_username);
+    console.log(req.method + ' ' + req.url + ' ' + req.userContext.userinfo.preferred_username);
 
     //Get all payment instructions
     var obj = new Query('SELECT * from eftpayee where id=?', [req.params.id]).get();
@@ -466,13 +475,13 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
 
   app.put('/payinfo/:id', oidc.ensureAuthenticated(), (req, res) => {
 
-    console.log(req.method + ' ' + req.url + ' ' + req.userinfo.preferred_username);
+    console.log(req.method + ' ' + req.url + ' ' + req.userContext.userinfo.preferred_username);
 
     //lazy shortcut
     var payload = req.body;
 
     //Update workflow first
-    var setWorkflow = new WorkflowAction(payload.wf_stepnext, 1, req.params.id, req.userinfo.preferred_username, payload.wf_notes);
+    var setWorkflow = new WorkflowAction(payload.wf_stepnext, 1, req.params.id, req.userContext.userinfo.preferred_username, payload.wf_notes);
 
     //Only save edits if the workflow is still in progress
     //if (currentstep.isapproval === 1) {
@@ -560,7 +569,7 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
 
   	  var payload = req.body;
 
-  	  console.log(req.method + ' ' + req.url + ' ' + req.userinfo.preferred_username);
+  	  console.log(req.method + ' ' + req.url + ' ' + req.userContext.userinfo.preferred_username);
   	  //console.log(payload);
 
   	  try {
@@ -606,7 +615,7 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
         new Query().audit(req, {'eftpayee' : payload});
 
         //Set initial workflow step for new record
-        var setWorkflow = new WorkflowAction(1, 1, insert.lastInsertROWID, req.userinfo.preferred_username, payload.wf_notes, true);
+        var setWorkflow = new WorkflowAction(1, 1, insert.lastInsertROWID, req.userContext.userinfo.preferred_username, payload.wf_notes, true);
         console.log(setWorkflow);
 
   	    res.send({msg: ''});
