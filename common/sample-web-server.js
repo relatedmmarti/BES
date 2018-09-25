@@ -306,7 +306,24 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
   	  //console.log(payload);
   	  try {
         for (var i = 1; i <= 82; i++) {
-          var setWorkflow = new WorkflowAction(1, 1, i, req.userContext.userinfo.preferred_username, 'Import', true);
+
+          var WorkflowAction = new Query(`
+          INSERT INTO wfaction (
+            'fk_wfstep_id',
+            'fk_objtype_id',
+            'fk_object_id',
+            'username',
+            'notes') values (?,?,?,?,?);`,
+            [
+              2,
+              1,
+              i,
+              'SYSTEM',
+              'import'
+            ]).run();
+
+            console.log('WFACTION INJECTED FOR ' + i)
+
         }
         //console.log(setWorkflow);
   	    res.send({msg: ''});
@@ -331,6 +348,8 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
   Workflow: Get valid next steps for a given object
   */
   app.get('/workflow/:id', oidc.ensureAuthenticated(), (req, res) => {
+
+    console.log(req.method + ' ' + req.url + ' ' + req.userContext.userinfo.preferred_username);
 
     if (req.isAuthenticated()) {
 
@@ -380,6 +399,8 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
   Delete records*/
   app.delete('/payinfo/:id', oidc.ensureAuthenticated(), (req, res) => {
 
+    console.log(req.method + ' ' + req.url + ' ' + req.userContext.userinfo.preferred_username);
+
     if (req.userContext.userinfo.preferred_username === 'dchin@relatedgroup.com') {
 
   	  console.log(req.method + ' ' + req.url + ' ' + req.userContext.userinfo.preferred_username);
@@ -401,6 +422,44 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
     }
 
   });
+
+
+
+
+
+  /*
+  ====================================================
+  Get a list of all encrypted records for use by TM5
+  */
+  app.get('/payinfo/bescode/all', (req, res) => {
+
+    res.send('');
+  });
+
+
+
+  /*
+  ====================================================
+  Get a list of all BES IDs for consumption by Yardi in the Beneficary segment
+  */
+  app.get('/payinfo/bescode/segment', (req, res) => {
+
+    res.send('');
+
+  });
+
+
+    /*
+  ====================================================
+  Get a single BESCODE record
+  */
+  app.get('/payinfo/list/bescode/:id', (req, res) => {
+
+    res.send('');
+
+  });
+
+
 
   /*
   ====================================================
@@ -683,6 +742,8 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
   NEW : Create record
   */
   app.post('/payinfo/new', oidc.ensureAuthenticated(), (req, res) => {
+
+    console.log(req.method + ' ' + req.url + ' ' + req.userContext.userinfo.preferred_username);
 
     if (req.isAuthenticated()) {
 

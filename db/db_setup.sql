@@ -118,15 +118,15 @@ CREATE TABLE `wfstepusers` (
 insert into `wfstepusers` (`fk_wfstep_id`,`username`) values
  (2,'kweller@relatedgroup.com')
 ,(2,'jhoyos@relatedgroup.com')
-,(2,'sgonzalez@relatedgroup.com')
+,(2,'susan@relatedgroup.com')
 
 ,(3,'kweller@relatedgroup.com')
 ,(3,'jhoyos@relatedgroup.com')
-,(3,'sgonzalez@relatedgroup.com')
+,(3,'susan@relatedgroup.com')
 
 ,(5,'kweller@relatedgroup.com')
 ,(5,'jhoyos@relatedgroup.com')
-,(5,'sgonzalez@relatedgroup.com');
+,(5,'susan@relatedgroup.com');
 
 
 /*
