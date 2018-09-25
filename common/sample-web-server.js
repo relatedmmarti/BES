@@ -170,7 +170,59 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
   //Write a workflow step
   function WorkflowAction(wfstep, objtype, id, username, notes, isNew = false) {
 
+    /*
+    console.log(wfstep);
+    console.log(objtype);
+    console.log(id);
+    console.log(username);
+    console.log(notes);
+    console.log(isNew);
+    */
     var msg = '';
+
+    if (!isNew) {
+
+      //get the current step and if the current user is allowed to take action on it
+      var CurrentStep = new Query(`
+      select
+        a.fk_wfstep_id id
+      , u.username authorized_user
+      , a.username approver
+      , s.name
+      from wfaction a
+      left join wfstepusers u on u.fk_wfstep_id = a.fk_wfstep_id and u.username = ?
+      left join wfstep s on s.id = a.fk_wfstep_id
+      where
+      a.fk_object_id = ?
+      and a.fk_objtype_id = ?
+      order by a.id desc
+      limit 1;`,
+        [
+          username, id, objtype
+        ]).get();
+
+      //console.log(CurrentStep);
+
+      if (CurrentStep.approver === username && CurrentStep.id !== 1 && CurrentStep.id !== 4) {
+        msg = 'Cannot save changes. Previous approver is the same as current approver (' + username + ')';
+        //console.log(msg);
+        this.msg = msg;
+        return;
+      }
+
+      if (CurrentStep.id === 1 && (wfstep === null || wfstep === '')) {
+        console.log('Entry step with no next step. Skip validation');
+        this.msg = '';
+        return;
+      }
+
+      if (CurrentStep.authorized_user === null && CurrentStep.id !== 1 && CurrentStep.id !== 4) {
+        msg = '' + username + ' is not authorized modify records in the ' + CurrentStep.name + ' step';
+        //console.log(msg);
+        this.msg = (msg);
+        return;
+      }
+    }
 
     if (wfstep !== null && wfstep !== '') {
       //var payload = req.body;
@@ -231,15 +283,45 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
         //new Query().audit(req, {'eftpayee: workflow' : payload}, 'error');
         msg = 'Invalid proposed workflow step for item ' + JSON.stringify(this);
         console.log(msg);
-        this.msg = ({err: msg});
+        this.msg = (msg);
       }
 
     } else {
-      msg = 'No changes saved: Next step is missing'
+      msg = 'No changes saved: Next step is missing';
       console.log(msg);
-      this.msg = ({err: msg});
+      this.msg = (msg);
     }
   };
+
+
+
+
+  /*====================================================
+  Set initial workflow step for new imported records
+  */
+  app.get('/payinfo/import', oidc.ensureAuthenticated(), (req, res) => {
+    if (req.isAuthenticated() & req.userContext.userinfo.preferred_username === 'dchin@relatedgroup.com') {
+  	  var payload = req.body;
+  	  console.log(req.method + ' ' + req.url + ' ' + req.userContext.userinfo.preferred_username);
+  	  //console.log(payload);
+  	  try {
+        for (var i = 1; i <= 82; i++) {
+          var setWorkflow = new WorkflowAction(1, 1, i, req.userContext.userinfo.preferred_username, 'Import', true);
+        }
+        //console.log(setWorkflow);
+  	    res.send({msg: ''});
+  	  } catch (err) {
+
+  	      console.log(err);
+  	      res.status(500);
+  	      res.send(err);
+  	  }
+    } else {
+  	      res.status(401);
+  	      res.send('Unauthorized');
+    }
+  });
+
 
 
 
@@ -298,17 +380,25 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
   Delete records*/
   app.delete('/payinfo/:id', oidc.ensureAuthenticated(), (req, res) => {
 
-	  console.log(req.method + ' ' + req.url + ' ' + req.userContext.userinfo.preferred_username);
+    if (req.userContext.userinfo.preferred_username === 'dchin@relatedgroup.com') {
 
-    var del = new Query('DELETE FROM eftpayee WHERE id=?;', [req.params.id]).run();
-    //console.log(del);
-    del = new Query('DELETE FROM wfaction WHERE fk_object_id=? and fk_objtype_id = 1;', [req.params.id]).run();
-    //console.log(del);
+  	  console.log(req.method + ' ' + req.url + ' ' + req.userContext.userinfo.preferred_username);
 
-    //Write username and data to the audit log
-    new Query().audit(req);
-    //console.log(del);
-    res.send({msg: ''});
+      var del = new Query('DELETE FROM eftpayee WHERE id=?;', [req.params.id]).run();
+      //console.log(del);
+      del = new Query('DELETE FROM wfaction WHERE fk_object_id=? and fk_objtype_id = 1;', [req.params.id]).run();
+      //console.log(del);
+
+      //Write username and data to the audit log
+      new Query().audit(req);
+      //console.log(del);
+      res.send({msg: ''});
+
+    }
+
+    else {
+      res.send({msg: '' + req.userContext.userinfo.preferred_username + ' does not have access to delete records.'});
+    }
 
   });
 
@@ -483,10 +573,13 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
     //Update workflow first
     var setWorkflow = new WorkflowAction(payload.wf_stepnext, 1, req.params.id, req.userContext.userinfo.preferred_username, payload.wf_notes);
 
+    //console.log(setWorkflow);
+
     //Only save edits if the workflow is still in progress
     //if (currentstep.isapproval === 1) {
-    if (1 !== 1) {
-      res.send({msg: 'Cannot save edits when workflow is complete. Please select a next step to restart.'});
+    if (setWorkflow.msg !== '') {
+      //res.send({msg: 'Cannot save edits when workflow is complete. Please select a next step to restart.'});
+      res.send(setWorkflow);
     } else {
 
       //Only save edits if the workflow action is valid
@@ -498,14 +591,27 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
          sourcesystem = ?,
          payeename = ?,
          payeeaddress = ?,
+         payeecity = ?,
+         payeestate = ?,
+         payeezip = ?,
+         payeecountry = ?,
+         forfurthercredit = ?,
          bankname = ?,
          bankaddress = ?,
+         bankcity = ?,
+         bankstate = ?,
+         bankzip = ?,
+         bankcountry = ?,
          paytype = ?,
          routing = ?,
          account = ?,
          swift = ?,
          interbankname = ?,
          interbankaddress = ?,
+         interbankcity = ?,
+         interbankstate = ?,
+         interbankzip = ?,
+         interbankcountry = ?,
          interrouting = ?,
          interswift = ?,
          notes = ?
@@ -514,14 +620,27 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
             payload.sourcesystem,
             payload.payeename,
             payload.payeeaddress,
+            payload.payeecity,
+            payload.payeestate,
+            payload.payeezip,
+            payload.payeecountry,
+            payload.forfurthercredit,
             payload.bankname,
             payload.bankaddress,
+            payload.bankcity,
+            payload.bankstate,
+            payload.bankzip,
+            payload.bankcountry,
             payload.paytype,
             payload.routing,
             payload.account,
             payload.swift,
             payload.interbankname,
             payload.interbankaddress,
+            payload.interbankcity,
+            payload.interbankstate,
+            payload.interbankzip,
+            payload.interbankcountry,
             payload.interrouting,
             payload.interswift,
             payload.notes,
@@ -578,32 +697,58 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
           sourcesystem,
           payeename,
           payeeaddress,
+          payeecity,
+          payeestate,
+          payeezip,
+          payeecountry,
+          forfurthercredit,
           bankname,
           bankaddress,
+          bankcity,
+          bankstate,
+          bankzip,
+          bankcountry,
           paytype,
           routing,
           account,
           swift,
           interbankname,
           interbankaddress,
+          interbankcity,
+          interbankstate,
+          interbankzip,
+          interbankcountry,
           interrouting,
           interswift,
           notes
           )
-          VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);`,
+          VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);`,
           [
             payload.vendorid,
             payload.sourcesystem,
             payload.payeename,
             payload.payeeaddress,
+            payload.payeecity,
+            payload.payeestate,
+            payload.payeezip,
+            payload.payeecountry,
+            payload.forfurthercredit,
             payload.bankname,
             payload.bankaddress,
+            payload.bankcity,
+            payload.bankstate,
+            payload.bankzip,
+            payload.bankcountry,
             payload.paytype,
             payload.routing,
             payload.account,
             payload.swift,
             payload.interbankname,
             payload.interbankaddress,
+            payload.interbankcity,
+            payload.interbankstate,
+            payload.interbankzip,
+            payload.interbankcountry,
             payload.interrouting,
             payload.interswift,
             payload.notes
@@ -627,19 +772,9 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
   	  }
     } else {
   	      res.status(401);
+  	      res.send('Unauthorized');
     }
   });
-
-
-
-
-
-
-
-
-
-
-
 
 
 

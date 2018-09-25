@@ -4,6 +4,7 @@
 .mode column
 */
 
+/*
 drop table `eftpayee`;
 CREATE TABLE `eftpayee` (
 	`id` INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -25,6 +26,46 @@ CREATE TABLE `eftpayee` (
 	`modified` DEFAULT CURRENT_TIMESTAMP,
 	`notes` TEXT
 );
+*/
+
+drop table `eftpayee`;
+CREATE TABLE`eftpayee` (
+     id INTEGER PRIMARY KEY AUTOINCREMENT,
+     vendorid VARCHAR(255),
+     vendortype VARCHAR(255),
+     sourcesystem VARCHAR(255),
+     payeename VARCHAR(255),
+     payeeaddress VARCHAR(255),
+     payeecity VARCHAR(255),
+     payeestate VARCHAR(255),
+     payeezip VARCHAR(255),
+     payeecountry VARCHAR(255),
+     bankname VARCHAR(255),
+     bankaccountname  VARCHAR(255),
+     forfurthercredit  VARCHAR(255),
+     bankaddress VARCHAR(255),
+     bankcity VARCHAR(255),
+     bankstate VARCHAR(255),
+     bankzip VARCHAR(255),
+     bankcountry VARCHAR(255),
+     paytype VARCHAR(255),
+     achsec VARCHAR(255),
+     routing VARCHAR(255),
+     account VARCHAR(255),
+     swift VARCHAR(255),
+     interbankname VARCHAR(255),
+     interbankaddress VARCHAR(255),
+     interbankcity VARCHAR(255),
+     interbankstate VARCHAR(255),
+     interbankzip VARCHAR(255),
+     interbankcountry VARCHAR(255),
+     interrouting VARCHAR(255),
+     interswift VARCHAR(255),
+     created DEFAULT CURRENT_TIMESTAMP,
+     modified DEFAULT CURRENT_TIMESTAMP,
+     notes TEXT
+);
+
 
 drop table `objtype`;
 CREATE TABLE `objtype` (
@@ -61,8 +102,34 @@ INSERT INTO wfstep ('fk_wf_id','name', 'isfirst', 'isapproval') values
 (1, 'Reject', null, null),
 (1, 'Approved', null, 1);
 
-/*
 
+
+
+/*stores the list of valid users who can take action on each wfstep*/
+drop table `wfstepusers`;
+CREATE TABLE `wfstepusers` (
+	`id` INTEGER PRIMARY KEY AUTOINCREMENT,
+	`fk_wfstep_id` INTEGER,
+	`username` VARCHAR(255),
+	`notes` VARCHAR(255),
+	`modified` DEFAULT CURRENT_TIMESTAMP
+);
+
+insert into `wfstepusers` (`fk_wfstep_id`,`username`) values
+ (2,'kweller@relatedgroup.com')
+,(2,'jhoyos@relatedgroup.com')
+,(2,'sgonzalez@relatedgroup.com')
+
+,(3,'kweller@relatedgroup.com')
+,(3,'jhoyos@relatedgroup.com')
+,(3,'sgonzalez@relatedgroup.com')
+
+,(5,'kweller@relatedgroup.com')
+,(5,'jhoyos@relatedgroup.com')
+,(5,'sgonzalez@relatedgroup.com');
+
+
+/*
 select * from wfstep;
 1|1|Entry||2018-08-08 18:56:46
 2|1|Review||2018-08-08 18:56:46
@@ -95,7 +162,7 @@ INSERT INTO wfstepnext ('fk_wfstep_id','fk_wfstep_id_next') values
 (3, 5),
 (3, 4),
 /*reject can only goto review*/
-(4, 1),
+(4, 2),
 /*approved can only goto the beginning*/
 (5, 1);
 
@@ -112,6 +179,19 @@ CREATE TABLE `wfaction` (
 );
 
 
+
+/*roles TBD*/
+/*
+drop table `roles`;
+CREATE TABLE `roles` (
+	`id` INTEGER PRIMARY KEY AUTOINCREMENT,
+	`name` VARCHAR(255),
+	`notes` VARCHAR(255),
+	`modified` DEFAULT CURRENT_TIMESTAMP
+);
+*/
+
+
 drop table `auditlog`;
 CREATE TABLE `auditlog` (
 	`id` INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -123,3 +203,6 @@ CREATE TABLE `auditlog` (
 );
 
 
+
+delete from auditlog;
+delete from wfaction;

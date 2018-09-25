@@ -73,13 +73,26 @@ function populateTable() {
       tableContent += '<td>' + this.vendorid + '</td>';
       tableContent += '<td>' + this.payeename + '</td>';
       tableContent += '<td>' + this.payeeaddress + '</td>';
+      tableContent += '<td>' + this.payeecity + '</td>';
+      tableContent += '<td>' + this.payeestate + '</td>';
+      tableContent += '<td>' + this.payeezip + '</td>';
+      tableContent += '<td>' + this.payeecountry + '</td>';
+      tableContent += '<td>' + this.forfurthercredit + '</td>';
       tableContent += '<td>' + this.bankname + '</td>';
       tableContent += '<td>' + this.bankaddress + '</td>';
+      tableContent += '<td>' + this.bankcity + '</td>';
+      tableContent += '<td>' + this.bankstate + '</td>';
+      tableContent += '<td>' + this.bankzip + '</td>';
+      tableContent += '<td>' + this.bankcountry + '</td>';
       tableContent += '<td>' + this.routing + '</td>';
       tableContent += '<td>' + this.account + '</td>';
       tableContent += '<td>' + this.swift + '</td>';
       tableContent += '<td>' + this.interbankname + '</td>';
       tableContent += '<td>' + this.interbankaddress + '</td>';
+      tableContent += '<td>' + this.interbankcity + '</td>';
+      tableContent += '<td>' + this.interbankstate + '</td>';
+      tableContent += '<td>' + this.interbankzip + '</td>';
+      tableContent += '<td>' + this.interbankcountry + '</td>';
       tableContent += '<td>' + this.interrouting + '</td>';
       tableContent += '<td>' + this.interswift + '</td>';
       tableContent += '<td>' + this.notes + '</td>';
@@ -110,13 +123,26 @@ function getEdit(id) {
     $('#vendorid').val(data.obj.vendorid);
     $('#payeename').val(data.obj.payeename);
     $('#payeeaddress').val(data.obj.payeeaddress);
+    $('#payeecity').val(data.obj.payeecity);
+    $('#payeestate').val(data.obj.payeestate);
+    $('#payeezip').val(data.obj.payeezip);
+    $('#payeecountry').val(data.obj.payeecountry);
+    $('#forfurthercredit').val(data.obj.forfurthercredit);
     $('#bankname').val(data.obj.bankname);
     $('#bankaddress').val(data.obj.bankaddress);
+    $('#bankcity').val(data.obj.bankcity);
+    $('#bankstate').val(data.obj.bankstate);
+    $('#bankzip').val(data.obj.bankzip);
+    $('#bankcountry').val(data.obj.bankcountry);
     $('#routing').val(data.obj.routing);
     $('#account').val(data.obj.account);
     $('#swift').val(data.obj.swift);
     $('#interbankname').val(data.obj.interbankname);
     $('#interbankaddress').val(data.obj.interbankaddress);
+    $('#interbankcity').val(data.obj.interbankcity);
+    $('#interbankstate').val(data.obj.interbankstate);
+    $('#interbankzip').val(data.obj.interbankzip);
+    $('#interbankcountry').val(data.obj.interbankcountry);
     $('#interrouting').val(data.obj.interrouting);
     $('#interswift').val(data.obj.interswift);
     $('#notes').val(data.obj.notes);
@@ -164,9 +190,11 @@ function doAction(event) {
 
   // Super basic validation - increase errorCount variable if any fields are blank
   var errorCount = 0;
+  /*
   $('#payinfofields input').each(function(index, val) {
     if($(this).val() === '') { errorCount++; }
   });
+  */
 
   // Check and make sure errorCount's still at zero
   if(errorCount === 0) {
@@ -178,13 +206,26 @@ function doAction(event) {
       'vendorid': $('#vendorid').val(),
       'payeename': $('#payeename').val(),
       'payeeaddress': $('#payeeaddress').val(),
+      'payeecity': $('#payeecity').val(),
+      'payeestate': $('#payeestate').val(),
+      'payeezip': $('#payeezip').val(),
+      'payeecountry': $('#payeecountry').val(),
+      'forfurthercredit': $('#forfurthercredit').val(),
       'bankname': $('#bankname').val(),
       'bankaddress': $('#bankaddress').val(),
+      'bankcity': $('#bankcity').val(),
+      'bankstate': $('#bankstate').val(),
+      'bankzip': $('#bankzip').val(),
+      'bankcountry': $('#bankcountry').val(),
       'routing': $('#routing').val(),
       'account': $('#account').val(),
       'swift': $('#swift').val(),
       'interbankname': $('#interbankname').val(),
       'interbankaddress': $('#interbankaddress').val(),
+      'interbankcity': $('#interbankcity').val(),
+      'interbankstate': $('#interbankstate').val(),
+      'interbankzip': $('#interbankzip').val(),
+      'interbankcountry': $('#interbankcountry').val(),
       'interrouting': $('#interrouting').val(),
       'interswift': $('#interswift').val(),
       'notes': $('#notes').val(),
