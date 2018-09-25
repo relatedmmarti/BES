@@ -85,3 +85,7 @@ input {
     font-family: Roboto, Helvetica;
     width:100%;
 }
+
+#searchFilter input {
+  width:200px;
+}
