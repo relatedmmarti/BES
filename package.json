@@ -9,6 +9,7 @@
     "@okta/jwt-verifier": "0.0.12",
     "@okta/oidc-middleware": "^1.0.0",
     "better-sqlite3": "^4.1.4",
+    "console-stamp": "^0.2.6",
     "express": "^4.16.3",
     "express-session": "^1.15.6",
     "mustache-express": "^1.2.7"

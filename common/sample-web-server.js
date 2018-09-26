@@ -4,6 +4,8 @@
  * and logout functionality.
  */
 
+require('console-stamp')(console, { pattern: 'yyyy-mm-dd HH:MM:ss' });
+
 const dbpath = '../db/treasury.db';
 const Database = require('better-sqlite3');
 
@@ -429,11 +431,28 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
 
   /*
   ====================================================
-  Get a list of all encrypted records for use by TM5
+  Get a list of all approved records for use by TM5
   */
-  app.get('/payinfo/bescode/all', (req, res) => {
+  app.get('/payinfo/bescode/approved', (req, res) => {
 
-    res.send('');
+    console.log(req.method + ' ' + req.url + ' ' + req.headers['x-forwarded-for']);
+
+    var sql = `
+    select e1.* from eftpayee e1
+    	left join
+    		(
+    			select e2.id fk_object_id, max(a.id) fk_faction_id from eftpayee e2
+    			left join wfaction a on a.fk_object_id = e2.id and a.fk_objtype_id = 1
+    			group by e2.id
+    		) z on z.fk_object_id = e1.id
+    	left join wfaction a2 on a2.id = z.fk_faction_id
+    	left join wfstep s on s.id = a2.fk_wfstep_id
+    	WHERE s.id = 5 and s.fk_wf_id = 1
+    	order by e1.id desc;`;
+
+    //get each object and the workflow step
+    var select = new Query(sql).all();
+    res.json(select);
   });
 
 
@@ -448,8 +467,7 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
 
   });
 
-
-    /*
+  /*
   ====================================================
   Get a single BESCODE record
   */
