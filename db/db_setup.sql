@@ -195,6 +195,8 @@ CREATE TABLE `roles` (
 drop table `auditlog`;
 CREATE TABLE `auditlog` (
 	`id` INTEGER PRIMARY KEY AUTOINCREMENT,
+	'fk_id' INTEGER,
+	'objtype' INTEGER,
 	`action` VARCHAR(255),
 	`status` VARCHAR(255),
 	`modified` DEFAULT CURRENT_TIMESTAMP,
