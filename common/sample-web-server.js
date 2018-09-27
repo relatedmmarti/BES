@@ -489,7 +489,7 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
   app.get('/payinfo/bescode/segment', (req, res) => {
 
     var sql = `
-    select e1.id, e1.paytype || ' : ' || e1.vendorid || '-' ||  e1.payeename || ' ' || e1.forfurthercredit || ' : ' || e1.bankname || '-' || substr(e1.account,-4)
+    select e1.id, e1.vendorid, e1.paytype || ' : ' || e1.vendorid || '-' ||  e1.payeename || ' ' || e1.forfurthercredit || ' : ' || e1.bankname || '-' || substr(e1.account,-4) sdesc
     from eftpayee e1
     	left join
     		(
