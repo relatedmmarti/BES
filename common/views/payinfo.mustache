@@ -59,6 +59,7 @@
               <th>BES ID</th>
               <th>Workflow</th>
               <th>Type</th>
+              <th>ACH SEC</th>
               <th>Source</th>
               <th>System Payee ID</th>
               <th>Name</th>
@@ -95,22 +96,25 @@
 
     </div>
 
-    <div class="ui modal">
-      <i class="close icon"></i>
-      <div class="header">
-        Title
-      </div>
-      <div class="image content">
-        <div class="image">
-          Y
-        </div>
-        <div class="description">
-          X
-        </div>
+    <div class="ui longer modal">
+      <div class="header">Audit Log</div>
+      <div class="scrolling content">
+        <table id="auditlog">
+          <thead>
+            <th>BES ID</th>
+            <th>Action</th>
+            <th>Modified</th>
+            <th>Username</th>
+            <th>Data</th>
+          </thead>
+          <tbody></tbody>
+        </table>
       </div>
       <div class="actions">
-        <div class="ui button">Cancel</div>
-        <div class="ui button">OK</div>
+      <div class="ui primary ok button">
+        OK
+        <i class="right chevron icon"></i>
+      </div>
       </div>
     </div>
 

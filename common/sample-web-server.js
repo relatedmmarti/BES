@@ -54,13 +54,15 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
     };
 
     //helper function to log requests
-    this.audit = function (req = {}, data = {}, status = '') {
-      var result = new Query('INSERT INTO auditlog ("action","username","payload","status") values (?,?,?,?);',
+    this.audit = function (req = {}, data = {}, status = '', id = null, objtype = null) {
+      var result = new Query('INSERT INTO auditlog ("action","username","payload","status","fk_id","objtype") values (?,?,?,?,?,?);',
         [
           req.method + ' ' + req.url,
           req.userContext.userinfo.preferred_username,
           JSON.stringify(data),
-          status
+          status,
+          id,
+          objtype
         ]).run();
       db.close();
       return result;
@@ -82,7 +84,7 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
 
   // set session seed
   app.use(session({
-    secret: 'this-should-be-very-random',
+    secret: '25388f6326e841678396dba241e3436e99a2147971a96ecb407db96325756aa3',
     resave: true,
     saveUninitialized: false
   }));
@@ -209,6 +211,12 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
         msg = 'Cannot save changes. Previous approver is the same as current approver (' + username + ')';
         //console.log(msg);
         this.msg = msg;
+        return;
+      }
+
+      if (CurrentStep.id === 5 && wfstep === 1) {
+        console.log('Approved record moved to Entry step');
+        this.msg = '';
         return;
       }
 
@@ -413,7 +421,7 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
       //console.log(del);
 
       //Write username and data to the audit log
-      new Query().audit(req);
+      new Query().audit(req, null, null, req.params.id, 1);
       //console.log(del);
       res.send({msg: ''});
 
@@ -422,6 +430,25 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
     else {
       res.send({msg: '' + req.userContext.userinfo.preferred_username + ' does not have access to delete records.'});
     }
+
+  });
+
+  /*====================================================
+  Pull audit logs for a record*/
+  app.get('/audit/:id', oidc.ensureAuthenticated(), (req, res) => {
+
+    console.log(req.method + ' ' + req.url + ' ' + req.userContext.userinfo.preferred_username);
+    var sql = 'select * from auditlog where fk_id = @id;';
+    var select = new Query(sql, {id: req.params.id}).all();
+
+
+    for (var row of select) {
+      if (row.payload !== null) {
+        row.payload = JSON.parse(row.payload);
+      }
+    }
+
+    res.json(select);
 
   });
 
@@ -680,6 +707,7 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
          bankzip = ?,
          bankcountry = ?,
          paytype = ?,
+         achsec = ?,
          routing = ?,
          account = ?,
          swift = ?,
@@ -709,6 +737,7 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
             payload.bankzip,
             payload.bankcountry,
             payload.paytype,
+            payload.achsec,
             payload.routing,
             payload.account,
             payload.swift,
@@ -725,8 +754,8 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
           ]).run();
 
         //Write username and data to the audit log
-        //new Query().audit(req, [{'eftpayee' : payload}, {'workflow' : {}}]);
-        new Query().audit(req, [{'eftpayee' : payload}]);
+        //new Query().audit(req, [{'eftpayee' : payload}]);
+        new Query().audit(req, [{'eftpayee' : payload}],null,req.params.id,1);
 
   	    res.send({msg: ''});
   	  } catch (err) {
@@ -788,6 +817,7 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
           bankzip,
           bankcountry,
           paytype,
+          achsec,
           routing,
           account,
           swift,
@@ -801,7 +831,7 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
           interswift,
           notes
           )
-          VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);`,
+          VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);`,
           [
             payload.vendorid,
             payload.sourcesystem,
@@ -819,6 +849,7 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
             payload.bankzip,
             payload.bankcountry,
             payload.paytype,
+            payload.achsec,
             payload.routing,
             payload.account,
             payload.swift,
@@ -836,11 +867,12 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
         //console.log(insert);
 
         //Write username and data to the audit log
-        new Query().audit(req, {'eftpayee' : payload});
+        //new Query().audit(req, {'eftpayee' : payload});
+        new Query().audit(req, [{'eftpayee' : payload}], null, insert.lastInsertROWID, 1);
 
         //Set initial workflow step for new record
         var setWorkflow = new WorkflowAction(1, 1, insert.lastInsertROWID, req.userContext.userinfo.preferred_username, payload.wf_notes, true);
-        console.log(setWorkflow);
+        //console.log(setWorkflow);
 
   	    res.send({msg: ''});
   	  } catch (err) {

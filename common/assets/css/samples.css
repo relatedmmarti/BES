@@ -89,3 +89,10 @@ input {
 #searchFilter input {
   width:200px;
 }
+
+#auditlog td {
+  border:1px solid #ccc;
+  margin:0px;
+  padding:0px;
+  c
+}

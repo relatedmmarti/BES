@@ -4,31 +4,42 @@ var userListData = [];
 // DOM Ready =============================================================
 $(document).ready(function() {
 
-  // Populate the user table on initial page load
-  //populateTable();
-
   $('#btnSave').on('click', doAction);
   $('#btnFilter').on('click', populateTable);
+  $('#btnAuditLog').on('click', populateAudit);
 
   $(document).on('click', '#userList button' , function() {
     getEdit($(this).val());
   });
-
-
-  $(document).on('click', '#btnAuditLog' , function() {
-
-    $('.modal').modal('show');
-
-  });
-
-
-
 
 });
 
 
 // Functions =============================================================
 
+function populateAudit() {
+
+  $.getJSON( '/audit/' + $('#rowid').html(), function( data ) {
+
+  // Empty content string
+    var tableContent = '';
+
+    $.each(data, function(){
+      tableContent += '<tr>';
+      tableContent += '<td>' + this.fk_id + '</td>';
+      tableContent += '<td>' + this.action + '</td>';
+      tableContent += '<td>' + this.modified + '</td>';
+      tableContent += '<td>' + this.username + '</td>';
+      tableContent += '<td><pre>' + JSON.stringify(this.payload, null, 4) + '</pre></td>';
+      tableContent += '</tr>';
+    });
+
+    $('#auditlog tbody').html(tableContent);
+  });
+
+  $('.ui.longer.modal').modal('show');
+
+}
 
 // Fill table with data
 function populateTable() {
@@ -69,6 +80,7 @@ function populateTable() {
       tableContent += '<td><button class="ui button" value="'+ this.id + '">' + this.id + '</button></td>';
       tableContent += '<td>' + this.wfstep_name + '</td>';
       tableContent += '<td>' + this.paytype + '</td>';
+      tableContent += '<td>' + this.achsec + '</td>';
       tableContent += '<td>' + this.sourcesystem + '</td>';
       tableContent += '<td>' + this.vendorid + '</td>';
       tableContent += '<td>' + this.payeename + '</td>';
@@ -103,7 +115,6 @@ function populateTable() {
     $('#userList tbody').html(tableContent);
   });
 
-
 };
 
 
@@ -119,6 +130,7 @@ function getEdit(id) {
     $('#rowid').html(data.obj.id);
     $('#wfstatus').html(data.obj.wfstatus);
     $('#paytype').val(data.obj.paytype);
+    $('#achsec').val(data.obj.achsec);
     $('#sourcesystem').val(data.obj.sourcesystem);
     $('#vendorid').val(data.obj.vendorid);
     $('#payeename').val(data.obj.payeename);
@@ -202,6 +214,7 @@ function doAction(event) {
     // Assemble object to save
     var newUser = {
       'paytype': $('#paytype').find(":selected").val(),
+      'achsec': $('#achsec').find(":selected").val(),
       'sourcesystem': $('#sourcesystem').val(),
       'vendorid': $('#vendorid').val(),
       'payeename': $('#payeename').val(),
