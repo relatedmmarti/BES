@@ -4,8 +4,6 @@
  * and logout functionality.
  */
 
-require('console-stamp')(console, { pattern: 'yyyy-mm-dd HH:MM:ss' });
-
 const dbpath = '../db/treasury.db';
 const Database = require('better-sqlite3');
 
