@@ -488,7 +488,22 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
   */
   app.get('/payinfo/bescode/segment', (req, res) => {
 
-    res.send('');
+    var sql = `
+    select e1.id, e1.paytype || ' : ' || e1.vendorid || '-' ||  e1.payeename || ' ' || e1.forfurthercredit || ' : ' || e1.bankname || '-' || substr(e1.account,-4)
+    from eftpayee e1
+    	left join
+    		(
+    			select e2.id fk_object_id, max(a.id) fk_faction_id from eftpayee e2
+    			left join wfaction a on a.fk_object_id = e2.id and a.fk_objtype_id = 1
+    			group by e2.id
+    		) z on z.fk_object_id = e1.id
+    	left join wfaction a2 on a2.id = z.fk_faction_id
+    	left join wfstep s on s.id = a2.fk_wfstep_id
+    	WHERE s.id = 5 and s.fk_wf_id = 1
+    	order by e1.id desc;`;
+
+    var select = new Query(sql).all();
+    res.json(select);
 
   });
 
