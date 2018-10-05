@@ -86,6 +86,10 @@ input {
     width:100%;
 }
 
+input:disabled, select:disabled {
+    background-color: #eee;
+}
+
 #searchFilter input {
   width:200px;
 }

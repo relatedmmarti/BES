@@ -169,6 +169,15 @@ function getEdit(id) {
     $('#wf_name').html(data.currentstep.wfname);
     $('#wf_currentstep').html(data.currentstep.name);
 
+    //visually disable the fields when input will not be saved
+    if ($('#wf_currentstep').html() !== 'Entry') {
+      $('#payinfofields').find('input').attr('disabled','disabled');
+      $('#payinfofields').find('select').attr('disabled','disabled');
+    } else {
+      $('#payinfofields').find('input').removeAttr('disabled');
+      $('#payinfofields').find('select').removeAttr('disabled');
+    }
+
     //set available actions for the record
     $('#action').html(`
       <option value="New">New</option>

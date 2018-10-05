@@ -203,8 +203,11 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
           username, id, objtype
         ]).get();
 
+      this.CurrentStep = CurrentStep;
+
       //console.log(CurrentStep);
 
+      //must have different approvers except for entry and hold
       if (CurrentStep.approver === username && CurrentStep.id !== 1 && CurrentStep.id !== 4) {
         msg = 'Cannot save changes. Previous approver is the same as current approver (' + username + ')';
         //console.log(msg);
@@ -224,7 +227,8 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
         return;
       }
 
-      if (CurrentStep.authorized_user === null && CurrentStep.id !== 1 && CurrentStep.id !== 4) {
+      //anyone can advance workflow in entry and review step
+      if (CurrentStep.authorized_user === null && CurrentStep.id !== 1 && CurrentStep.id !== 2) {
         msg = '' + username + ' is not authorized modify records in the ' + CurrentStep.name + ' step';
         //console.log(msg);
         this.msg = (msg);
@@ -500,7 +504,7 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
     	left join wfaction a2 on a2.id = z.fk_faction_id
     	left join wfstep s on s.id = a2.fk_wfstep_id
     	WHERE s.id = 5 and s.fk_wf_id = 1
-    	order by e1.id desc;`;
+    	order by e1.id asc;`;
 
     var select = new Query(sql).all();
     res.json(select);
@@ -526,30 +530,55 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
   app.get('/payinfo/list', oidc.ensureAuthenticated(), (req, res) => {
 
     console.log(req.method + ' ' + req.url + ' ' + req.userContext.userinfo.preferred_username);
-    var where = '';
 
+    //Prepare an array to hold query parameters. Prevent SQL injection attacks.
+    var queryParams = [];
+
+    //build the where statement depending on the fields the user is searching by
+    var where = '';
     if (req.query.id !== undefined && req.query.id !== '') {
-      where += ' AND e1.rowid=' + req.query.id;
+      //where += ' AND e1.rowid=' + req.query.id;
+      where += ' AND e1.rowid=?';
+      queryParams.push(req.query.id);
     };
     if (req.query.workflow !== undefined && req.query.workflow !== '') {
-      where += ' AND s.name=\'' + req.query.workflow + '\'';
+      //where += ' AND s.name=\'' + req.query.workflow + '\'';
+
+      if (req.query.workflow === 'Pending') {
+        where += ' AND NOT s.name = ?';
+        queryParams.push('Approved');
+      } else {
+        where += ' AND s.name=?';
+        queryParams.push(req.query.workflow);
+      }
+
     };
     if (req.query.type !== undefined && req.query.type !== '') {
-      where += ' AND e1.paytype=\'' + req.query.type + '\'';
+      //where += ' AND e1.paytype=\'' + req.query.type + '\'';
+      where += ' AND e1.paytype=?';
+      queryParams.push(req.query.type);
     };
     if (req.query.source !== undefined && req.query.source !== '') {
-      where += ' AND e1.sourcesystem=\'' + req.query.source + '\'';
+      //where += ' AND e1.sourcesystem=\'' + req.query.source + '\'';
+      where += ' AND e1.sourcesystem like ?';
+      queryParams.push('%' + req.query.source + '%');
     };
     if (req.query.vendor !== undefined && req.query.vendor !== '') {
-      where += ' AND (e1.vendorid like \'%' + req.query.vendor + '%\' or e1.payeename like \'%' + req.query.vendor + '%\')';
+      //where += ' AND (e1.vendorid like \'%' + req.query.vendor + '%\' or e1.payeename like \'%' + req.query.vendor + '%\')';
+      where += ' AND (e1.vendorid like ? or e1.payeename like ?)';
+      queryParams.push('%' + req.query.vendor + '%');
+      queryParams.push('%' + req.query.vendor + '%');
     };
     if (req.query.bank !== undefined && req.query.bank !== '') {
-      where += ' AND e1.bankname=\'' + req.query.bank + '\'';
+      //where += ' AND e1.bankname=\'' + req.query.bank + '\'';
+      where += ' AND e1.bankname like ?';
+      queryParams.push('%' + req.query.bank + '%');
     };
 
-    //console.log(where);
+    console.log(where);
+    console.log(queryParams);
 
-    sql = `
+    var sql = `
     select e1.*, ifnull(s.name,'') wfstep_name from eftpayee e1
     	left join
     		(
@@ -565,7 +594,7 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
     	//console.log(sql);
 
     //get each object and the workflow step
-    var select = new Query(sql).all();
+    var select = new Query(sql, queryParams).all();
     res.json(select);
   });
 
@@ -692,11 +721,17 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
 
     //console.log(setWorkflow);
 
-    //Only save edits if the workflow is still in progress
-    //if (currentstep.isapproval === 1) {
+    /* Check for workflow validation */
     if (setWorkflow.msg !== '') {
-      //res.send({msg: 'Cannot save edits when workflow is complete. Please select a next step to restart.'});
+      //Return the error message if validation fails
       res.send(setWorkflow);
+
+    } else if (setWorkflow.CurrentStep.id !== 1) {
+
+      //Only 1.ENTRY step is valid to save changes other than workflow. Skip saving changes if any other step.
+      new Query().audit(req, [{'eftpayee' : payload}], null, req.params.id, 1);
+	    res.send({msg: ''});
+
     } else {
 
       //Only save edits if the workflow action is valid
@@ -768,7 +803,7 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
 
         //Write username and data to the audit log
         //new Query().audit(req, [{'eftpayee' : payload}]);
-        new Query().audit(req, [{'eftpayee' : payload}],null,req.params.id,1);
+        new Query().audit(req, [{'eftpayee' : payload}], null, req.params.id, 1);
 
   	    res.send({msg: ''});
   	  } catch (err) {

@@ -98,8 +98,8 @@ CREATE TABLE `wfstep` (
 INSERT INTO wfstep ('fk_wf_id','name', 'isfirst', 'isapproval') values
 (1, 'Entry', 1, null),
 (1, 'Review', null, null),
+(1, 'Treasury', null, null),
 (1, 'Hold', null, null),
-(1, 'Reject', null, null),
 (1, 'Approved', null, 1);
 
 
@@ -116,13 +116,14 @@ CREATE TABLE `wfstepusers` (
 );
 
 insert into `wfstepusers` (`fk_wfstep_id`,`username`) values
- (2,'kweller@relatedgroup.com')
-,(2,'jhoyos@relatedgroup.com')
-,(2,'susan@relatedgroup.com')
 
-,(3,'kweller@relatedgroup.com')
+ (3,'kweller@relatedgroup.com')
 ,(3,'jhoyos@relatedgroup.com')
 ,(3,'susan@relatedgroup.com')
+
+,(4,'kweller@relatedgroup.com')
+,(4,'jhoyos@relatedgroup.com')
+,(4,'susan@relatedgroup.com')
 
 ,(5,'kweller@relatedgroup.com')
 ,(5,'jhoyos@relatedgroup.com')
@@ -149,22 +150,45 @@ CREATE TABLE `wfstepnext` (
 	`notes` VARCHAR(255),
 	`modified` DEFAULT CURRENT_TIMESTAMP
 );
+/* NEW WORKFLOWS */
 INSERT INTO wfstepnext ('fk_wfstep_id','fk_wfstep_id_next') values
 /*new records default to entry*/
 (null, 1),
-/*entry can only send to review*/
+/*1.ENTRY can only send to 2.REVIEW*/
 (1, 2),
-/*review can send to hold reject or approved*/
+/*2.REVIEW can send to 3.TREASURY or back to 1.ENTRY*/
 (2, 3),
-(2, 4),
-(2, 5),
-/*hold can goto approved or reject */
+(2, 1),
+/*3.TREASURY can 5.APPROVE, 4.HOLD, or back to 1.ENTRY */
 (3, 5),
 (3, 4),
-/*reject can only goto review*/
-(4, 2),
-/*approved can only goto the beginning*/
+(3, 1),
+/*4.HOLD can 5.APPROVE, 3.TREASURY or back to 1.ENTRY*/
+(4, 5),
+(4, 3),
+(4, 1),
+/*5.APPROVED can only go back to 1.ENTRY*/
 (5, 1);
+
+/* ORIGINAL WORKFLOWS */
+--INSERT INTO wfstepnext ('fk_wfstep_id','fk_wfstep_id_next') values
+/*new records default to entry*/
+--(null, 1),
+/*entry can only send to review*/
+--(1, 2),
+/*review can send to hold reject or approved*/
+--(2, 3),
+--(2, 4),
+--(2, 5),
+/*hold can goto approved or reject */
+--(3, 5),
+--(3, 4),
+/*reject can only goto review*/
+--(4, 2),
+/*approved can only goto the beginning*/
+--(5, 1);
+
+
 
 /*stores the workflow actions selected*/
 drop table `wfaction`;
@@ -177,8 +201,6 @@ CREATE TABLE `wfaction` (
 	`notes` VARCHAR(255),
 	`modified` DEFAULT CURRENT_TIMESTAMP
 );
-
-
 
 /*roles TBD*/
 /*
