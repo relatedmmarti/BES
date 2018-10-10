@@ -14,8 +14,8 @@ app.use(basicAuth({
 }));
 
 app.get('/api', (req, res) => {
-  console.log(req.method + ' ' + req.url + ' ' + req.headers['x-forwarded-for']);
-  req.send('');
+  console.log(req.method + ' ' + req.url + ' ' + req.headers['x-real-ip']);
+  res.send('');
 });
 
 /*
@@ -24,7 +24,7 @@ Get a list of all approved records for use by TM5
 */
 app.get('/api/bescode/approved', (req, res) => {
 
-  console.log(req.method + ' ' + req.url + ' ' + req.headers['x-forwarded-for']);
+  console.log(req.method + ' ' + req.url + ' ' + req.headers['x-real-ip']);
 
   var sql = `
 select e1.* from eftpayee e1
@@ -77,7 +77,7 @@ Get ALL records
 */
 app.get('/api/bescode', (req, res) => {
 
-  console.log(req.method + ' ' + req.url + ' ' + req.headers['x-forwarded-for']);
+  console.log(req.method + ' ' + req.url + ' ' + req.headers['x-real-ip']);
 
   var sql = `
 select e1.* from eftpayee e1
