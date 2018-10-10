@@ -7,7 +7,8 @@
 //Query helper
 const Query = require('../common/query.js');
 
-const express = require('express'), bodyParser = require('body-parser');
+const express = require('express'),
+  bodyParser = require('body-parser');
 const session = require('express-session');
 const mustacheExpress = require('mustache-express');
 const path = require('path');
@@ -38,10 +39,8 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
   }));
 
   // Provide the configuration to the view layer because we show it on the homepage
-  const displayConfig = Object.assign(
-    {},
-    sampleConfig.oidc,
-    {
+  const displayConfig = Object.assign({},
+    sampleConfig.oidc, {
       clientSecret: '****' + sampleConfig.oidc.clientSecret.substr(sampleConfig.oidc.clientSecret.length - 4, 4)
     }
   );
@@ -148,10 +147,9 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
       a.fk_object_id = ?
       and a.fk_objtype_id = ?
       order by a.id desc
-      limit 1;`,
-        [
-          username, id, objtype
-        ]).get();
+      limit 1;`, [
+        username, id, objtype
+      ]).get();
 
       this.CurrentStep = CurrentStep;
 
@@ -196,8 +194,8 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
       }
       */
 
-  	  //console.log(req.method + ' ' + req.url + ' ' + req.userContext.userinfo.preferred_username);
-  	  //console.log(payload);
+      //console.log(req.method + ' ' + req.url + ' ' + req.userContext.userinfo.preferred_username + ' ' + req.headers['x-real-ip']);
+      //console.log(payload);
 
       /* check to see if the selected step is valid for the current object */
       var isValidStep = new Query(`
@@ -209,12 +207,11 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
         select id from wfaction
         where fk_objtype_id = ?
         and fk_object_id = ?
-        order by id desc limit 1);`,
-        [
-          wfstep,
-          objtype,
-          id
-        ]).get();
+        order by id desc limit 1);`, [
+        wfstep,
+        objtype,
+        id
+      ]).get();
 
       console.log('Valid steps found: ' + isValidStep.value);
 
@@ -228,27 +225,28 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
           'fk_objtype_id',
           'fk_object_id',
           'username',
-          'notes') values (?,?,?,?,?);`,
-          [
-            wfstep,
-            objtype,
-            id,
-            username,
-            notes
-          ]).run();
+          'notes') values (?,?,?,?,?);`, [
+          wfstep,
+          objtype,
+          id,
+          username,
+          notes
+        ]).run();
 
         //new Query().audit(req, {'eftpayee: workflow' : payload}, 'valid');
         //console.log(JSON.stringify(this));
         this.msg = ('');
 
-      } else {
+      }
+      else {
         //new Query().audit(req, {'eftpayee: workflow' : payload}, 'error');
         msg = 'Invalid proposed workflow step for item ' + JSON.stringify(this);
         console.log(msg);
         this.msg = (msg);
       }
 
-    } else {
+    }
+    else {
       msg = 'No changes saved: Next step is missing';
       console.log(msg);
       this.msg = (msg);
@@ -263,10 +261,10 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
   */
   app.get('/payinfo/import', oidc.ensureAuthenticated(), (req, res) => {
     if (req.isAuthenticated() & req.userContext.userinfo.preferred_username === 'dchin@relatedgroup.com') {
-  	  var payload = req.body;
-  	  console.log(req.method + ' ' + req.url + ' ' + req.userContext.userinfo.preferred_username);
-  	  //console.log(payload);
-  	  try {
+      var payload = req.body;
+      console.log(req.method + ' ' + req.url + ' ' + req.userContext.userinfo.preferred_username + ' ' + req.headers['x-real-ip']);
+      //console.log(payload);
+      try {
         for (var i = 1; i <= 82; i++) {
 
           var WorkflowAction = new Query(`
@@ -275,29 +273,30 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
             'fk_objtype_id',
             'fk_object_id',
             'username',
-            'notes') values (?,?,?,?,?);`,
-            [
-              2,
-              1,
-              i,
-              'SYSTEM',
-              'import'
-            ]).run();
+            'notes') values (?,?,?,?,?);`, [
+            2,
+            1,
+            i,
+            'SYSTEM',
+            'import'
+          ]).run();
 
-            console.log('WFACTION INJECTED FOR ' + i)
+          console.log('WFACTION INJECTED FOR ' + i)
 
         }
         //console.log(setWorkflow);
-  	    res.send({msg: ''});
-  	  } catch (err) {
+        res.send({ msg: '' });
+      }
+      catch (err) {
 
-  	      console.log(err);
-  	      res.status(500);
-  	      res.send(err);
-  	  }
-    } else {
-  	      res.status(401);
-  	      res.send('Unauthorized');
+        console.log(err);
+        res.status(500);
+        res.send(err);
+      }
+    }
+    else {
+      res.status(401);
+      res.send('Unauthorized');
     }
   });
 
@@ -311,7 +310,7 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
   */
   app.get('/workflow/:id', oidc.ensureAuthenticated(), (req, res) => {
 
-    console.log(req.method + ' ' + req.url + ' ' + req.userContext.userinfo.preferred_username);
+    console.log(req.method + ' ' + req.url + ' ' + req.userContext.userinfo.preferred_username + ' ' + req.headers['x-real-ip']);
 
     if (req.isAuthenticated()) {
 
@@ -321,8 +320,8 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
         objtype: 1,
       };
 
-  	  console.log(req.method + ' ' + req.url + ' ' + req.userContext.userinfo.preferred_username);
-  	  //console.log(payload);
+      console.log(req.method + ' ' + req.url + ' ' + req.userContext.userinfo.preferred_username + ' ' + req.headers['x-real-ip']);
+      //console.log(payload);
 
       /* check to see if the selected step is valid for the current object */
       var validSteps = new Query(`
@@ -333,11 +332,10 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
       wfa.id = (select id from wfaction
         where fk_objtype_id = ?
         and fk_object_id = ?
-        order by id desc limit 1);`,
-        [
-          payload.objtype,
-          req.params.id
-        ]).all();
+        order by id desc limit 1);`, [
+        payload.objtype,
+        req.params.id
+      ]).all();
 
       //console.log(validSteps);
       res.send(validSteps);
@@ -361,11 +359,11 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
   Delete records*/
   app.delete('/payinfo/:id', oidc.ensureAuthenticated(), (req, res) => {
 
-    console.log(req.method + ' ' + req.url + ' ' + req.userContext.userinfo.preferred_username);
+    console.log(req.method + ' ' + req.url + ' ' + req.userContext.userinfo.preferred_username + ' ' + req.headers['x-real-ip']);
 
     if (req.userContext.userinfo.preferred_username === 'dchin@relatedgroup.com') {
 
-  	  console.log(req.method + ' ' + req.url + ' ' + req.userContext.userinfo.preferred_username);
+      console.log(req.method + ' ' + req.url + ' ' + req.userContext.userinfo.preferred_username + ' ' + req.headers['x-real-ip']);
 
       var del = new Query('DELETE FROM eftpayee WHERE id=?;', [req.params.id]).run();
       //console.log(del);
@@ -375,12 +373,12 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
       //Write username and data to the audit log
       new Query().audit(req, null, null, req.params.id, 1);
       //console.log(del);
-      res.send({msg: ''});
+      res.send({ msg: '' });
 
     }
 
     else {
-      res.send({msg: '' + req.userContext.userinfo.preferred_username + ' does not have access to delete records.'});
+      res.send({ msg: '' + req.userContext.userinfo.preferred_username + ' does not have access to delete records.' });
     }
 
   });
@@ -389,9 +387,9 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
   Pull audit logs for a record*/
   app.get('/audit/:id', oidc.ensureAuthenticated(), (req, res) => {
 
-    console.log(req.method + ' ' + req.url + ' ' + req.userContext.userinfo.preferred_username);
+    console.log(req.method + ' ' + req.url + ' ' + req.userContext.userinfo.preferred_username + ' ' + req.headers['x-real-ip']);
     var sql = 'select * from auditlog where fk_id = @id;';
-    var select = new Query(sql, {id: req.params.id}).all();
+    var select = new Query(sql, { id: req.params.id }).all();
 
 
     for (var row of select) {
@@ -410,7 +408,7 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
   */
   app.get('/payinfo/list', oidc.ensureAuthenticated(), (req, res) => {
 
-    console.log(req.method + ' ' + req.url + ' ' + req.userContext.userinfo.preferred_username);
+    console.log(req.method + ' ' + req.url + ' ' + req.userContext.userinfo.preferred_username + ' ' + req.headers['x-real-ip']);
 
     //Prepare an array to hold query parameters. Prevent SQL injection attacks.
     var queryParams = [];
@@ -428,7 +426,8 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
       if (req.query.workflow === 'Pending') {
         where += ' AND NOT s.name = ?';
         queryParams.push('Approved');
-      } else {
+      }
+      else {
         where += ' AND s.name=?';
         queryParams.push(req.query.workflow);
       }
@@ -472,7 +471,7 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
     	WHERE 1=1` + where + `
     	order by e1.id desc;`;
 
-    	//console.log(sql);
+    //console.log(sql);
 
     //get each object and the workflow step
     var select = new Query(sql, queryParams).all();
@@ -502,15 +501,15 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
     wfa.id = (select id from wfaction
       where fk_objtype_id = ?
       and fk_object_id = ?
-      order by id desc limit 1);`,
-      [
-        objType,
-        id
-      ]).get();
+      order by id desc limit 1);`, [
+      objType,
+      id
+    ]).get();
 
     if (result === undefined) {
-      return {id:null, fk_wf_id:null, name: '(None)', notes:null, modified:null, wfname: 'No Workflow Assigned' };
-    } else {
+      return { id: null, fk_wf_id: null, name: '(None)', notes: null, modified: null, wfname: 'No Workflow Assigned' };
+    }
+    else {
       return result;
     }
 
@@ -520,7 +519,7 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
 
     var objType = 1;
 
-    console.log(req.method + ' ' + req.url + ' ' + req.userContext.userinfo.preferred_username);
+    console.log(req.method + ' ' + req.url + ' ' + req.userContext.userinfo.preferred_username + ' ' + req.headers['x-real-ip']);
 
     //Get all payment instructions
     var obj = new Query('SELECT * from eftpayee where id=?', [req.params.id]).get();
@@ -535,11 +534,10 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
     wfa.id = (select id from wfaction
       where fk_objtype_id = ?
       and fk_object_id = ?
-      order by id desc limit 1);`,
-      [
-        objType,
-        req.params.id
-      ]).all();
+      order by id desc limit 1);`, [
+      objType,
+      req.params.id
+    ]).all();
 
     //Get the current workflow step for the item
     var currentstep = new CurrentStep(1, req.params.id);
@@ -549,15 +547,17 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
 
     //If no steps came back feed bake a dummy result in
     if (nextsteps === undefined || nextsteps.length === 0) {
-      nextsteps = [{id:null, fk_wf_id:null, name:'(None)', notes:null, modified:null, wfname: 'No Workflow Assigned' }];
-    } else {
+      nextsteps = [{ id: null, fk_wf_id: null, name: '(None)', notes: null, modified: null, wfname: 'No Workflow Assigned' }];
+    }
+    else {
       //add a blank option to the array of valid next steps. This is used to save edits without advancing the workflow
-      nextsteps.unshift({id:'', fk_wf_id:'', name:'', notes:'', modified:'', wfname: '' });
+      nextsteps.unshift({ id: '', fk_wf_id: '', name: '', notes: '', modified: '', wfname: '' });
     }
 
     if (currentstep.isapproval === 1) {
       obj.wfstatus = 'Completed';
-    } else {
+    }
+    else {
       obj.wfstatus = 'Pending';
     }
 
@@ -592,7 +592,7 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
 
   app.put('/payinfo/:id', oidc.ensureAuthenticated(), (req, res) => {
 
-    console.log(req.method + ' ' + req.url + ' ' + req.userContext.userinfo.preferred_username);
+    console.log(req.method + ' ' + req.url + ' ' + req.userContext.userinfo.preferred_username + ' ' + req.headers['x-real-ip']);
 
     //lazy shortcut
     var payload = req.body;
@@ -607,18 +607,20 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
       //Return the error message if validation fails
       res.send(setWorkflow);
 
-    } else if (setWorkflow.CurrentStep.id !== 1) {
+    }
+    else if (setWorkflow.CurrentStep.id !== 1) {
 
       //Only 1.ENTRY step is valid to save changes other than workflow. Skip saving changes if any other step.
-      new Query().audit(req, [{'eftpayee' : payload}], null, req.params.id, 1);
-	    res.send({msg: ''});
+      new Query().audit(req, [{ 'eftpayee': payload }], null, req.params.id, 1);
+      res.send({ msg: '' });
 
-    } else {
+    }
+    else {
 
       //Only save edits if the workflow action is valid
       //if (setWorkflow.msg.err === null) {
 
-  	  try {
+      try {
         var select = new Query(`UPDATE eftpayee
         SET vendorid = ?,
          sourcesystem = ?,
@@ -650,50 +652,51 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
          interswift = ?,
          notes = ?
          WHERE id = ?;`, [
-            payload.vendorid,
-            payload.sourcesystem,
-            payload.payeename,
-            payload.payeeaddress,
-            payload.payeecity,
-            payload.payeestate,
-            payload.payeezip,
-            payload.payeecountry,
-            payload.forfurthercredit,
-            payload.bankname,
-            payload.bankaddress,
-            payload.bankcity,
-            payload.bankstate,
-            payload.bankzip,
-            payload.bankcountry,
-            payload.paytype,
-            payload.achsec,
-            payload.routing,
-            payload.account,
-            payload.swift,
-            payload.interbankname,
-            payload.interbankaddress,
-            payload.interbankcity,
-            payload.interbankstate,
-            payload.interbankzip,
-            payload.interbankcountry,
-            payload.interrouting,
-            payload.interswift,
-            payload.notes,
-            req.params.id
-          ]).run();
+          payload.vendorid,
+          payload.sourcesystem,
+          payload.payeename,
+          payload.payeeaddress,
+          payload.payeecity,
+          payload.payeestate,
+          payload.payeezip,
+          payload.payeecountry,
+          payload.forfurthercredit,
+          payload.bankname,
+          payload.bankaddress,
+          payload.bankcity,
+          payload.bankstate,
+          payload.bankzip,
+          payload.bankcountry,
+          payload.paytype,
+          payload.achsec,
+          payload.routing,
+          payload.account,
+          payload.swift,
+          payload.interbankname,
+          payload.interbankaddress,
+          payload.interbankcity,
+          payload.interbankstate,
+          payload.interbankzip,
+          payload.interbankcountry,
+          payload.interrouting,
+          payload.interswift,
+          payload.notes,
+          req.params.id
+        ]).run();
 
         //Write username and data to the audit log
         //new Query().audit(req, [{'eftpayee' : payload}]);
-        new Query().audit(req, [{'eftpayee' : payload}], null, req.params.id, 1);
+        new Query().audit(req, [{ 'eftpayee': payload }], null, req.params.id, 1);
 
-  	    res.send({msg: ''});
-  	  } catch (err) {
-  	      console.log(err);
-  	      res.status(500);
-  	      res.send(err);
-  	  }
+        res.send({ msg: '' });
+      }
+      catch (err) {
+        console.log(err);
+        res.status(500);
+        res.send(err);
+      }
 
-    	/*
+      /*
       } else {
         res.send({msg: setWorkflow.msg.err});
       }
@@ -719,16 +722,16 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
   */
   app.post('/payinfo/new', oidc.ensureAuthenticated(), (req, res) => {
 
-    console.log(req.method + ' ' + req.url + ' ' + req.userContext.userinfo.preferred_username);
+    console.log(req.method + ' ' + req.url + ' ' + req.userContext.userinfo.preferred_username + ' ' + req.headers['x-real-ip']);
 
     if (req.isAuthenticated()) {
 
-  	  var payload = req.body;
+      var payload = req.body;
 
-  	  console.log(req.method + ' ' + req.url + ' ' + req.userContext.userinfo.preferred_username);
-  	  //console.log(payload);
+      console.log(req.method + ' ' + req.url + ' ' + req.userContext.userinfo.preferred_username + ' ' + req.headers['x-real-ip']);
+      //console.log(payload);
 
-  	  try {
+      try {
         var insert = new Query(`INSERT INTO eftpayee(
           vendorid,
           sourcesystem,
@@ -760,59 +763,60 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
           interswift,
           notes
           )
-          VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);`,
-          [
-            payload.vendorid,
-            payload.sourcesystem,
-            payload.payeename,
-            payload.payeeaddress,
-            payload.payeecity,
-            payload.payeestate,
-            payload.payeezip,
-            payload.payeecountry,
-            payload.forfurthercredit,
-            payload.bankname,
-            payload.bankaddress,
-            payload.bankcity,
-            payload.bankstate,
-            payload.bankzip,
-            payload.bankcountry,
-            payload.paytype,
-            payload.achsec,
-            payload.routing,
-            payload.account,
-            payload.swift,
-            payload.interbankname,
-            payload.interbankaddress,
-            payload.interbankcity,
-            payload.interbankstate,
-            payload.interbankzip,
-            payload.interbankcountry,
-            payload.interrouting,
-            payload.interswift,
-            payload.notes
-          ]).run();
+          VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);`, [
+          payload.vendorid,
+          payload.sourcesystem,
+          payload.payeename,
+          payload.payeeaddress,
+          payload.payeecity,
+          payload.payeestate,
+          payload.payeezip,
+          payload.payeecountry,
+          payload.forfurthercredit,
+          payload.bankname,
+          payload.bankaddress,
+          payload.bankcity,
+          payload.bankstate,
+          payload.bankzip,
+          payload.bankcountry,
+          payload.paytype,
+          payload.achsec,
+          payload.routing,
+          payload.account,
+          payload.swift,
+          payload.interbankname,
+          payload.interbankaddress,
+          payload.interbankcity,
+          payload.interbankstate,
+          payload.interbankzip,
+          payload.interbankcountry,
+          payload.interrouting,
+          payload.interswift,
+          payload.notes
+        ]).run();
 
         //console.log(insert);
 
         //Write username and data to the audit log
         //new Query().audit(req, {'eftpayee' : payload});
-        new Query().audit(req, [{'eftpayee' : payload}], null, insert.lastInsertROWID, 1);
+        new Query().audit(req, [{ 'eftpayee': payload }], null, insert.lastInsertROWID, 1);
 
         //Set initial workflow step for new record
         var setWorkflow = new WorkflowAction(1, 1, insert.lastInsertROWID, req.userContext.userinfo.preferred_username, payload.wf_notes, true);
         //console.log(setWorkflow);
 
-  	    res.send({msg: ''});
-  	  } catch (err) {
+        res.send({ msg: '' });
+      }
+      catch (err) {
 
-  	      console.log(err);
-  	      res.status(500);
-  	      res.send(err);
-  	  }
-    } else {
-  	      res.status(401);
-  	      res.send('Unauthorized');
+        console.log(err);
+        res.status(500);
+        res.send(err);
+      }
+    }
+    else {
+      res.status(401);
+      res.send('Unauthorized');
     }
   });
 
