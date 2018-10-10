@@ -7,18 +7,22 @@ const basicAuth = require('express-basic-auth');
 
 var Query = require('../common/query.js');
 
+//todo: move this to a key file
 app.use(basicAuth({
   users: { 'bes.rg.systems': 'ff7a1c2dcca0be07f1be4ef82fec454193a6dc638f54983946905ee3ee14bc17' },
   challenge: true
 }));
 
-app.get('/', (req, res) => res.send(''));
+app.get('/api', (req, res) => {
+  console.log(req.method + ' ' + req.url + ' ' + req.headers['x-forwarded-for']);
+  req.send('');
+});
 
 /*
 ====================================================
 Get a list of all approved records for use by TM5
 */
-app.get('/bescode/approved', (req, res) => {
+app.get('/api/bescode/approved', (req, res) => {
 
   console.log(req.method + ' ' + req.url + ' ' + req.headers['x-forwarded-for']);
 
@@ -46,7 +50,7 @@ select e1.* from eftpayee e1
 ====================================================
 Get a list of all BES IDs for consumption by Yardi in the Beneficary segment
 */
-app.get('/bescode/segment', (req, res) => {
+app.get('/api/bescode/segment', (req, res) => {
 
   var sql = `
 select e1.id, e1.vendorid, e1.paytype || ' : ' || e1.vendorid || '-' ||  e1.payeename || ' ' || e1.forfurthercredit || ' : ' || e1.bankname || '-' || substr(e1.account,-4) sdesc
@@ -71,7 +75,7 @@ from eftpayee e1
 ====================================================
 Get ALL records
 */
-app.get('/bescode/', (req, res) => {
+app.get('/api/bescode', (req, res) => {
 
   console.log(req.method + ' ' + req.url + ' ' + req.headers['x-forwarded-for']);
 
@@ -97,7 +101,7 @@ select e1.* from eftpayee e1
 ====================================================
 Get a single BESCODE record
 */
-app.get('/bescode/:id', (req, res) => {
+app.get('/api/bescode/:id', (req, res) => {
 
   res.send('');
 
