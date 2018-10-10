@@ -4,8 +4,8 @@
  * and logout functionality.
  */
 
-const dbpath = '../db/treasury.db';
-const Database = require('better-sqlite3');
+//Query helper
+const Query = require('../common/query.js');
 
 const express = require('express'), bodyParser = require('body-parser');
 const session = require('express-session');
@@ -17,56 +17,6 @@ const templateDir = path.join(__dirname, '..', 'common', 'views');
 const frontendDir = path.join(__dirname, '..', 'common', 'assets');
 
 module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePageTemplateName) {
-
-//Database helper
-//Takes a sql statement and parameters
-//exposes functions to execute queries
-  function Query(sql = '', params = {}) {
-    var db = new Database(dbpath);
-
-    //return rows as an array of objects
-    this.all = function () {
-      var rows = db.prepare(sql).all(params);
-      //console.log('Query.all: ' + sql);
-      //console.log('Query.all: ' + JSON.stringify(params));
-      db.close();
-      return rows;
-    };
-
-    //return single row as an object
-    this.get = function () {
-      var row = db.prepare(sql).get(params);
-      //console.log('Query.get: ' + sql);
-      //console.log('Query.get: ' + JSON.stringify(params));
-      db.close();
-      return row;
-    };
-
-    //execute a statement
-    this.run = function () {
-      var result = db.prepare(sql).run(params);
-      //console.log('Query.run: ' + sql);
-      //console.log('Query.run: ' + JSON.stringify(params));
-      db.close();
-      return result;
-    };
-
-    //helper function to log requests
-    this.audit = function (req = {}, data = {}, status = '', id = null, objtype = null) {
-      var result = new Query('INSERT INTO auditlog ("action","username","payload","status","fk_id","objtype") values (?,?,?,?,?,?);',
-        [
-          req.method + ' ' + req.url,
-          req.userContext.userinfo.preferred_username,
-          JSON.stringify(data),
-          status,
-          id,
-          objtype
-        ]).run();
-      db.close();
-      return result;
-    };
-
-  }
 
   const oidc = new ExpressOIDC(Object.assign({
     issuer: sampleConfig.oidc.issuer,
@@ -453,75 +403,6 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
     res.json(select);
 
   });
-
-
-
-
-
-  /*
-  ====================================================
-  Get a list of all approved records for use by TM5
-  */
-  app.get('/payinfo/bescode/approved', (req, res) => {
-
-    console.log(req.method + ' ' + req.url + ' ' + req.headers['x-forwarded-for']);
-
-    var sql = `
-    select e1.* from eftpayee e1
-    	left join
-    		(
-    			select e2.id fk_object_id, max(a.id) fk_faction_id from eftpayee e2
-    			left join wfaction a on a.fk_object_id = e2.id and a.fk_objtype_id = 1
-    			group by e2.id
-    		) z on z.fk_object_id = e1.id
-    	left join wfaction a2 on a2.id = z.fk_faction_id
-    	left join wfstep s on s.id = a2.fk_wfstep_id
-    	WHERE s.id = 5 and s.fk_wf_id = 1
-    	order by e1.id desc;`;
-
-    //get each object and the workflow step
-    var select = new Query(sql).all();
-    res.json(select);
-  });
-
-
-
-  /*
-  ====================================================
-  Get a list of all BES IDs for consumption by Yardi in the Beneficary segment
-  */
-  app.get('/payinfo/bescode/segment', (req, res) => {
-
-    var sql = `
-    select e1.id, e1.vendorid, e1.paytype || ' : ' || e1.vendorid || '-' ||  e1.payeename || ' ' || e1.forfurthercredit || ' : ' || e1.bankname || '-' || substr(e1.account,-4) sdesc
-    from eftpayee e1
-    	left join
-    		(
-    			select e2.id fk_object_id, max(a.id) fk_faction_id from eftpayee e2
-    			left join wfaction a on a.fk_object_id = e2.id and a.fk_objtype_id = 1
-    			group by e2.id
-    		) z on z.fk_object_id = e1.id
-    	left join wfaction a2 on a2.id = z.fk_faction_id
-    	left join wfstep s on s.id = a2.fk_wfstep_id
-    	WHERE s.id = 5 and s.fk_wf_id = 1
-    	order by e1.id asc;`;
-
-    var select = new Query(sql).all();
-    res.json(select);
-
-  });
-
-  /*
-  ====================================================
-  Get a single BESCODE record
-  */
-  app.get('/payinfo/list/bescode/:id', (req, res) => {
-
-    res.send('');
-
-  });
-
-
 
   /*
   ====================================================
@@ -934,6 +815,7 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
   	      res.send('Unauthorized');
     }
   });
+
 
 
 
