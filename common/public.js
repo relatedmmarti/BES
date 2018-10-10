@@ -52,6 +52,8 @@ Get a list of all BES IDs for consumption by Yardi in the Beneficary segment
 */
 app.get('/api/bescode/segment', (req, res) => {
 
+  console.log(req.method + ' ' + req.url + ' ' + req.headers['x-real-ip']);
+
   var sql = `
 select e1.id, e1.vendorid, e1.paytype || ' : ' || e1.vendorid || '-' ||  e1.payeename || ' ' || e1.forfurthercredit || ' : ' || e1.bankname || '-' || substr(e1.account,-4) sdesc
 from eftpayee e1
