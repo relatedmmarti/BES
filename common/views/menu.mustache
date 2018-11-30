@@ -1,4 +1,4 @@
-<div class="ui inverted left fixed vertical menu">
+<div class="ui inverted left fixed vertical menu fullWith">
   <a id="item-overview" class="item" href="/">Home</a>
   <div id="section-authorization-code" class="item">
     <div class="menu">
@@ -16,3 +16,31 @@
     </div>
   </div>
 </div>
+
+<nav role="navigation" class="smallFactor">
+  <div id="menuToggle">
+    <input type="checkbox" />
+    <span></span>
+    <span></span>
+    <span></span>
+
+    <!--
+    Too bad the menu has to be inside of the button
+    but hey, it's pure CSS magic.
+    -->
+    <ul id="menu">
+       <a id="item-overview" class="item" href="/"><li>Home</li></a>
+     {{#isLoggedIn}}
+        <a id="profile-button" data-se="profile" class="item" href="/profile">
+          <li>My Profile</li>
+        </a>
+        <a id="payinfo-button" data-se="payinfo" class="item" href="/payinfo">
+          <li>Beneficiary EFT Setup</li>
+        </a>
+        <a id="logout-button" data-se="logout" class="item" href="/logout">
+          <li>Logout</li>
+        </a>
+      {{/isLoggedIn}}
+    </ul>
+  </div>
+</nav>
