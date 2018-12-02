@@ -27,8 +27,9 @@
             </thead>
             <tbody>
               <tr>
-                <td><input type="text" value="" id="filter_id"/></td>
+                <td><input type="text" value="" id="filter_id" class="input is-info"/></td>
                 <td>
+                <div class="select is-info">
                   <select name="filterstep" id="filter_step">
                     <option value="" selected>All</option>
                     <option value="Pending">Pending</option>
@@ -39,20 +40,23 @@
                     <option value="Treasury">Treasury</option>
                     <option value="Hold">Hold</option>
                   </select>
+                  </div>
                 </td>
                 <td>
+                <div class="select is-info">
                   <select name="filtertype" id="filter_type">
                     <option value="" selected></option>
                     <option value="ACH">ACH</option>
                     <option value="Wire">Wire</option>
                   </select>
+                  </div>
                 </td>
-              <td><input type="text" value="" id="filter_source"/></td>
-                <td><input type="text" value="" id="filter_vendor"/></td>
-                <td><input type="text" value="" id="filter_bank"/></td>
+              <td><input type="text" value="" id="filter_source" class="input is-info"/></td>
+                <td><input type="text" value="" id="filter_vendor" class="input is-info"/></td>
+                <td><input type="text" value="" id="filter_bank" class="input is-info"/></td>
               </tr>
               <tr>
-                <td><button type="button" id="btnFilter">Search</button></td>
+                <td><button type="button" id="btnFilter" class="button is-info">Search</button></td>
               </tr>
             </tbody>
           </table>
