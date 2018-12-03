@@ -159,6 +159,7 @@ function getEdit(id) {
         $('#interswift').val(data.obj.interswift);
         $('#notes').val(data.obj.notes);
 
+        $("#rightbar").show("slow"); //Allow users to show/hide details panel
 
         //build a list of available valid steps and output to the dropdown
         var steps = '';
@@ -378,3 +379,12 @@ function saveCSV(tableId) {
 /*
 Export to CSV end
 */
+
+/**
+ *  Jorge Medina (12/03/2018) -> Added method to hide divs on demand in order to improve UI user customizations
+ *
+ */
+
+function hideDiv(divId) {
+    $("#" + divId).hide("slow");
+}
