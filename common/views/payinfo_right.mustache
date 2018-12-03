@@ -1,6 +1,12 @@
 <div id="rightbar" class="ui very wide right sidebar vertical visible">
   <h3 id="recordInfoHdr">Record Info</h3>
    <button class="delete is-danger" id="rightClose" aria-label="close" onclick="hideDiv('rightbar')"></button>
+     <span class="icon" id="rightMaxim" onclick="showFullDiv('rightbar');">
+  <i class="fa fa-arrows-alt" aria-hidden="true"></i>
+</span>
+ <span class="icon" id="rightMin" onclick="showMinDiv('rightbar');">
+  <i class="fa fa-window-minimize" aria-hidden="true"></i>
+</span>
   <table class="ui table compact" id="payinfofields">
     <thead>
       <tr>
@@ -201,6 +207,22 @@
       </tr>
     </tbody>
 
+ <div class="file is-boxed is-primary" id="filesDiv">
+  <label class="file-label">
+    <input class="file-input" type="file" name="attachment" id="attachment" onchange="setFileName();">
+    <span class="file-cta">
+      <span class="file-icon">
+        <i class="fas fa-upload"></i>
+      </span>
+      <span class="file-label">
+        Upload File
+      </span>
+    </span>
+      <span class="file-name" id="uploadFileName">
+
+    </span>
+  </label>
+</div>
 
   <table class="ui table compact collapsing" id="wf_history">
     <thead>

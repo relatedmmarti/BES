@@ -12,6 +12,22 @@ $(document).ready(function () {
         getEdit($(this).val());
     });
 
+    /*
+    Setup files drag and drop
+    */
+
+    document.getElementById("filesDiv").ondragover = document.getElementById("filesDiv").ondragenter = function (evt) {
+        evt.preventDefault();
+    };
+
+    document.getElementById("filesDiv").ondrop = function (evt) {
+        // pretty simple -- but not for IE :(
+        document.getElementById("attachment").files = evt.dataTransfer.files;
+        evt.preventDefault();
+        setFileName();
+
+    };
+
 });
 
 
@@ -387,4 +403,37 @@ Export to CSV end
 
 function hideDiv(divId) {
     $("#" + divId).hide("slow");
+}
+
+/**
+ *  Jorge Medina (12/03/2018) -> Added method to show div full screen in order to improve UI user customizations
+ *
+ */
+
+
+function showFullDiv(divId) {
+    $("#" + divId).css("width", "100%").show("slow");
+    $("#rightMaxim").hide();
+    $("#rightMin").show();
+}
+
+/**
+ *  Jorge Medina (12/03/2018) -> Added method to show div full in right paner in order to improve UI user customizations
+ *
+ */
+
+function showMinDiv(divId) {
+    $("#" + divId).css("width", "70%").show("slow");
+    $("#rightMaxim").show();
+    $("#rightMin").hide();
+}
+
+
+/**
+ * Jorge Medina - 12/03/2018 - Set File Upload descriptor
+ */
+
+function setFileName() {
+    var filesToUpload = $("#attachment")[0].files;
+    $("#uploadFileName").html(filesToUpload[0].name);
 }
