@@ -12,6 +12,12 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.3.3/semantic.min.js"></script>
 
 <link href="/assets/css/samples.css" type="text/css" rel="stylesheet"/>
+<script>
+    if (navigator.appName == 'Microsoft Internet Explorer' || !!(navigator.userAgent.match(/Trident/) || navigator.userAgent.match(/rv:11/)) || (typeof $.browser !== "undefined" && $.browser.msie == 1)) //IF IE show warning
+    {
+       alert("Internel Explorer is not a supported browser, please use Google Chrome or Mozila Firefox");
+    }
+</script>
 <script src="/assets/js/global.js"></script>
 <script src="/assets/js/table2CSV.js"></script>
 <script defer src="https://use.fontawesome.com/releases/v5.3.1/js/all.js"></script> <!-- Icons: https://fontawesome.com/v4.7.0 -->

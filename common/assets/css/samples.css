@@ -258,14 +258,7 @@ input:disabled, select:disabled {
             width: 10% !important;
         }
 
-        #rightMaxim{
-            display: inline-block;
-            float: right;
-        }
-        #rightMin{
-            float: right;
-            display: none;
-        }
+
 }
 
 @media screen and (min-width: 900px){ /* Desktop Mode*/
@@ -280,16 +273,31 @@ input:disabled, select:disabled {
     width: 15% !important;
     }
     #rightbar{
-        width: 30% !important;
+        width: 30%;
         background-color: #f5f5f5;
         padding-top: 10px;
     }
-    #rightMaxim, #rightMin{
+   /* #rightMaxim, #rightMin{
         display: none;
     }
+    */
+
+   /* #searchFilter{
+        width: 50%;
+    }
+    _:-ms-lang(x),  #searchFilter { display: block !important;  width: 100% !important; }
+    */
 
 }
 
+#rightMaxim{
+            display: inline-block;
+            float: right;
+        }
+        #rightMin{
+            float: right;
+            display: none;
+        }
 
 #systemInfoDiv {
     flex-grow: 0.5 !important;
@@ -323,6 +331,30 @@ input:disabled, select:disabled {
 }
 
 #recordInfoHdr{
+    display: inline;
+}
+
+html{
+    overflow-y: auto !important;
+}
+
+#payInfoDocOverview{
+     display: -webkit-box;
+    display: -ms-flexbox;
+    display: flex;
+    -webkit-box-orient: horizontal;
+    -webkit-box-direction: normal;
+    -ms-flex-direction: row;
+    flex-direction: row;
+    -ms-flex-wrap: wrap;
+    flex-wrap: wrap;
+    -webkit-box-align: stretch;
+    -ms-flex-align: stretch;
+    align-items: stretch;
+    padding: 0;
+}
+
+#newBtn{
     display: inline;
 }
 /**

@@ -7,16 +7,17 @@
 
     {{>menu}}
 
+    <!--<div id="content" class="ui grid">-->
     <div id="content" class="ui grid">
 
       {{>payinfo_right}}
 
-      <div id="doc" class="column twelve wide" style="overflow-y:auto;white-space:nowrap;">
-        <div class="doc-overview">
+      <div id="doc" class="column twelve wide" style="overflow-y:auto;white-space:nowrap;height:100%;">
+        <div class="doc-overview" id="payInfoDocOverview">
           <h2 class="ui dividing header" data-se="overview-doc-header">
             Beneficiary EFT Setup
           </h2>
-          <table id="searchFilter" class="ui very compact celled table" style="width:400px;">
+          <table id="searchFilter" class="ui very compact celled table">
             <thead>
                 <th>BES ID</th>
                 <th>Workflow Step</th>
@@ -27,7 +28,7 @@
             </thead>
             <tbody>
               <tr>
-                <td><input type="text" value="" id="filter_id" class="input is-info"/></td>
+                <td><input type="text" value="" id="filter_id" class="input is-info" placeholder="BES ID"/></td>
                 <td>
                 <div class="select is-info">
                   <select name="filterstep" id="filter_step">
@@ -51,12 +52,21 @@
                   </select>
                   </div>
                 </td>
-              <td><input type="text" value="" id="filter_source" class="input is-info"/></td>
-                <td><input type="text" value="" id="filter_vendor" class="input is-info"/></td>
-                <td><input type="text" value="" id="filter_bank" class="input is-info"/></td>
+              <td><input type="text" value="" id="filter_source" class="input is-info" placeholder="Source System"/></td>
+                <td><input type="text" value="" id="filter_vendor" class="input is-info" placeholder="System Payee/ID"/></td>
+                <td><input type="text" value="" id="filter_bank" class="input is-info" placeholder="Bank Name"/></td>
               </tr>
               <tr>
-                <td><button type="button" id="btnFilter" class="button is-info">Search</button></td>
+                <td><button type="button" id="btnFilter" class="button is-info">Search</button>
+                <p class="control" id="newBtn">
+                 <a class="button is-info" onclick="newEntry();">
+                   <span class="icon is-small">
+                     <i class="fa fa-plus" aria-hidden="true"></i>
+                   </span>
+                   <span>New</span>
+                 </a>
+                </p>
+                </td>
               </tr>
             </tbody>
           </table>
