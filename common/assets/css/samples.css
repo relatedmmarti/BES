@@ -291,6 +291,10 @@ input:disabled, select:disabled {
 .ui.fixed.menu+.ui.grid {
     padding-top: 0.1rem !important;
 }
+
+#rightbar{
+    width: 30% !important;
+}
 /**
 Custom CSS - Jorge Medina END
 */

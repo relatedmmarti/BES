@@ -341,3 +341,40 @@ function doAction(event) {
         return false;
     }
 };
+
+
+/*
+Export to CSV option  - Jorge Medina 12/2/2018
+*/
+function saveCSV(tableId) {
+    if (tableId.indexOf('Hdn') != -1)
+        $("#" + tableId).show();
+    var csv = $("#" + tableId).table2CSV({
+        delivery: 'value'
+    });
+    if (tableId.indexOf('Hdn') != -1)
+        $("#" + tableId).hide();
+
+    var filename = "BES.csv";
+    var type = "text/csv";
+    var file = new Blob([csv], { type: type });
+    if (window.navigator.msSaveOrOpenBlob) // IE10+
+        window.navigator.msSaveOrOpenBlob(file, filename);
+    else { // Others
+        var a = document.createElement("a"),
+            url = 'data:text/csv;charset=UTF-8,' +
+            encodeURIComponent(csv);
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(function () {
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+        }, 0);
+    }
+};
+
+/*
+Export to CSV end
+*/
