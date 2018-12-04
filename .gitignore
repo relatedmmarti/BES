@@ -1,3 +1,4 @@
 tests/
 common/config.js
 treasury.db
+temp/

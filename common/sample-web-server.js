@@ -14,6 +14,11 @@ const mustacheExpress = require('mustache-express');
 const path = require('path');
 const { ExpressOIDC } = require('@okta/oidc-middleware');
 
+var multiparty = require('multiparty');
+var _ = require('lodash');
+var fs = require('fs');
+var config = require('./config');
+
 const templateDir = path.join(__dirname, '..', 'common', 'views');
 const frontendDir = path.join(__dirname, '..', 'common', 'assets');
 
@@ -301,9 +306,116 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
   });
 
 
+  /**
+   *  Jorge Medina  12/03/2018 Route to store attachments into folder
+   * */
+
+  app.post('/attach', oidc.ensureAuthenticated(), (req, res) => {
+    console.log(req.method + ' ' + req.url + ' ' + req.userContext.userinfo.preferred_username + ' ' + req.headers['x-real-ip']);
 
 
+    var form = new multiparty.Form();
+    var payload = { id: "", files: {} };
+    form.parse(req, function (err, fields, files) {
+      var now = new Date();
+      var fileStamp = (now.getMonth() + 1) + '' + (now.getDate()) + '' + (now.getFullYear()) + '' + (now.getHours()) + '' + (now.getMinutes());
+      payload.id = fields.id[0];
+      payload.files = files;
+      _.values(files).forEach((file) => {
+        fs.copyFile(file[0].path, config.attachmentPath + fields.id[0] + '_' + fileStamp + '_' + file[0].originalFilename, (err) => {
+          if (err) throw err;
+          console.log(`${file[0].path} copied to ${config.attachmentPath+file[0].originalFilename}`);
+          var insert = new Query(`INSERT INTO eftattach(
+          id,
+          filename,
+          dateadded,
+          dateupdated,
+          datedeleted,
+          user
+          )
+          VALUES(?,?,?,?,?,?);`, [
+            fields.id[0],
+            fields.id[0] + '_' + fileStamp + '_' + file[0].originalFilename,
+            now.toLocaleDateString(),
+            now.toLocaleDateString(),
+            null,
+            req.userContext.userinfo.preferred_username
+          ]).run();
+        });
+      })
+      new Query().audit(req, [{ 'attachments': payload }], null, fields.id[0], 1);
+      res.send({ msg: '' });
+    });
 
+  })
+
+
+  /**
+   * Jorge Medina: 12/04/2018 -> Route to serve files on request
+   * */
+
+  app.get('/file/:filename', oidc.ensureAuthenticated(), (req, res) => {
+    console.log(req.method + ' ' + req.url + ' ' + req.userContext.userinfo.preferred_username + ' ' + req.headers['x-real-ip']);
+
+    var filename = req.params.filename;
+
+    fs.readFile(config.attachmentPath + filename, (err, data) => {
+      if (err) {
+        res.send({ msg: "File not found on server" + err });
+      }
+      else {
+        console.log(filename.substring(filename.indexOf('_', 5) + 1));
+        switch (filename.substring(filename.lastIndexOf('.')).toLowerCase()) {
+        case 'pdf':
+          res.writeHead(200, { 'Content-Type': 'application/pdf', 'Content-Disposition': 'attachment;filename=' + filename.substring(filename.indexOf('_', 5) + 1) });
+          break;
+        case 'jpg':
+        case 'jpeg':
+          res.writeHead(200, { 'Content-Type': 'image/jpeg', 'Content-Disposition': 'attachment;filename=' + filename.substring(filename.indexOf('_', 5) + 1) });
+          break;
+        case 'bmp':
+          res.writeHead(200, { 'Content-Type': 'image/bmp', 'Content-Disposition': 'attachment;filename=' + filename.substring(filename.indexOf('_', 5) + 1) });
+          break;
+        case 'xls':
+        case 'xlsx':
+        case 'xlsm':
+          res.writeHead(200, { 'Content-Type': 'application/excel', 'Content-Disposition': 'attachment;filename=' + filename.substring(filename.indexOf('_', 5) + 1) });
+          break;
+        case 'doc':
+        case 'docx':
+          res.writeHead(200, { 'Content-Type': 'application/msword', 'Content-Disposition': 'attachment;filename=' + filename.substring(filename.indexOf('_', 5) + 1) });
+          break;
+        case 'tiff':
+        case 'tif':
+          res.writeHead(200, { 'Content-Type': 'image/tiff', 'Content-Disposition': 'attachment;filename=' + filename.substring(filename.indexOf('_', 5) + 1) });
+          break;
+        case 'gif':
+          res.writeHead(200, { 'Content-Type': 'image/gif', 'Content-Disposition': 'attachment;filename=' + filename.substring(filename.indexOf('_', 5) + 1) });
+          break;
+        case 'txt':
+          res.writeHead(200, { 'Content-Type': 'text/plain', 'Content-Disposition': 'attachment;filename=' + filename.substring(filename.indexOf('_', 5) + 1) });
+          break;
+        case 'msg':
+          res.writeHead(200, { 'Content-Type': 'application/vnd.ms-outlook', 'Content-Disposition': 'attachment;filename=' + filename.substring(filename.indexOf('_', 5) + 1) });
+          break;
+        case 'zip':
+          res.writeHead(200, { 'Content-Type': 'application/x-compressed', 'Content-Disposition': 'attachment;filename=' + filename.substring(filename.indexOf('_', 5) + 1) });
+          break;
+        case 'ppt':
+        case 'pptx':
+          res.writeHead(200, { 'Content-Type': 'application/mspowerpoint', 'Content-Disposition': 'attachment;filename=' + filename.substring(filename.indexOf('_', 5) + 1) });
+          break
+        case 'png':
+          res.writeHead(200, { 'Content-Type': 'image/png', 'Content-Disposition': 'attachment;filename=' + filename.substring(filename.indexOf('_', 5) + 1) });
+          break;
+        default:
+          // code
+        }
+        res.end(data, 'binary');
+      }
+    })
+
+  })
 
   /*====================================================
   Workflow: Get valid next steps for a given object
@@ -369,6 +481,10 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
       //console.log(del);
       del = new Query('DELETE FROM wfaction WHERE fk_object_id=? and fk_objtype_id = 1;', [req.params.id]).run();
       //console.log(del);
+      //delete attachments record
+      del = new Query('DELETE FROM eftattach WHERE fk_object_id=?;', [req.params.id]).run();
+
+      //delete from file server or move?
 
       //Write username and data to the audit log
       new Query().audit(req, null, null, req.params.id, 1);
@@ -382,14 +498,33 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
     }
 
   });
+  /**
+   * Audit for files attach to a record
+   * */
 
+  app.get('/auditFiles/:id', oidc.ensureAuthenticated(), (req, res) => {
+
+    console.log(req.method + ' ' + req.url + ' ' + req.userContext.userinfo.preferred_username + ' ' + req.headers['x-real-ip']);
+    var sql = 'select * from auditlog where fk_id = @id and action like @attachAction;';
+    var select = new Query(sql, { id: req.params.id, attachAction: '%attach%' }).all();
+
+
+    for (var row of select) {
+      if (row.payload !== null) {
+        row.payload = JSON.parse(row.payload);
+      }
+    }
+
+    res.json(select);
+
+  });
   /*====================================================
   Pull audit logs for a record*/
   app.get('/audit/:id', oidc.ensureAuthenticated(), (req, res) => {
 
     console.log(req.method + ' ' + req.url + ' ' + req.userContext.userinfo.preferred_username + ' ' + req.headers['x-real-ip']);
-    var sql = 'select * from auditlog where fk_id = @id;';
-    var select = new Query(sql, { id: req.params.id }).all();
+    var sql = 'select * from auditlog where fk_id = @id and action not like @attachAction;';
+    var select = new Query(sql, { id: req.params.id, attachAction: '%attach%' }).all();
 
 
     for (var row of select) {
@@ -539,6 +674,11 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
       req.params.id
     ]).all();
 
+
+    //Get Attachments if Any
+    var attachments = new Query('SELECT * from eftattach where id=?', [req.params.id]).all();
+
+    //
     //Get the current workflow step for the item
     var currentstep = new CurrentStep(1, req.params.id);
 
@@ -567,7 +707,8 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
       obj: obj,
       nextsteps: nextsteps,
       currentstep: currentstep,
-      stephistory: stephistory
+      stephistory: stephistory,
+      attachments: attachments //send attachments on response
     };
 
     //console.log(payload);
@@ -805,7 +946,7 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
         var setWorkflow = new WorkflowAction(1, 1, insert.lastInsertROWID, req.userContext.userinfo.preferred_username, payload.wf_notes, true);
         //console.log(setWorkflow);
 
-        res.send({ msg: '' });
+        res.send({ msg: '', id: insert.lastInsertROWID });
       }
       catch (err) {
 

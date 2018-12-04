@@ -1,24 +1,24 @@
 <section class="hero banner">
   <div class="hero-body">
     <div>
-      <img src="https://ok4static.oktacdn.com/bc/image/fileStoreRecord?id=fs01sicv34fEkVDQy1t7" class="bannerImg"/>
+      <img src="/assets/images/related_logo.svg" class="bannerImg"/>
       <label class="label">Related Treasury</label>
     </div>
   </div>
 </section>
 
 <div class="ui inverted left fixed vertical menu fullWith">
-  <a id="item-overview" class="item" href="/">Home</a>
+  <a id="item-overview" class="item" href="/" style='font-size:16px;'>Home</a>
   <div id="section-authorization-code" class="item">
     <div class="menu">
       {{#isLoggedIn}}
-        <a id="profile-button" data-se="profile" class="item" href="/profile">
+        <a id="profile-button" data-se="profile" class="item" href="/profile" style='font-size:14px;'>
           My Profile
         </a>
-        <a id="payinfo-button" data-se="payinfo" class="item" href="/payinfo">
+        <a id="payinfo-button" data-se="payinfo" class="item" href="/payinfo" style='font-size:14px;'>
           Beneficiary EFT Setup
         </a>
-        <a id="logout-button" data-se="logout" class="item" href="/logout">
+        <a id="logout-button" data-se="logout" class="item" href="/logout" style='font-size:14px;'>
           Logout
         </a>
       {{/isLoggedIn}}
@@ -38,15 +38,15 @@
     but hey, it's pure CSS magic.
     -->
     <ul id="menu">
-       <a id="item-overview" class="item" href="/"><li>Home</li></a>
+       <a id="item-overview" class="item" href="/" style='font-size:16px;'><li>Home</li></a>
      {{#isLoggedIn}}
-        <a id="profile-button" data-se="profile" class="item" href="/profile">
+        <a id="profile-button" data-se="profile" class="item" href="/profile" style='font-size:14px;'>
           <li>My Profile</li>
         </a>
-        <a id="payinfo-button" data-se="payinfo" class="item" href="/payinfo">
+        <a id="payinfo-button" data-se="payinfo" class="item" href="/payinfo" style='font-size:14px;'>
           <li>Beneficiary EFT Setup</li>
         </a>
-        <a id="logout-button" data-se="logout" class="item" href="/logout">
+        <a id="logout-button" data-se="logout" class="item" href="/logout" style='font-size:14px;'>
           <li>Logout</li>
         </a>
       {{/isLoggedIn}}
