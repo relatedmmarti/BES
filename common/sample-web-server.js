@@ -14,10 +14,16 @@ const mustacheExpress = require('mustache-express');
 const path = require('path');
 const { ExpressOIDC } = require('@okta/oidc-middleware');
 
+require('dotenv').config();
+var config = require('./config');
+var azure = require('azure-storage');
+var blobService = azure.createBlobService();
 var multiparty = require('multiparty');
+
 var _ = require('lodash');
 var fs = require('fs');
-var config = require('./config');
+
+
 
 const templateDir = path.join(__dirname, '..', 'common', 'views');
 const frontendDir = path.join(__dirname, '..', 'common', 'assets');
@@ -313,19 +319,35 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
   app.post('/attach', oidc.ensureAuthenticated(), (req, res) => {
     console.log(req.method + ' ' + req.url + ' ' + req.userContext.userinfo.preferred_username + ' ' + req.headers['x-real-ip']);
 
+    try {
+      var form = new multiparty.Form();
+      var payload = { id: "", files: {} };
+      form.parse(req, (err, fields, files) => {
+        var now = new Date();
+        var fileStamp = (now.getMonth() + 1) + '' + (now.getDate()) + '' + (now.getFullYear()) + '' + (now.getHours()) + '' + (now.getMinutes());
+        payload.id = fields.id[0];
+        payload.files = files;
+        _.values(files).forEach((file) => {
 
-    var form = new multiparty.Form();
-    var payload = { id: "", files: {} };
-    form.parse(req, function (err, fields, files) {
-      var now = new Date();
-      var fileStamp = (now.getMonth() + 1) + '' + (now.getDate()) + '' + (now.getFullYear()) + '' + (now.getHours()) + '' + (now.getMinutes());
-      payload.id = fields.id[0];
-      payload.files = files;
-      _.values(files).forEach((file) => {
-        fs.copyFile(file[0].path, config.attachmentPath + fields.id[0] + '_' + fileStamp + '_' + file[0].originalFilename, (err) => {
-          if (err) throw err;
-          console.log(`${file[0].path} copied to ${config.attachmentPath+file[0].originalFilename}`);
-          var insert = new Query(`INSERT INTO eftattach(
+          //fs.copyFile(file[0].path, config.attachmentPath + fields.id[0] + '_' + fileStamp + '_' + file[0].originalFilename, (err) => {
+          fs.copyFile(file[0].path, fields.id[0] + '_' + fileStamp + '_' + file[0].originalFilename, (err) => {
+            if (err) throw err;
+            console.log(`${file[0].path} copied to ${config.attachmentPath+file[0].originalFilename}`);
+            blobService.createBlockBlobFromLocalFile(config.blobContainer, config.blobPath + fields.id[0] + '_' + fileStamp + '_' + file[0].originalFilename, fields.id[0] + '_' + fileStamp + '_' + file[0].originalFilename,
+              function (error, result, response) {
+                if (error) {
+                  console.log(error)
+                }
+                else {
+                  console.log("uploaded to azure");
+                  fs.unlink(fields.id[0] + '_' + fileStamp + '_' + file[0].originalFilename, (err) => {
+                    if (err) throw err;
+                    console.log(fields.id[0] + '_' + fileStamp + '_' + file[0].originalFilename + ' was deleted from local');
+                  });
+                }
+              }
+            )
+            var insert = new Query(`INSERT INTO eftattach(
           id,
           filename,
           dateadded,
@@ -334,19 +356,24 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
           user
           )
           VALUES(?,?,?,?,?,?);`, [
-            fields.id[0],
-            fields.id[0] + '_' + fileStamp + '_' + file[0].originalFilename,
-            now.toLocaleDateString(),
-            now.toLocaleDateString(),
-            null,
-            req.userContext.userinfo.preferred_username
-          ]).run();
-        });
-      })
-      new Query().audit(req, [{ 'attachments': payload }], null, fields.id[0], 1);
-      res.send({ msg: '' });
-    });
-
+              fields.id[0],
+              fields.id[0] + '_' + fileStamp + '_' + file[0].originalFilename,
+              now.toLocaleDateString(),
+              now.toLocaleDateString(),
+              null,
+              req.userContext.userinfo.preferred_username
+            ]).run();
+          });
+        })
+        new Query().audit(req, [{ 'attachments': payload }], null, fields.id[0], 1);
+        res.send({ msg: '' });
+      });
+    }
+    catch (err) {
+      console.log(err);
+      res.status(500);
+      res.send(err);
+    }
   })
 
 
@@ -356,66 +383,83 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
 
   app.get('/file/:filename', oidc.ensureAuthenticated(), (req, res) => {
     console.log(req.method + ' ' + req.url + ' ' + req.userContext.userinfo.preferred_username + ' ' + req.headers['x-real-ip']);
+    try {
+      var filename = req.params.filename;
+      blobService.getBlobToLocalFile(config.blobContainer, config.blobPath + filename, config.attachmentPath + filename.substring(filename.indexOf('_', 5) + 1), (error, data) => {
+        if (!error) {
+          fs.readFile(config.attachmentPath + filename.substring(filename.indexOf('_', 5) + 1), (err, data) => {
+            if (err) {
+              res.send({ msg: "File not found on server" + err });
+            }
+            else {
+              // Blob available in serverBlob.blob variable
+              console.log(filename.substring(filename.indexOf('_', 5) + 1));
+              switch (filename.substring(filename.lastIndexOf('.')).toLowerCase()) {
+              case 'pdf':
+                res.writeHead(200, { 'Content-Type': 'application/pdf', 'Content-Disposition': 'attachment;filename=' + filename.substring(filename.indexOf('_', 5) + 1) });
+                break;
+              case 'jpg':
+              case 'jpeg':
+                res.writeHead(200, { 'Content-Type': 'image/jpeg', 'Content-Disposition': 'attachment;filename=' + filename.substring(filename.indexOf('_', 5) + 1) });
+                break;
+              case 'bmp':
+                res.writeHead(200, { 'Content-Type': 'image/bmp', 'Content-Disposition': 'attachment;filename=' + filename.substring(filename.indexOf('_', 5) + 1) });
+                break;
+              case 'xls':
+              case 'xlsx':
+              case 'xlsm':
+                res.writeHead(200, { 'Content-Type': 'application/excel', 'Content-Disposition': 'attachment;filename=' + filename.substring(filename.indexOf('_', 5) + 1) });
+                break;
+              case 'doc':
+              case 'docx':
+                res.writeHead(200, { 'Content-Type': 'application/msword', 'Content-Disposition': 'attachment;filename=' + filename.substring(filename.indexOf('_', 5) + 1) });
+                break;
+              case 'tiff':
+              case 'tif':
+                res.writeHead(200, { 'Content-Type': 'image/tiff', 'Content-Disposition': 'attachment;filename=' + filename.substring(filename.indexOf('_', 5) + 1) });
+                break;
+              case 'gif':
+                res.writeHead(200, { 'Content-Type': 'image/gif', 'Content-Disposition': 'attachment;filename=' + filename.substring(filename.indexOf('_', 5) + 1) });
+                break;
+              case 'txt':
+                res.writeHead(200, { 'Content-Type': 'text/plain', 'Content-Disposition': 'attachment;filename=' + filename.substring(filename.indexOf('_', 5) + 1) });
+                break;
+              case 'msg':
+                res.writeHead(200, { 'Content-Type': 'application/vnd.ms-outlook', 'Content-Disposition': 'attachment;filename=' + filename.substring(filename.indexOf('_', 5) + 1) });
+                break;
+              case 'zip':
+                res.writeHead(200, { 'Content-Type': 'application/x-compressed', 'Content-Disposition': 'attachment;filename=' + filename.substring(filename.indexOf('_', 5) + 1) });
+                break;
+              case 'ppt':
+              case 'pptx':
+                res.writeHead(200, { 'Content-Type': 'application/mspowerpoint', 'Content-Disposition': 'attachment;filename=' + filename.substring(filename.indexOf('_', 5) + 1) });
+                break
+              case 'png':
+                res.writeHead(200, { 'Content-Type': 'image/png', 'Content-Disposition': 'attachment;filename=' + filename.substring(filename.indexOf('_', 5) + 1) });
+                break;
+              default:
+                // code
+              }
+              res.end(data, 'binary');
 
-    var filename = req.params.filename;
+              //file sent to user ==> delete it
 
-    fs.readFile(config.attachmentPath + filename, (err, data) => {
-      if (err) {
-        res.send({ msg: "File not found on server" + err });
-      }
-      else {
-        console.log(filename.substring(filename.indexOf('_', 5) + 1));
-        switch (filename.substring(filename.lastIndexOf('.')).toLowerCase()) {
-        case 'pdf':
-          res.writeHead(200, { 'Content-Type': 'application/pdf', 'Content-Disposition': 'attachment;filename=' + filename.substring(filename.indexOf('_', 5) + 1) });
-          break;
-        case 'jpg':
-        case 'jpeg':
-          res.writeHead(200, { 'Content-Type': 'image/jpeg', 'Content-Disposition': 'attachment;filename=' + filename.substring(filename.indexOf('_', 5) + 1) });
-          break;
-        case 'bmp':
-          res.writeHead(200, { 'Content-Type': 'image/bmp', 'Content-Disposition': 'attachment;filename=' + filename.substring(filename.indexOf('_', 5) + 1) });
-          break;
-        case 'xls':
-        case 'xlsx':
-        case 'xlsm':
-          res.writeHead(200, { 'Content-Type': 'application/excel', 'Content-Disposition': 'attachment;filename=' + filename.substring(filename.indexOf('_', 5) + 1) });
-          break;
-        case 'doc':
-        case 'docx':
-          res.writeHead(200, { 'Content-Type': 'application/msword', 'Content-Disposition': 'attachment;filename=' + filename.substring(filename.indexOf('_', 5) + 1) });
-          break;
-        case 'tiff':
-        case 'tif':
-          res.writeHead(200, { 'Content-Type': 'image/tiff', 'Content-Disposition': 'attachment;filename=' + filename.substring(filename.indexOf('_', 5) + 1) });
-          break;
-        case 'gif':
-          res.writeHead(200, { 'Content-Type': 'image/gif', 'Content-Disposition': 'attachment;filename=' + filename.substring(filename.indexOf('_', 5) + 1) });
-          break;
-        case 'txt':
-          res.writeHead(200, { 'Content-Type': 'text/plain', 'Content-Disposition': 'attachment;filename=' + filename.substring(filename.indexOf('_', 5) + 1) });
-          break;
-        case 'msg':
-          res.writeHead(200, { 'Content-Type': 'application/vnd.ms-outlook', 'Content-Disposition': 'attachment;filename=' + filename.substring(filename.indexOf('_', 5) + 1) });
-          break;
-        case 'zip':
-          res.writeHead(200, { 'Content-Type': 'application/x-compressed', 'Content-Disposition': 'attachment;filename=' + filename.substring(filename.indexOf('_', 5) + 1) });
-          break;
-        case 'ppt':
-        case 'pptx':
-          res.writeHead(200, { 'Content-Type': 'application/mspowerpoint', 'Content-Disposition': 'attachment;filename=' + filename.substring(filename.indexOf('_', 5) + 1) });
-          break
-        case 'png':
-          res.writeHead(200, { 'Content-Type': 'image/png', 'Content-Disposition': 'attachment;filename=' + filename.substring(filename.indexOf('_', 5) + 1) });
-          break;
-        default:
-          // code
-        }
-        res.end(data, 'binary');
-      }
-    })
+              fs.unlink(config.attachmentPath + filename.substring(filename.indexOf('_', 5) + 1), (err) => {
+                if (err) throw err;
+              });
 
-  })
+            }
+          });
+        };
+
+      });
+    }
+    catch (err) {
+      console.log(err);
+      res.status(500);
+      res.send(err);
+    }
+  });
 
   /*====================================================
   Workflow: Get valid next steps for a given object
