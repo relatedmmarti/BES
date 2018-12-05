@@ -891,15 +891,7 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
     }
   });
 
-  /**
-   * Jorge Medina 12/05/2018 Handle 404 requests
-   * */
-  app.get('*', oidc.ensureAuthenticated(), (req, res) => {
-    res.render('404', {
-      isLoggedIn: !!req.userContext.userinfo,
-      userinfo: req.userContext.userinfo
-    });
-  });
+
 
 
 
@@ -1017,7 +1009,15 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
     }
   });
 
-
+  /**
+   * Jorge Medina 12/05/2018 Handle 404 requests -> DO NOT REMOVE FROM BOTTOM OF SCRIPT!
+   * */
+  app.get('*', oidc.ensureAuthenticated(), (req, res) => {
+    res.render('404', {
+      isLoggedIn: !!req.userContext.userinfo,
+      userinfo: req.userContext.userinfo
+    });
+  });
 
 
 
