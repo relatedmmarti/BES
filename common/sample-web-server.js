@@ -104,12 +104,7 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
     res.redirect('/');
   });
 
-  app.get('*', oidc.ensureAuthenticated(), (req, res) => {
-    res.render('404', {
-      isLoggedIn: !!req.userContext.userinfo,
-      userinfo: req.userContext.userinfo
-    });
-  });
+
 
   oidc.on('ready', () => {
     app.listen(sampleConfig.port, () => console.log(`App started on port ${sampleConfig.port}`));
@@ -894,6 +889,16 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
       }
       */
     }
+  });
+
+  /**
+   * Jorge Medina 12/05/2018 Handle 404 requests
+   * */
+  app.get('*', oidc.ensureAuthenticated(), (req, res) => {
+    res.render('404', {
+      isLoggedIn: !!req.userContext.userinfo,
+      userinfo: req.userContext.userinfo
+    });
   });
 
 
