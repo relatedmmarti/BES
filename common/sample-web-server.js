@@ -332,7 +332,7 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
           //fs.copyFile(file[0].path, config.attachmentPath + fields.id[0] + '_' + fileStamp + '_' + file[0].originalFilename, (err) => {
           fs.copyFile(file[0].path, fields.id[0] + '_' + fileStamp + '_' + file[0].originalFilename, (err) => {
             if (err) throw err;
-            console.log(`${file[0].path} copied to ${config.attachmentPath+file[0].originalFilename}`);
+            //console.log(`${file[0].path} copied to ${config.attachmentPath+file[0].originalFilename}`);
             blobService.createBlockBlobFromLocalFile(config.blobContainer, config.blobPath + fields.id[0] + '_' + fileStamp + '_' + file[0].originalFilename, fields.id[0] + '_' + fileStamp + '_' + file[0].originalFilename,
               function (error, result, response) {
                 if (error) {
