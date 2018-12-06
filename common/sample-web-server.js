@@ -1044,7 +1044,7 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
 
 
   /**
-   * Jorge Medina 12/06/2018 EFT Payload custom fiel validations
+   * Jorge Medina 12/06/2018 EFT Payload custom field validations
    * */
   function validatePayload(payload) {
     return new Promise((resolve, reject) => {
@@ -1053,10 +1053,10 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
 
         //avoid commas in fields
         _.forOwn(payload, (value, key) => {
-          if (value && value.indexOf(",") != -1) {
+          if (value && (value.indexOf(",") != -1 || value.indexOf("#") != -1)) {
             validationErrors.push({
               field: key,
-              msg: 'Remove commas on field'
+              msg: 'Invalid Characters found (, or #)'
             });
           }
 
