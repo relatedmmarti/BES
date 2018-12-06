@@ -1056,7 +1056,7 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
           if (value && (value.indexOf(",") != -1 || value.indexOf("#") != -1)) {
             validationErrors.push({
               field: key,
-              msg: 'Invalid Characters found (, or #)'
+              msg: 'Invalid Characters found ("," or "#")'
             });
           }
 
@@ -1068,6 +1068,15 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
             msg: 'Cannot be blank'
           });
         }
+        //bank city cannot be empty
+        if (validator.isEmpty(payload.bankcity, { ignore_whitespace: true })) {
+          validationErrors.push({
+            field: 'bankcity',
+            msg: 'Cannot be blank'
+          });
+        }
+
+
 
         //bank country only allows 2 letters ISO codes
         if (!validator.isISO31661Alpha2(payload.bankcountry)) {
@@ -1084,6 +1093,21 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
             msg: 'Cannot be blank'
           });
         }
+        //account cannot include special characters
+        if (payload.account.indexOf('-') !== -1 || payload.account.indexOf('_') !== -1) {
+          validationErrors.push({
+            field: 'account',
+            msg: 'Invalid characters found ("-" or "_")'
+          });
+        }
+
+        //Bank State is required. For US and CA, use two letters for states, example: Florida = FL
+        if (['US', 'CA'].indexOf(payload.bankcountry) !== -1 && !validator.isLength(payload.bankstate, { min: 2, max: 2 })) {
+          validationErrors.push({
+            field: 'bankstate',
+            msg: 'Use only 2 letter state code'
+          });
+        }
 
         //If the Bank Account is international and the country uses IBAN code, the IBAN code must be used, do not include the word IBAN as part of the account number
         if (payload.bankcountry !== 'US' && payload.account.indexOf('IBAN') !== -1) {
@@ -1092,6 +1116,8 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
             msg: 'Remove work "IBAN" from account number'
           });
         }
+
+
 
         //Payee name can’t be empty
         if (validator.isEmpty(payload.payeename, { ignore_whitespace: true })) {
@@ -1109,6 +1135,8 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
           });
         }
 
+
+
         //If Payee Country is not ‘US’ then SWIFT can’t be empty
         if (payload.payeecountry !== 'US' && (validator.isEmpty(payload.swift, { ignore_whitespace: true }))) {
           validationErrors.push({
@@ -1122,6 +1150,12 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
           validationErrors.push({
             field: 'routing',
             msg: 'Routing is required for US banks'
+          });
+        }
+        if (payload.payeecountry === 'US' && !(validator.isEmpty(payload.routing, { ignore_whitespace: true })) && !validRoutingNumber(payload.routing)) {
+          validationErrors.push({
+            field: 'routing',
+            msg: 'Invalid routing number'
           });
         }
 
@@ -1165,6 +1199,28 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
 
     });
 
+  }
+
+
+  /**
+   * Jorge Medina 12/06/2018 Helper function to check routing numbers
+   */
+  function validRoutingNumber(routing) {
+    if (routing.length !== 9) {
+      return false;
+    }
+
+    var checksumTotal = (7 * (parseInt(routing.charAt(0), 10) + parseInt(routing.charAt(3), 10) + parseInt(routing.charAt(6), 10))) +
+      (3 * (parseInt(routing.charAt(1), 10) + parseInt(routing.charAt(4), 10) + parseInt(routing.charAt(7), 10))) +
+      (9 * (parseInt(routing.charAt(2), 10) + parseInt(routing.charAt(5), 10) + parseInt(routing.charAt(8), 10)));
+
+    var checksumMod = checksumTotal % 10;
+    if (checksumMod !== 0) {
+      return false;
+    }
+    else {
+      return true;
+    }
   }
 
 
