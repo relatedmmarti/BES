@@ -23,6 +23,8 @@ var multiparty = require('multiparty');
 var _ = require('lodash');
 var fs = require('fs');
 
+var validator = require('validator');
+
 
 
 const templateDir = path.join(__dirname, '..', 'common', 'views');
@@ -783,32 +785,39 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
 
     //lazy shortcut
     var payload = req.body;
+    validatePayload(payload)
+      .then(function (validationErrors) {
 
-    //Update workflow first
-    var setWorkflow = new WorkflowAction(payload.wf_stepnext, 1, req.params.id, req.userContext.userinfo.preferred_username, payload.wf_notes);
+        if (validationErrors.length >= 1) {
+          res.send({ msg: '', validationErrors: validationErrors });
+          return; //force end of execution
+        }
 
-    //console.log(setWorkflow);
 
-    /* Check for workflow validation */
-    if (setWorkflow.msg !== '') {
-      //Return the error message if validation fails
-      res.send(setWorkflow);
+        var setWorkflow = new WorkflowAction(payload.wf_stepnext, 1, req.params.id, req.userContext.userinfo.preferred_username, payload.wf_notes);
 
-    }
-    else if (setWorkflow.CurrentStep.id !== 1) {
+        //console.log(setWorkflow);
 
-      //Only 1.ENTRY step is valid to save changes other than workflow. Skip saving changes if any other step.
-      new Query().audit(req, [{ 'eftpayee': payload }], null, req.params.id, 1);
-      res.send({ msg: '' });
+        /* Check for workflow validation */
+        if (setWorkflow.msg !== '') {
+          //Return the error message if validation fails
+          res.send(setWorkflow);
 
-    }
-    else {
+        }
+        else if (setWorkflow.CurrentStep.id !== 1) {
 
-      //Only save edits if the workflow action is valid
-      //if (setWorkflow.msg.err === null) {
+          //Only 1.ENTRY step is valid to save changes other than workflow. Skip saving changes if any other step.
+          new Query().audit(req, [{ 'eftpayee': payload }], null, req.params.id, 1);
+          res.send({ msg: '' });
 
-      try {
-        var select = new Query(`UPDATE eftpayee
+        }
+        else {
+
+          //Only save edits if the workflow action is valid
+          //if (setWorkflow.msg.err === null) {
+
+          try {
+            var select = new Query(`UPDATE eftpayee
         SET vendorid = ?,
          sourcesystem = ?,
          payeename = ?,
@@ -839,56 +848,60 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
          interswift = ?,
          notes = ?
          WHERE id = ?;`, [
-          payload.vendorid,
-          payload.sourcesystem,
-          payload.payeename,
-          payload.payeeaddress,
-          payload.payeecity,
-          payload.payeestate,
-          payload.payeezip,
-          payload.payeecountry,
-          payload.forfurthercredit,
-          payload.bankname,
-          payload.bankaddress,
-          payload.bankcity,
-          payload.bankstate,
-          payload.bankzip,
-          payload.bankcountry,
-          payload.paytype,
-          payload.achsec,
-          payload.routing,
-          payload.account,
-          payload.swift,
-          payload.interbankname,
-          payload.interbankaddress,
-          payload.interbankcity,
-          payload.interbankstate,
-          payload.interbankzip,
-          payload.interbankcountry,
-          payload.interrouting,
-          payload.interswift,
-          payload.notes,
-          req.params.id
-        ]).run();
+              payload.vendorid,
+              payload.sourcesystem,
+              payload.payeename,
+              payload.payeeaddress,
+              payload.payeecity,
+              payload.payeestate,
+              payload.payeezip,
+              payload.payeecountry,
+              payload.forfurthercredit,
+              payload.bankname,
+              payload.bankaddress,
+              payload.bankcity,
+              payload.bankstate,
+              payload.bankzip,
+              payload.bankcountry,
+              payload.paytype,
+              payload.achsec,
+              payload.routing,
+              payload.account,
+              payload.swift,
+              payload.interbankname,
+              payload.interbankaddress,
+              payload.interbankcity,
+              payload.interbankstate,
+              payload.interbankzip,
+              payload.interbankcountry,
+              payload.interrouting,
+              payload.interswift,
+              payload.notes,
+              req.params.id
+            ]).run();
 
-        //Write username and data to the audit log
-        //new Query().audit(req, [{'eftpayee' : payload}]);
-        new Query().audit(req, [{ 'eftpayee': payload }], null, req.params.id, 1);
+            //Write username and data to the audit log
+            //new Query().audit(req, [{'eftpayee' : payload}]);
+            new Query().audit(req, [{ 'eftpayee': payload }], null, req.params.id, 1);
 
-        res.send({ msg: '' });
-      }
-      catch (err) {
-        console.log(err);
-        res.status(500);
-        res.send(err);
-      }
+            res.send({ msg: '' });
+          }
+          catch (err) {
+            console.log(err);
+            res.status(500);
+            res.send(err);
+          }
 
-      /*
-      } else {
-        res.send({msg: setWorkflow.msg.err});
-      }
-      */
-    }
+          /*
+          } else {
+            res.send({msg: setWorkflow.msg.err});
+          }
+          */
+        }
+
+      })
+    //Update workflow first
+
   });
 
 
@@ -921,7 +934,15 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
       //console.log(payload);
 
       try {
-        var insert = new Query(`INSERT INTO eftpayee(
+
+        validatePayload(payload)
+          .then(function (validationErrors) {
+
+            if (validationErrors.length >= 1) {
+              res.send({ msg: '', validationErrors: validationErrors });
+              return; //force end of execution
+            }
+            var insert = new Query(`INSERT INTO eftpayee(
           vendorid,
           sourcesystem,
           payeename,
@@ -953,48 +974,50 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
           notes
           )
           VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);`, [
-          payload.vendorid,
-          payload.sourcesystem,
-          payload.payeename,
-          payload.payeeaddress,
-          payload.payeecity,
-          payload.payeestate,
-          payload.payeezip,
-          payload.payeecountry,
-          payload.forfurthercredit,
-          payload.bankname,
-          payload.bankaddress,
-          payload.bankcity,
-          payload.bankstate,
-          payload.bankzip,
-          payload.bankcountry,
-          payload.paytype,
-          payload.achsec,
-          payload.routing,
-          payload.account,
-          payload.swift,
-          payload.interbankname,
-          payload.interbankaddress,
-          payload.interbankcity,
-          payload.interbankstate,
-          payload.interbankzip,
-          payload.interbankcountry,
-          payload.interrouting,
-          payload.interswift,
-          payload.notes
-        ]).run();
+              payload.vendorid,
+              payload.sourcesystem,
+              payload.payeename,
+              payload.payeeaddress,
+              payload.payeecity,
+              payload.payeestate,
+              payload.payeezip,
+              payload.payeecountry,
+              payload.forfurthercredit,
+              payload.bankname,
+              payload.bankaddress,
+              payload.bankcity,
+              payload.bankstate,
+              payload.bankzip,
+              payload.bankcountry,
+              payload.paytype,
+              payload.achsec,
+              payload.routing,
+              payload.account,
+              payload.swift,
+              payload.interbankname,
+              payload.interbankaddress,
+              payload.interbankcity,
+              payload.interbankstate,
+              payload.interbankzip,
+              payload.interbankcountry,
+              payload.interrouting,
+              payload.interswift,
+              payload.notes
+            ]).run();
 
-        //console.log(insert);
+            //console.log(insert);
 
-        //Write username and data to the audit log
-        //new Query().audit(req, {'eftpayee' : payload});
-        new Query().audit(req, [{ 'eftpayee': payload }], null, insert.lastInsertROWID, 1);
+            //Write username and data to the audit log
+            //new Query().audit(req, {'eftpayee' : payload});
+            new Query().audit(req, [{ 'eftpayee': payload }], null, insert.lastInsertROWID, 1);
 
-        //Set initial workflow step for new record
-        var setWorkflow = new WorkflowAction(1, 1, insert.lastInsertROWID, req.userContext.userinfo.preferred_username, payload.wf_notes, true);
-        //console.log(setWorkflow);
+            //Set initial workflow step for new record
+            var setWorkflow = new WorkflowAction(1, 1, insert.lastInsertROWID, req.userContext.userinfo.preferred_username, payload.wf_notes, true);
+            //console.log(setWorkflow);
 
-        res.send({ msg: '', id: insert.lastInsertROWID });
+            res.send({ msg: '', id: insert.lastInsertROWID });
+          })
+
       }
       catch (err) {
 
@@ -1019,6 +1042,130 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
     });
   });
 
+
+  /**
+   * Jorge Medina 12/06/2018 EFT Payload custom fiel validations
+   * */
+  function validatePayload(payload) {
+    return new Promise((resolve, reject) => {
+      var validationErrors = [];
+      try {
+
+        //avoid commas in fields
+        _.forOwn(payload, (value, key) => {
+          if (value && value.indexOf(",") != -1) {
+            validationErrors.push({
+              field: key,
+              msg: 'Remove commas on field'
+            });
+          }
+
+        });
+        //bank name is required
+        if (validator.isEmpty(payload.bankname, { ignore_whitespace: true })) {
+          validationErrors.push({
+            field: 'bankname',
+            msg: 'Cannot be blank'
+          });
+        }
+
+        //bank country only allows 2 letters ISO codes
+        if (!validator.isISO31661Alpha2(payload.bankcountry)) {
+          validationErrors.push({
+            field: 'bankcountry',
+            msg: 'Invalid value, please use only 2 letters ISO codes'
+          });
+        }
+
+        //Bank Account can’t’ be empty, is required
+        if (validator.isEmpty(payload.account, { ignore_whitespace: true })) {
+          validationErrors.push({
+            field: 'account',
+            msg: 'Cannot be blank'
+          });
+        }
+
+        //If the Bank Account is international and the country uses IBAN code, the IBAN code must be used, do not include the word IBAN as part of the account number
+        if (payload.bankcountry !== 'US' && payload.account.indexOf('IBAN') !== -1) {
+          validationErrors.push({
+            field: 'account',
+            msg: 'Remove work "IBAN" from account number'
+          });
+        }
+
+        //Payee name can’t be empty
+        if (validator.isEmpty(payload.payeename, { ignore_whitespace: true })) {
+          validationErrors.push({
+            field: 'payeename',
+            msg: 'Cannot be blank'
+          });
+        }
+
+        //Payee Country can’t be empty. Use only 2 letters ISO codes, examples: United States = US
+        if (!validator.isISO31661Alpha2(payload.payeecountry)) {
+          validationErrors.push({
+            field: 'payeecountry',
+            msg: 'Invalid value, please use only 2 letters ISO codes'
+          });
+        }
+
+        //If Payee Country is not ‘US’ then SWIFT can’t be empty
+        if (payload.payeecountry !== 'US' && (validator.isEmpty(payload.swift, { ignore_whitespace: true }))) {
+          validationErrors.push({
+            field: 'swift',
+            msg: 'Swift is required for non US banks'
+          });
+        }
+
+        //If Payee Country is ‘US’ then Routing number can’t be empty
+        if (payload.payeecountry === 'US' && (validator.isEmpty(payload.routing, { ignore_whitespace: true }))) {
+          validationErrors.push({
+            field: 'routing',
+            msg: 'Routing is required for US banks'
+          });
+        }
+
+        //Payee city is required
+        if (validator.isEmpty(payload.payeecity, { ignore_whitespace: true })) {
+          validationErrors.push({
+            field: 'payeecity',
+            msg: 'Cannot be blank'
+          });
+        }
+
+        //Payee Postal Code is required
+        if (validator.isEmpty(payload.payeezip, { ignore_whitespace: true })) {
+          validationErrors.push({
+            field: 'payeezip',
+            msg: 'Cannot be blank'
+          });
+        }
+
+        //Payee State is required. For US and CA, use two letters for states, example: Florida = FL
+        if (['US', 'CA'].indexOf(payload.payeecountry) !== -1 && !validator.isLength(payload.payeestate, { min: 2, max: 2 })) {
+          validationErrors.push({
+            field: 'payeestate',
+            msg: 'Use only 2 letter state code'
+          });
+        }
+        else if (validator.isEmpty(payload.payeestate, { ignore_whitespace: true })) {
+          validationErrors.push({
+            field: 'payeestate',
+            msg: 'Cannot be blank'
+          });
+        }
+
+
+
+        resolve(validationErrors);
+      }
+      catch (err) {
+        reject(err);
+      }
+
+    });
+
+  }
 
 
 
