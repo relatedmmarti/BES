@@ -1113,7 +1113,7 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
         if (payload.bankcountry !== 'US' && payload.account.indexOf('IBAN') !== -1) {
           validationErrors.push({
             field: 'account',
-            msg: 'Remove work "IBAN" from account number'
+            msg: 'Remove word "IBAN" from account number'
           });
         }
 
