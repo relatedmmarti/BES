@@ -30,7 +30,15 @@ $(document).ready(function () {
 
     };
 
-
+    //if BES id sent on URL then auto filter
+    if ($("#filter_id").val()) {
+        $("#btnFilter").click();
+        setTimeout(function () {
+            if ($('#userList button').length > 0) {
+                $('#userList button').first().click();
+            }
+        }, 1000)
+    }
 
 });
 
@@ -631,8 +639,8 @@ function newEntry() {
  * Jorge Medina 12/06/2018 Fix rendering issues on Chrome.
  * */
 function inputShow(elem) {
-
-    $('#rightbar').hide().show(0);
+    if (elem.tagName == 'input')
+        $('#rightbar').hide().show(0);
 }
 
 

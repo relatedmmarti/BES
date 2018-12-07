@@ -94,10 +94,14 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
     });
   });
 
+  /**
+   * Jorge Medina 12/07/2018 Added query string params to create direct URL to specific BES
+   * */
   app.get('/payinfo', oidc.ensureAuthenticated(), (req, res) => {
     res.render('payinfo', {
       isLoggedIn: !!req.userContext.userinfo,
-      userinfo: req.userContext.userinfo
+      userinfo: req.userContext.userinfo,
+      id: (req.query.id) ? req.query.id : "" //pass BES ID is present
     });
   });
 
@@ -610,11 +614,18 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
         where += ' AND NOT s.name = ?';
         queryParams.push('Approved');
       }
+      else if (req.query.workflow === 'All') {
+        //do nothing, all BES including incative ones
+      }
       else {
         where += ' AND s.name=?';
         queryParams.push(req.query.workflow);
       }
 
+    }
+    else {
+      where += ' AND NOT s.name =?';
+      queryParams.push('Inactive');
     };
     if (req.query.type !== undefined && req.query.type !== '') {
       //where += ' AND e1.paytype=\'' + req.query.type + '\'';
@@ -883,6 +894,10 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
             //Write username and data to the audit log
             //new Query().audit(req, [{'eftpayee' : payload}]);
             new Query().audit(req, [{ 'eftpayee': payload }], null, req.params.id, 1);
+
+
+            //send email notification to next step approver
+
 
             res.send({ msg: '' });
           }

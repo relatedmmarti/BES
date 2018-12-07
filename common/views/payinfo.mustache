@@ -28,11 +28,12 @@
             </thead>
             <tbody>
               <tr>
-                <td><input type="text" value="" id="filter_id" class="input is-info" placeholder="BES ID"/></td>
+                <td><input type="text" value='{{id}}' id="filter_id" class="input is-info" placeholder="BES ID" /></td>
                 <td>
                 <div class="select is-info">
                   <select name="filterstep" id="filter_step">
-                    <option value="" selected>All</option>
+                    <option value="" selected>All Active</option>
+                    <option value="All">All</option>
                     <option value="Pending">Pending</option>
                     <option value="Approved">Approved</option>
                     <option value=""></option>
@@ -40,6 +41,7 @@
                     <option value="Review">Review</option>
                     <option value="Treasury">Treasury</option>
                     <option value="Hold">Hold</option>
+                    <option value="Inactive">Inactive</option>
                   </select>
                   </div>
                 </td>
