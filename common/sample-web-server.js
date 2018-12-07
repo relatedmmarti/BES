@@ -24,6 +24,7 @@ var _ = require('lodash');
 var fs = require('fs');
 
 var validator = require('validator');
+var nodemailer = require('nodemailer');
 
 
 
@@ -897,7 +898,14 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
 
 
             //send email notification to next step approver
-
+            if (payload.wf_stepnext === '2') {
+              //need to email review
+              //sendEmail('', req.params.id);
+            }
+            else if (payload.wf_stepnext === '3') {
+              //email treasury
+              //sendEmail('', req.params.id);
+            }
 
             res.send({ msg: '' });
           }
@@ -1238,6 +1246,22 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
     }
   }
 
+  function sendEmail(recipient, id) {
+    var transporter = nodemailer.createTransport(config.emailSettings);
+
+    var mailOptions = config.mailOptions;
+    mailOptions.subject = config.emailTemplate.subject.replace(/<BES>/g, id);
+    mailOptions.html = config.emailTemplate.message.replace(/<BES>/g, id).replace(/<FORM_URL>/g, (config.besURL.replace(/<ID>/g, id)));
+
+    transporter.sendMail(mailOptions, function (error, info) {
+      if (error) {
+        console.log(error);
+      }
+      else {
+        console.log('Email sent: ' + info.response);
+      }
+    });
+  }
 
 
 };

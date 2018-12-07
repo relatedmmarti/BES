@@ -12,7 +12,7 @@ CREATE TABLE `eftattach`
 )
 
 --Insert new workflow step for Inactive
-insert into wfstep (id, fk,wf_id,name,notes,isfirst,isapproval,modified) values (6,2,'Inactive','','','','2018-10-05 17:19:04');
+insert into wfstep (id, fk,wf_id,name,notes,isfirst,isapproval,modified) values (6,1,'Inactive','','','','2018-10-05 17:19:04');
 
 insert into wfstepnext (id, fk_wfstep_id, fk_step_id_next, sort, notes, modified) values (12,1,6,,,'2018-10-05 17:19:40');
 insert into wfstepnext (id, fk_wfstep_id, fk_step_id_next, sort, notes, modified) values (13,2,6,,,'2018-10-05 17:19:40');

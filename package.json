@@ -20,6 +20,7 @@
     "lodash": "^4.17.11",
     "multiparty": "^4.2.1",
     "mustache-express": "^1.2.7",
+    "nodemailer": "^4.7.0",
     "validator": "^10.9.0"
   }
 }

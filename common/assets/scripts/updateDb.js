@@ -1,12 +1,30 @@
 const Query = require('./query.js');
 
 var statements = [{
-    statement: 'DELETE FROM eftpayee WHERE id=?;',
-    param: ['204']
+    statement: 'CREATE TABLE eftattach (`id` INTEGER, `filename` TEXT,`dateadded` TEXT, `dateupdated` TEXT, `datedeleted` TEXT, `user` TEXT,PRIMARY KEY(`id`,`filename`));',
+    param: []
   },
   {
-    statement: 'DELETE FROM wfaction WHERE fk_object_id=?;',
-    param: ['204']
+    statement: `insert into wfstep ('id', 'fk_wf_id','name','notes','isfirst','isapproval','modified') values (?,?,?,?,?,?,?);`,
+    param: [6, 1, 'Inactive2', '', '', '', '2018-10-05 17:19:04']
+  }, {
+    statement: `insert into wfstepnext ('id', 'fk_wfstep_id', 'fk_step_id_next', 'sort', 'notes', 'modified') values (?,?,?,?,?,?);`,
+    param: [12, 1, 6, , , '2018-10-05 17:19:40']
+  },
+  {
+    statement: `insert into wfstepnext ('id', 'fk_wfstep_id', 'fk_step_id_next', 'sort', 'notes', 'modified') values (?,?,?,?,?,?);`,
+    param: [13, 2, 6, , , '2018-10-05 17:19:40']
+  },
+  {
+    statement: `insert into wfstepnext ('id', 'fk_wfstep_id', 'fk_step_id_next', 'sort', 'notes', 'modified') values (?,?,?,?,?,?);`,
+    param: [14, 3, 6, , , '2018-10-05 17:19:40']
+  },
+  {
+    statement: `insert into wfstepnext ('id', 'fk_wfstep_id', 'fk_step_id_next', 'sort', 'notes', 'modified') values (?,?,?,?,?,?);`,
+    param: [15, 4, 6, , , '2018-10-05 17:19:40']
+  }, {
+    statement: `insert into wfstepnext ('id', 'fk_wfstep_id', 'fk_step_id_next', 'sort', 'notes', 'modified') values (?,?,?,?,?,?);`,
+    param: [16, 6, 1, , , '2018-10-05 17:19:40']
   }
 ]
 
