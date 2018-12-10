@@ -231,11 +231,11 @@ function getEdit(id) {
 
         //visually disable the fields when input will not be saved
         if ($('#wf_currentstep').html() !== 'Entry') {
-            $('#payinfofields').find('input').attr('disabled', 'disabled');
-            $('#payinfofields').find('select').attr('disabled', 'disabled');
+            $('#payinfofields').find('input').attr('readonly', true).css("background-color", "#f5f5f5"); //mimic disabled style while allowing dom events
+            $('#payinfofields').find('select').attr('disabled', true);
         }
         else {
-            $('#payinfofields').find('input').removeAttr('disabled');
+            $('#payinfofields').find('input').removeAttr('readonly').css("background-color", "white"); //mimic disabled style while allowing dom events
             $('#payinfofields').find('select').removeAttr('disabled');
         }
 
@@ -637,10 +637,13 @@ function newEntry() {
 
 /**
  * Jorge Medina 12/06/2018 Fix rendering issues on Chrome.
+ * Semantic UI CSS seem to have a bug in Chrome after a modal window is invoked. It causes input elements to hide on click.
+ * Workaround is to re-draw parent elemement to fix style.
  * */
 function inputShow(elem) {
-    if (elem.tagName == 'input')
+    if (elem.tagName === 'INPUT') {
         $('#rightbar').hide().show(0);
+    }
 }
 
 

@@ -900,11 +900,11 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
             //send email notification to next step approver
             if (payload.wf_stepnext === '2') {
               //need to email review
-              //sendEmail('', req.params.id);
+              //sendEmail('', req.params.id, payload.payeename);
             }
             else if (payload.wf_stepnext === '3') {
               //email treasury
-              //sendEmail('', req.params.id);
+              //sendEmail('', req.params.id, payload.payeename);
             }
 
             res.send({ msg: '' });
@@ -1076,14 +1076,62 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
 
         //avoid commas in fields
         _.forOwn(payload, (value, key) => {
-          if (value && (value.indexOf(",") != -1 || value.indexOf("#") != -1)) {
+          if (value && (value.indexOf(',') !== -1 || value.indexOf('#') !== -1 || value.indexOf("'") !== -1 || value.indexOf('"') !== -1)) {
             validationErrors.push({
               field: key,
-              msg: 'Invalid Characters found ("," or "#")'
+              msg: 'Invalid Characters found ("," , # , \" or \')'
             });
           }
 
         });
+
+        //Payee name can’t be empty
+        if (validator.isEmpty(payload.payeename, { ignore_whitespace: true })) {
+          validationErrors.push({
+            field: 'payeename',
+            msg: 'Cannot be blank'
+          });
+        }
+
+        //Payee city is required
+        if (validator.isEmpty(payload.payeecity, { ignore_whitespace: true })) {
+          validationErrors.push({
+            field: 'payeecity',
+            msg: 'Cannot be blank'
+          });
+        }
+
+        //Payee Postal Code is required
+        if (validator.isEmpty(payload.payeezip, { ignore_whitespace: true })) {
+          validationErrors.push({
+            field: 'payeezip',
+            msg: 'Cannot be blank'
+          });
+        }
+
+        //Payee Country can’t be empty. Use only 2 letters ISO codes, examples: United States = US
+        if (!validator.isISO31661Alpha2(payload.payeecountry)) {
+          validationErrors.push({
+            field: 'payeecountry',
+            msg: 'Invalid value, please use only 2 letters ISO codes'
+          });
+        }
+
+
+        //Payee State is required. For US and CA, use two letters for states, example: Florida = FL
+        if (['US', 'CA'].indexOf(payload.payeecountry) !== -1 && !validator.isLength(payload.payeestate, { min: 2, max: 2 })) {
+          validationErrors.push({
+            field: 'payeestate',
+            msg: 'Use only 2 letter state code'
+          });
+        }
+        else if (validator.isEmpty(payload.payeestate, { ignore_whitespace: true })) {
+          validationErrors.push({
+            field: 'payeestate',
+            msg: 'Cannot be blank'
+          });
+        }
+
         //bank name is required
         if (validator.isEmpty(payload.bankname, { ignore_whitespace: true })) {
           validationErrors.push({
@@ -1091,6 +1139,8 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
             msg: 'Cannot be blank'
           });
         }
+
+
         //bank city cannot be empty
         if (validator.isEmpty(payload.bankcity, { ignore_whitespace: true })) {
           validationErrors.push({
@@ -1098,6 +1148,8 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
             msg: 'Cannot be blank'
           });
         }
+
+
 
 
 
@@ -1109,7 +1161,7 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
           });
         }
 
-        //Bank Account can’t’ be empty, is required
+        //Bank Account can’t be empty, is required
         if (validator.isEmpty(payload.account, { ignore_whitespace: true })) {
           validationErrors.push({
             field: 'account',
@@ -1132,6 +1184,8 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
           });
         }
 
+
+
         //If the Bank Account is international and the country uses IBAN code, the IBAN code must be used, do not include the word IBAN as part of the account number
         if (payload.bankcountry !== 'US' && payload.account.indexOf('IBAN') !== -1) {
           validationErrors.push({
@@ -1142,26 +1196,14 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
 
 
 
-        //Payee name can’t be empty
-        if (validator.isEmpty(payload.payeename, { ignore_whitespace: true })) {
-          validationErrors.push({
-            field: 'payeename',
-            msg: 'Cannot be blank'
-          });
-        }
 
-        //Payee Country can’t be empty. Use only 2 letters ISO codes, examples: United States = US
-        if (!validator.isISO31661Alpha2(payload.payeecountry)) {
-          validationErrors.push({
-            field: 'payeecountry',
-            msg: 'Invalid value, please use only 2 letters ISO codes'
-          });
-        }
+
+
 
 
 
         //If Payee Country is not ‘US’ then SWIFT can’t be empty
-        if (payload.payeecountry !== 'US' && (validator.isEmpty(payload.swift, { ignore_whitespace: true }))) {
+        if (payload.bankcountry !== 'US' && (validator.isEmpty(payload.swift, { ignore_whitespace: true }))) {
           validationErrors.push({
             field: 'swift',
             msg: 'Swift is required for non US banks'
@@ -1169,48 +1211,61 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
         }
 
         //If Payee Country is ‘US’ then Routing number can’t be empty
-        if (payload.payeecountry === 'US' && (validator.isEmpty(payload.routing, { ignore_whitespace: true }))) {
+        if (payload.bankcountry === 'US' && (validator.isEmpty(payload.routing, { ignore_whitespace: true }))) {
           validationErrors.push({
             field: 'routing',
             msg: 'Routing is required for US banks'
           });
         }
-        if (payload.payeecountry === 'US' && !(validator.isEmpty(payload.routing, { ignore_whitespace: true })) && !validRoutingNumber(payload.routing)) {
+        if (payload.bankcountry === 'US' && !(validator.isEmpty(payload.routing, { ignore_whitespace: true })) && !validRoutingNumber(payload.routing)) {
           validationErrors.push({
             field: 'routing',
             msg: 'Invalid routing number'
           });
         }
 
-        //Payee city is required
-        if (validator.isEmpty(payload.payeecity, { ignore_whitespace: true })) {
+        //If Payee Country is not ‘US’ then SWIFT can’t be empty
+        if (payload.interbankcountry !== 'US' && (validator.isEmpty(payload.interswift, { ignore_whitespace: true }))) {
           validationErrors.push({
-            field: 'payeecity',
-            msg: 'Cannot be blank'
+            field: 'interswift',
+            msg: 'Swift is required for non US banks'
           });
         }
 
-        //Payee Postal Code is required
-        if (validator.isEmpty(payload.payeezip, { ignore_whitespace: true })) {
+        //If Payee Country is ‘US’ then Routing number can’t be empty
+        if (payload.interbankcountry === 'US' && (validator.isEmpty(payload.interrouting, { ignore_whitespace: true }))) {
           validationErrors.push({
-            field: 'payeezip',
-            msg: 'Cannot be blank'
+            field: 'interrouting',
+            msg: 'Routing is required for US banks'
+          });
+        }
+        if (payload.interbankcountry === 'US' && !(validator.isEmpty(payload.interrouting, { ignore_whitespace: true })) && !validRoutingNumber(payload.interrouting)) {
+          validationErrors.push({
+            field: 'interrouting',
+            msg: 'Invalid routing number'
           });
         }
 
-        //Payee State is required. For US and CA, use two letters for states, example: Florida = FL
-        if (['US', 'CA'].indexOf(payload.payeecountry) !== -1 && !validator.isLength(payload.payeestate, { min: 2, max: 2 })) {
+
+        //Bank State is required. For US and CA, use two letters for states, example: Florida = FL
+        if (['US', 'CA'].indexOf(payload.interbankcountry) !== -1 && !validator.isLength(payload.interbankstate, { min: 2, max: 2 })) {
           validationErrors.push({
-            field: 'payeestate',
+            field: 'interbankstate',
             msg: 'Use only 2 letter state code'
           });
         }
-        else if (validator.isEmpty(payload.payeestate, { ignore_whitespace: true })) {
+
+        //Payee Country can’t be empty. Use only 2 letters ISO codes, examples: United States = US
+        if (!validator.isISO31661Alpha2(payload.interbankcountry)) {
           validationErrors.push({
-            field: 'payeestate',
-            msg: 'Cannot be blank'
+            field: 'interbankcountry',
+            msg: 'Invalid value, please use only 2 letters ISO codes'
           });
         }
+
+
+
+
 
 
 
@@ -1246,21 +1301,28 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
     }
   }
 
-  function sendEmail(recipient, id) {
-    var transporter = nodemailer.createTransport(config.emailSettings);
+  function sendEmail(recipient, id, beneficiary) {
+    try {
+      var transporter = nodemailer.createTransport(config.emailSettings);
 
-    var mailOptions = config.mailOptions;
-    mailOptions.subject = config.emailTemplate.subject.replace(/<BES>/g, id);
-    mailOptions.html = config.emailTemplate.message.replace(/<BES>/g, id).replace(/<FORM_URL>/g, (config.besURL.replace(/<ID>/g, id)));
+      var mailOptions = config.mailOptions;
+      mailOptions.subject = config.emailTemplate.subject.replace(/<BES>/g, id);
+      mailOptions.text = config.emailTemplate.message.replace(/<BES>/g, id).replace(/<BENEFICIARY_NAME>/g, beneficiary).replace(/<FORM_URL>/g, (config.besURL.replace(/<ID>/g, id)));
 
-    transporter.sendMail(mailOptions, function (error, info) {
-      if (error) {
-        console.log(error);
-      }
-      else {
-        console.log('Email sent: ' + info.response);
-      }
-    });
+      transporter.sendMail(mailOptions, function (error, info) {
+        if (error) {
+          console.log(error);
+        }
+        else {
+          console.log('Email sent: ' + info.response);
+          return true;
+        }
+      });
+    }
+    catch (err) {
+      console.log(`Error sending email: ${err}`);
+      return false;
+    }
   }
 
 
