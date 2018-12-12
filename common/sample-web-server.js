@@ -16,18 +16,18 @@ const { ExpressOIDC } = require('@okta/oidc-middleware');
 
 if (process.env.NODE_ENV === 'development')
   require('dotenv').config();
-var config = require('./config');
-var azure = require('azure-storage');
-var blobService = azure.createBlobService();
-var multiparty = require('multiparty');
-var https = require("https");
-var qs = require("querystring");
+const config = require('./config');
+const azure = require('azure-storage');
+const blobService = azure.createBlobService();
+const multiparty = require('multiparty');
+const https = require('https');
+const qs = require('querystring');
 
-var _ = require('lodash');
-var fs = require('fs');
+const _ = require('lodash');
+const fs = require('fs');
 
-var validator = require('validator');
-var nodemailer = require('nodemailer');
+const validator = require('validator');
+const nodemailer = require('nodemailer');
 
 
 
