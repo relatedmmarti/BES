@@ -1,6 +1,7 @@
-var gulp = require('gulp');
-var exec = require('gulp-exec');
-var confirm = require('gulp-confirm');
+const gulp = require('gulp');
+const exec = require('gulp-exec');
+const confirm = require('gulp-confirm');
+const minify = require('gulp-minify');
 
 /*
 updates the database
@@ -30,4 +31,14 @@ gulp.task('initdb', function () {
     }))
     .pipe(exec('node updateDb.js', options))
     .pipe(exec.reporter(reportOptions));
+});
+
+
+/**
+ * Jorge Medina 12/12/2018 -> Gulp Task to minimize js
+ * */
+gulp.task('compress', function () {
+  gulp.src(['../js/*.js'])
+    .pipe(minify())
+    .pipe(gulp.dest('../minjs/'))
 });
