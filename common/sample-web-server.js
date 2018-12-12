@@ -109,6 +109,25 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
     });
   });
 
+  /**
+   * Jorge Medina 12/12/2018 Added Vendors routes to review external vendor forms
+   * */
+  app.get('/vendors', oidc.ensureAuthenticated(), (req, res) => {
+    res.render('vendors', {
+      isLoggedIn: !!req.userContext.userinfo,
+      userinfo: req.userContext.userinfo
+    });
+  });
+
+  /**
+   * Jorge Medina 12/12/2018 Added Vendors routes to review external vendor forms
+   * */
+  app.get('/vendorform', (req, res) => {
+    res.render('vendorform', {
+
+    });
+  });
+
   app.get('/logout', (req, res) => {
     req.logout();
     res.redirect('/');
@@ -827,9 +846,19 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
           //send email notification to next step approver
           if (payload.wf_stepnext === '3') {
             //email treasury
-            //sendEmail('', req.params.id, payload.payeename);
+            res.send({ msg: '' });
+            sendEmail(config.treasuryEmail, req.params.id, payload.payeename)
+              .then(() => {
+                console.log('email sent!');
+              })
+              .catch((err) => {
+                console.log('Unable to email users');
+                res.send({ msg: '' });
+              })
 
           }
+          else
+            res.send({ msg: '' });
 
           /*if (payload.wf_stepnext === '5') {
             console.log('need to send to Yardi');
@@ -839,7 +868,7 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
               })
           }
           else*/
-          res.send({ msg: '' });
+          //res.send({ msg: '' });
 
         }
         else {
@@ -918,9 +947,19 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
 
             if (payload.wf_stepnext === '2') {
               //need to email review
-              //sendEmail('', req.params.id, payload.payeename);
+              res.send({ msg: '' });
+              sendEmail(config.reviewEmail, req.params.id, payload.payeename)
+                .then(() => {
+                  console.log('email sent!')
+                })
+                .catch((err) => {
+                  console.log('Unable to email users');
+                  res.send({ msg: '' });
+                })
+
             }
-            res.send({ msg: '' });
+            else
+              res.send({ msg: '' });
           }
           catch (err) {
             console.log(err);
@@ -1065,6 +1104,136 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
     else {
       res.status(401);
       res.send('Unauthorized');
+    }
+  });
+
+
+  /**
+   * List all Submitted Vendors
+   * */
+  app.get('/vendor/list', oidc.ensureAuthenticated(), (req, res) => {
+
+    console.log(req.method + ' ' + req.url + ' ' + req.userContext.userinfo.preferred_username + ' ' + req.headers['x-real-ip']);
+
+    //Prepare an array to hold query parameters. Prevent SQL injection attacks.
+    var queryParams = [];
+
+    //build the where statement depending on the fields the user is searching by
+    var where = '';
+    if (req.query.id !== undefined && req.query.id !== '') {
+      //where += ' AND e1.rowid=' + req.query.id;
+      where += ' AND e1.rowid=?';
+      queryParams.push(req.query.id);
+    };
+
+    if (req.query.legalentityname !== undefined && req.query.legalentityname !== '') {
+      //where += ' AND e1.paytype=\'' + req.query.type + '\'';
+      where += ' AND e1.legalentityname=?';
+      queryParams.push(req.query.legalentityname);
+    };
+    if (req.query.taxid !== undefined && req.query.taxid !== '') {
+      //where += ' AND e1.sourcesystem=\'' + req.query.source + '\'';
+      where += ' AND e1.taxid like ?';
+      queryParams.push('%' + req.query.taxid + '%');
+    };
+
+    console.log(where);
+    console.log(queryParams);
+
+    var sql = `
+    select e1.* from vendorforms e1
+    	WHERE 1=1` + where + `
+    	order by e1.id desc;`;
+
+    //console.log(sql);
+
+    //get each object and the workflow step
+    var select = new Query(sql, queryParams).all();
+    res.json(select);
+  });
+
+  /**
+   * Get Vendor
+   * */
+  app.get('/vendor/:id', oidc.ensureAuthenticated(), (req, res) => {
+
+    var objType = 1;
+
+    console.log(req.method + ' ' + req.url + ' ' + req.userContext.userinfo.preferred_username + ' ' + req.headers['x-real-ip']);
+
+    //Get all payment instructions
+    var obj = new Query('SELECT * from vendorforms where id=?', [req.params.id]).get();
+
+
+    //Wrap everything up into an object to send out
+    var payload = {
+      obj: obj
+    };
+
+    //console.log(payload);
+
+    //res.json(JSON.payload);
+    res.send(JSON.stringify(payload, null, 4));
+
+  });
+  /**
+   * Jorge Medina 12/12/2018 - Save new external vendor forms
+   * */
+  app.post('/vendor/new', (req, res) => {
+
+    console.log(req.method + ' ' + req.url);
+
+    var payload = req.body;
+
+
+    try {
+
+      validateVendorPayload(payload)
+        .then(function (validationErrors) {
+
+          if (validationErrors.length >= 1) {
+            res.send({ msg: '', validationErrors: validationErrors });
+            return; //force end of execution
+          }
+          var insert = new Query(`INSERT INTO vendorforms(
+          legalentityname,
+          dba,
+          taxid,
+          email1099,
+          vendorname,
+          title,
+          address1,
+          address2,
+          city,
+          state,
+          zip
+          )
+          VALUES(?,?,?,?,?,?,?,?,?,?,?);`, [
+            payload.legalentityname,
+            payload.dba,
+            payload.taxid,
+            payload.email1099,
+            payload.vendorname,
+            payload.title,
+            payload.address1,
+            payload.address2,
+            payload.city,
+            payload.state,
+            payload.zip
+          ]).run();
+
+          //console.log(insert);
+
+
+          res.send({ msg: '', id: insert.lastInsertROWID });
+        })
+
+    }
+    catch (err) {
+
+      console.log(err);
+      res.status(500);
+      res.send(err);
     }
   });
 
@@ -1301,6 +1470,49 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
   }
 
 
+  function validateVendorPayload(payload) {
+    return new Promise((resolve, reject) => {
+      var validationErrors = [];
+      try {
+
+        //avoid commas in fields
+        _.forOwn(payload, (value, key) => {
+          if (value && (value.indexOf(',') !== -1 || value.indexOf('#') !== -1 || value.indexOf("'") !== -1 || value.indexOf('"') !== -1)) {
+            validationErrors.push({
+              field: key,
+              msg: 'Invalid Characters found ("," , # , \" or \')'
+            });
+          }
+
+          if (key !== 'address2' && validator.isEmpty(value, { ignore_whitespace: true })) {
+            validationErrors.push({
+              field: key,
+              msg: 'Cannot be blank'
+            });
+          }
+
+        });
+
+        if (payload.email1099 && !validator.isEmail(payload.email1099)) {
+          validationErrors.push({
+            field: 'email1099',
+            msg: 'Invalid Email address found'
+          });
+        }
+
+
+
+        resolve(validationErrors);
+      }
+      catch (err) {
+        reject(err);
+      }
+
+    });
+
+  }
+
+
   /**
    * Jorge Medina 12/06/2018 Helper function to check routing numbers
    */
@@ -1325,27 +1537,31 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
   }
 
   function sendEmail(recipient, id, beneficiary) {
-    try {
-      var transporter = nodemailer.createTransport(config.emailSettings);
+    return new Promise((resolve, reject) => {
+      try {
+        var transporter = nodemailer.createTransport(config.emailSettings);
 
-      var mailOptions = config.mailOptions;
-      mailOptions.subject = config.emailTemplate.subject.replace(/<BES>/g, id);
-      mailOptions.text = config.emailTemplate.message.replace(/<BES>/g, id).replace(/<BENEFICIARY_NAME>/g, beneficiary).replace(/<FORM_URL>/g, (config.besURL.replace(/<ID>/g, id)));
+        var mailOptions = config.mailOptions;
+        mailOptions.to = recipient;
+        mailOptions.subject = config.emailTemplate.subject.replace(/<BES>/g, id);
+        mailOptions.text = config.emailTemplate.message.replace(/<BES>/g, id).replace(/<BENEFICIARY_NAME>/g, beneficiary).replace(/<FORM_URL>/g, (config.besURL.replace(/<ID>/g, id)));
 
-      transporter.sendMail(mailOptions, function (error, info) {
-        if (error) {
-          console.log(error);
-        }
-        else {
-          console.log('Email sent: ' + info.response);
-          return true;
-        }
-      });
-    }
-    catch (err) {
-      console.log(`Error sending email: ${err}`);
-      return false;
-    }
+        transporter.sendMail(mailOptions, function (error, info) {
+          if (error) {
+            console.log(error);
+            reject();
+          }
+          else {
+            console.log('Email sent: ' + info.response);
+            resolve();
+          }
+        });
+      }
+      catch (err) {
+        console.log(`Error sending email: ${err}`);
+        reject();
+      }
+    });
   }
 
   /**

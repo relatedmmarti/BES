@@ -1,0 +1,75 @@
+<div id="rightbar" class="ui very wide right sidebar vertical visible" style='display:none;'>
+  <h3 id="recordInfoHdr">Vendor Info</h3>
+   <button class="delete is-danger" id="rightClose" aria-label="close" onclick="hideDiv('rightbar')"></button>
+     <span class="icon" id="rightMaxim" onclick="showFullDiv('rightbar');">
+  <i class="fa fa-arrows-alt" aria-hidden="true"></i>
+</span>
+ <span class="icon" id="rightMin" onclick="showMinDiv('rightbar');">
+  <i class="fa fa-window-minimize" aria-hidden="true"></i>
+</span>
+  <table class="ui table compact" id="payinfofields">
+    <thead>
+      <tr>
+        <th>Setting</th>
+        <th>Value</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Vendor ID</td>
+        <td id="vendorid"></td>
+      </tr>
+      <tr>
+        <td>Legal Entity Name</td>
+        <td id="legalentityname"></td>
+      </tr>
+      <tr>
+        <td>DBA</td>
+        <td id="dba"></td>
+      </tr>
+      <tr>
+        <td>Tax ID</td>
+        <td id="taxid"></td>
+      </tr>
+      <tr>
+        <td>Email for 1099 Contact</td>
+        <td id="email1099"></td>
+      </tr>
+      <tr>
+        <td>Name</td>
+        <td id="vendorname"></td>
+      </tr>
+      <tr>
+        <td>Title</td>
+        <td id="title"></td>
+      </tr>
+      <tr>
+        <td>Address Line 1</td>
+        <td id="address1"></td>
+      </tr>
+      <tr>
+        <td>Address Line 2</td>
+        <td id="address2"></td>
+      </tr>
+      <tr>
+        <td>City</td>
+        <td id="city"></td>
+      </tr>
+      <tr>
+        <td>State</td>
+        <td id="state"></td>
+      </tr>
+      <tr>
+        <td>Zip Code</td>
+        <td id="zip"></td>
+      </tr>
+
+    </tbody>
+  </table>
+  <div>
+      <button type="button" id="btnClear" class="button is-info">Create BES</button>
+  </div>
+
+
+
+</div>

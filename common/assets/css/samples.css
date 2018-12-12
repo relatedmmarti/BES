@@ -258,6 +258,10 @@ input:disabled, select:disabled {
             width: 10% !important;
         }
 
+          label.file-label{
+    width: 50%;
+}
+
 
 }
 
@@ -287,6 +291,11 @@ input:disabled, select:disabled {
     }
     _:-ms-lang(x),  #searchFilter { display: block !important;  width: 100% !important; }
     */
+
+    /*label.file-label{
+    width: 20%;
+}*/
+
 
 }
 
@@ -360,3 +369,13 @@ html{
 /**
 Custom CSS - Jorge Medina END
 */
+
+/*
+CSS for Vendor Form
+*/
+
+#vendorFormHdr, #vendoractionsDiv{
+    text-align:center;
+}
+
+

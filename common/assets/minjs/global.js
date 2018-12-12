@@ -5,16 +5,23 @@ var userListData = [];
 $(document).ready(function () {
 
     $('#btnSave').on('click', doAction);
+    $('#btnSubmitVendor').on('click', doVendorAction);
     $('#btnFilter').on('click', populateTable);
+    $('#btnVendorFilter').on('click', populateVendorTable);
     $('#btnAuditLog').on('click', populateAudit);
     $('#btnUploadFile').on('click', uploadFiles).prop("disabled", true);
     $('#btnAttachAuditLog').on('click', populateFilesAudit);
     $('#btnClear').on('click', clearInputs);
+    $('#btnClearForm').on('click', clearAllInputs);
 
     $(document).on('click', '#userList button', function () {
         getEdit($(this).val());
     });
 
+
+    $(document).on('click', '#vendorList button', function () {
+        getVendorEdit($(this).val());
+    });
     /*
     Setup files drag and drop
     */
@@ -659,3 +666,170 @@ function hideModal(divId) {
 function clearInputs() {
     $("#rightbar .input").val("");
 }
+
+function clearAllInputs() {
+    $(".input").val("");
+}
+
+
+/**
+ * Jorge Medina 12/12/2018 Vendor Forms Helper functions
+ * */
+function generateVendorUrl() {
+    var str = "https://treasurynode-test-innersphere.c9users.io/vendorform";
+    const el = document.createElement('textarea');
+    el.value = str;
+    document.body.appendChild(el);
+    el.select();
+    document.execCommand('copy');
+    document.body.removeChild(el);
+    alert('Link copied to clipboard');
+}
+
+
+
+/**
+ * ------------------------------
+ * Vendor Form JS
+ * */
+
+function doVendorAction(event) {
+    event.preventDefault();
+
+
+    $('.is-danger').addClass('is-info').removeClass('is-danger'); //clear error warnings
+
+    // Assemble object to save
+    var newVendor = {
+        'legalentityname': $('#legalentityname').val(),
+        'dba': $('#dba').val(),
+        'taxid': $('#taxid').val(),
+        'email1099': $('#email1099').val(),
+        'vendorname': $('#vendorname').val(),
+        'title': $('#title').val(),
+        'address1': $('#address1').val(),
+        'address2': $('#address2').val(),
+        'city': $('#city').val(),
+        'state': $('#state').val(),
+        'zip': $('#zip').val()
+    }
+
+    $.ajax({
+        url: '/vendor/new',
+        type: 'POST',
+        data: JSON.stringify(newVendor),
+        contentType: 'application/json',
+
+    }).done(function (response) {
+
+        //check for validation errors
+        if (response.validationErrors) {
+            var errorHTML = "<div>";
+            response.validationErrors.forEach((field) => {
+                $("#" + field.field).removeClass('is-info').addClass('is-danger');
+                errorHTML += 'Field: ' + field.field + '<ul><li> Error: ' + field.msg + '</li></ul>';
+            })
+            errorHTML += "</div>";
+            $("#notificationDiv .header").html("Input Validation Errors");
+            $("#notificationDiv .content").html(errorHTML);
+            $("#notificationDiv").modal("show");
+        }
+        // Check for successful (blank) response
+        else if (response.msg === '') {
+
+            //attachments
+            $("#notificationDiv .header").html("Confirmation");
+            $("#notificationDiv .content").html("<p>Form was succesfully submitted</p>");
+            $("#notificationDiv").modal("show");
+            $("#vendorform").html("<p>Form was succesfully submitted</p>");
+        }
+        else {
+            // If something goes wrong, alert the error message that our service returned
+            $("#notificationDiv .header").html("Error");
+            $("#notificationDiv .content").html("<p>Error while submitting form: " + response.msg + "</p>");
+            $("#notificationDiv").modal("show");
+        }
+    });
+};
+
+
+/**
+ * Populate Vendor data
+ * */
+function populateVendorTable() {
+
+    //build a list of filter values
+    var filters = {
+        'id': $('#vendor_id').val(),
+        'legalentityname': $('#legal_entity_name').val(),
+        'taxid': $('#tax_id').val()
+    }
+
+    //drop any filters that are blank
+    Object.keys(filters).forEach(key => filters[key] === '' && delete filters[key]);
+
+    console.log(JSON.stringify(filters));
+
+    var queryString = Object.keys(filters).map((key) => {
+        return encodeURIComponent(key) + '=' + encodeURIComponent(filters[key]);
+    }).join('&');
+
+    if (queryString !== '') {
+        queryString = '?' + queryString;
+    };
+
+    console.log('queryString:' + queryString);
+
+    $.getJSON('/vendor/list' + queryString, function (data) {
+
+        // Empty content string
+        var tableContent = '';
+
+        // For each item in our JSON, add a table row and cells to the content string
+        $.each(data, function () {
+            tableContent += '<tr id="vendor_' + this.id + '">'
+            tableContent += '<td><button class="button is-primary" value="' + this.id + '">' + this.id + '</button></td>';
+            tableContent += '<td>' + this.legalentityname + '</td>';
+            tableContent += '<td>' + this.dba + '</td>';
+            tableContent += '<td>' + this.taxid + '</td>';
+            tableContent += '<td>' + this.email1099 + '</td>';
+            tableContent += '<td>' + this.vendorname + '</td>';
+            tableContent += '<td>' + this.title + '</td>';
+            tableContent += '<td>' + this.address1 + '</td>';
+            tableContent += '<td>' + this.address2 + '</td>';
+            tableContent += '<td>' + this.city + '</td>';
+            tableContent += '<td>' + this.state + '</td>';
+            tableContent += '<td>' + this.zip + '</td>';
+            tableContent += '</tr>';
+        });
+
+        // Inject the whole content string into our existing HTML table
+        $('#vendorList tbody').html(tableContent);
+    });
+
+};
+
+
+// Get record to edit
+function getVendorEdit(id) {
+
+    $.getJSON('/vendor/' + id, function (data) {
+
+        $('#vendorid').html(data.obj.id);
+        $('#legalentityname').html(data.obj.legalentityname);
+        $('#dba').html(data.obj.dba);
+        $('#taxid').html(data.obj.taxid);
+        $('#email1099').html(data.obj.email1099);
+        $('#vendorname').html(data.obj.vendorname);
+        $('#title').html(data.obj.title);
+        $('#address1').html(data.obj.address1);
+        $('#address2').html(data.obj.address2);
+        $('#city').html(data.obj.city);
+        $('#state').html(data.obj.state);
+        $('#zip').html(data.obj.zip);
+
+        $("#rightbar").show(); //Allow users to show/hide details panel
+
+    });
+
+};
