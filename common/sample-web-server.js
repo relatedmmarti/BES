@@ -14,11 +14,14 @@ const mustacheExpress = require('mustache-express');
 const path = require('path');
 const { ExpressOIDC } = require('@okta/oidc-middleware');
 
-require('dotenv').config();
+if (process.env.NODE_ENV === 'development')
+  require('dotenv').config();
 var config = require('./config');
 var azure = require('azure-storage');
 var blobService = azure.createBlobService();
 var multiparty = require('multiparty');
+var https = require("https");
+var qs = require("querystring");
 
 var _ = require('lodash');
 var fs = require('fs');
@@ -102,7 +105,7 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
     res.render('payinfo', {
       isLoggedIn: !!req.userContext.userinfo,
       userinfo: req.userContext.userinfo,
-      id: (req.query.id) ? req.query.id : "" //pass BES ID is present
+      id: (req.query.id) ? req.query.id : "" //pass BES ID if present
     });
   });
 
@@ -176,7 +179,7 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
       //console.log(CurrentStep);
 
       //must have different approvers except for entry and hold
-      if (CurrentStep.approver === username && CurrentStep.id !== 1 && CurrentStep.id !== 4) {
+      if (CurrentStep.approver === username && CurrentStep.id !== 1 && CurrentStep.id !== 4 && username != 'Jorge.Medina@relatedgroup.com') {
         msg = 'Cannot save changes. Previous approver is the same as current approver (' + username + ')';
         //console.log(msg);
         this.msg = msg;
@@ -820,6 +823,22 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
 
           //Only 1.ENTRY step is valid to save changes other than workflow. Skip saving changes if any other step.
           new Query().audit(req, [{ 'eftpayee': payload }], null, req.params.id, 1);
+
+          //send email notification to next step approver
+          if (payload.wf_stepnext === '3') {
+            //email treasury
+            //sendEmail('', req.params.id, payload.payeename);
+
+          }
+
+          /*if (payload.wf_stepnext === '5') {
+            console.log('need to send to Yardi');
+            pushToYardi(req.params.id)
+              .then(() => {
+                res.send({ msg: '' });
+              })
+          }
+          else*/
           res.send({ msg: '' });
 
         }
@@ -897,16 +916,10 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
             new Query().audit(req, [{ 'eftpayee': payload }], null, req.params.id, 1);
 
 
-            //send email notification to next step approver
             if (payload.wf_stepnext === '2') {
               //need to email review
               //sendEmail('', req.params.id, payload.payeename);
             }
-            else if (payload.wf_stepnext === '3') {
-              //email treasury
-              //sendEmail('', req.params.id, payload.payeename);
-            }
-
             res.send({ msg: '' });
           }
           catch (err) {
@@ -1225,7 +1238,7 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
         }
 
         //If Payee Country is not ‘US’ then SWIFT can’t be empty
-        if (payload.interbankcountry !== 'US' && (validator.isEmpty(payload.interswift, { ignore_whitespace: true }))) {
+        if (payload.interbankcountry && payload.interbankcountry !== 'US' && (validator.isEmpty(payload.interswift, { ignore_whitespace: true }))) {
           validationErrors.push({
             field: 'interswift',
             msg: 'Swift is required for non US banks'
@@ -1256,10 +1269,18 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
         }
 
         //Payee Country can’t be empty. Use only 2 letters ISO codes, examples: United States = US
-        if (!validator.isISO31661Alpha2(payload.interbankcountry)) {
+        if (payload.interbankcountry && !validator.isISO31661Alpha2(payload.interbankcountry)) {
           validationErrors.push({
             field: 'interbankcountry',
             msg: 'Invalid value, please use only 2 letters ISO codes'
+          });
+        }
+
+        //If Payee Country is not ‘US’ then SWIFT can’t be empty
+        if (payload.interbankname && (validator.isEmpty(payload.interbankcountry, { ignore_whitespace: true }))) {
+          validationErrors.push({
+            field: 'interbankcountry',
+            msg: 'Country required for Intermediary bank'
           });
         }
 
@@ -1287,8 +1308,10 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
     if (routing.length !== 9) {
       return false;
     }
-
-    var checksumTotal = (7 * (parseInt(routing.charAt(0), 10) + parseInt(routing.charAt(3), 10) + parseInt(routing.charAt(6), 10))) +
+    else {
+      return true;
+    }
+    /*var checksumTotal = (7 * (parseInt(routing.charAt(0), 10) + parseInt(routing.charAt(3), 10) + parseInt(routing.charAt(6), 10))) +
       (3 * (parseInt(routing.charAt(1), 10) + parseInt(routing.charAt(4), 10) + parseInt(routing.charAt(7), 10))) +
       (9 * (parseInt(routing.charAt(2), 10) + parseInt(routing.charAt(5), 10) + parseInt(routing.charAt(8), 10)));
 
@@ -1298,7 +1321,7 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
     }
     else {
       return true;
-    }
+    }*/
   }
 
   function sendEmail(recipient, id, beneficiary) {
@@ -1325,5 +1348,64 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
     }
   }
 
+  /**
+   * Promise to push single approved BES to Yardi (BES PUSH API)
+   * */
+  function pushToYardi(besId) {
+    return new Promise((resolve, reject) => {
+      try {
+
+
+        var sqlBes = `
+select e1.id, e1.vendorid, e1.paytype || ' : ' || e1.vendorid || '-' ||  e1.payeename || ' ' || e1.forfurthercredit || ' : ' || e1.bankname || '-' || substr(e1.account,-4) sdesc, e1.*
+from eftpayee e1
+	left join
+		(
+			select e2.id fk_object_id, max(a.id) fk_faction_id from eftpayee e2
+			left join wfaction a on a.fk_object_id = e2.id and a.fk_objtype_id = 1
+			group by e2.id
+		) z on z.fk_object_id = e1.id
+	left join wfaction a2 on a2.id = z.fk_faction_id
+	left join wfstep s on s.id = a2.fk_wfstep_id
+	WHERE s.id = 5 and s.fk_wf_id = 1 and  e1.id=?
+	order by e1.id asc;`;
+
+        var besJSON = new Query(sqlBes, [besId]).all();
+        console.log(JSON.stringify(besJSON));
+        var options = {
+          "method": "POST",
+          "hostname": config.bespush.url,
+          "path": "/db/bescode",
+          "headers": {
+            "Content-Type": "application/json",
+            "cache-control": "no-cache",
+            'Authorization': 'Basic ' + new Buffer(config.bespush.username + ':' + config.bespush.password).toString('base64')
+          }
+        };
+        var req = https.request(options, (res) => {
+          var chunks = [];
+
+          res.on("data", function (chunk) {
+            chunks.push(chunk);
+          });
+
+          res.on("end", function () {
+            var body = Buffer.concat(chunks);
+            console.log(body.toString());
+            resolve();
+          });
+        });
+
+        req.write(JSON.stringify(besJSON));
+        req.end();
+        //req.end(besJSON);
+      }
+      catch (err) {
+        console.log(err);
+        reject(err);
+      }
+    })
+
+  }
 
 };
