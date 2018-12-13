@@ -14,10 +14,29 @@ const mustacheExpress = require('mustache-express');
 const path = require('path');
 const { ExpressOIDC } = require('@okta/oidc-middleware');
 
+if (process.env.NODE_ENV === 'development')
+  require('dotenv').config();
+const config = require('./config');
+const azure = require('azure-storage');
+
+const multiparty = require('multiparty');
+const https = require('https');
+const qs = require('querystring');
+
+const _ = require('lodash');
+const fs = require('fs');
+
+const validator = require('validator');
+const nodemailer = require('nodemailer');
+
+
+
 const templateDir = path.join(__dirname, '..', 'common', 'views');
 const frontendDir = path.join(__dirname, '..', 'common', 'assets');
 
 module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePageTemplateName) {
+
+  const blobService = azure.createBlobService();
 
   const oidc = new ExpressOIDC(Object.assign({
     issuer: sampleConfig.oidc.issuer,
@@ -81,10 +100,33 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
     });
   });
 
+  /**
+   * Jorge Medina 12/07/2018 Added query string params to create direct URL to specific BES
+   * */
   app.get('/payinfo', oidc.ensureAuthenticated(), (req, res) => {
     res.render('payinfo', {
       isLoggedIn: !!req.userContext.userinfo,
+      userinfo: req.userContext.userinfo,
+      id: (req.query.id) ? req.query.id : "" //pass BES ID if present
+    });
+  });
+
+  /**
+   * Jorge Medina 12/12/2018 Added Vendors routes to review external vendor forms
+   * */
+  app.get('/vendors', oidc.ensureAuthenticated(), (req, res) => {
+    res.render('vendors', {
+      isLoggedIn: !!req.userContext.userinfo,
       userinfo: req.userContext.userinfo
+    });
+  });
+
+  /**
+   * Jorge Medina 12/12/2018 Added Vendors routes to review external vendor forms
+   * */
+  app.get('/vendorform', (req, res) => {
+    res.render('vendorform', {
+
     });
   });
 
@@ -92,6 +134,8 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
     req.logout();
     res.redirect('/');
   });
+
+
 
   oidc.on('ready', () => {
     app.listen(sampleConfig.port, () => console.log(`App started on port ${sampleConfig.port}`));
@@ -156,7 +200,7 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
       //console.log(CurrentStep);
 
       //must have different approvers except for entry and hold
-      if (CurrentStep.approver === username && CurrentStep.id !== 1 && CurrentStep.id !== 4) {
+      if (CurrentStep.approver === username && CurrentStep.id !== 1 && CurrentStep.id !== 4 && username != 'Jorge.Medina@relatedgroup.com') {
         msg = 'Cannot save changes. Previous approver is the same as current approver (' + username + ')';
         //console.log(msg);
         this.msg = msg;
@@ -301,9 +345,174 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
   });
 
 
+  /**
+   *  Jorge Medina  12/03/2018 Route to store attachments into folder
+   * */
 
+  app.post('/attach', oidc.ensureAuthenticated(), (req, res) => {
+    console.log(req.method + ' ' + req.url + ' ' + req.userContext.userinfo.preferred_username + ' ' + req.headers['x-real-ip']);
 
+    try {
+      var form = new multiparty.Form();
+      var payload = { id: "", files: {} };
+      form.parse(req, (err, fields, files) => {
+        var now = new Date();
+        var fileStamp = (now.getMonth() + 1) + '' + (now.getDate()) + '' + (now.getFullYear()) + '' + (now.getHours()) + '' + (now.getMinutes());
+        payload.id = fields.id[0];
+        payload.files = files;
+        _.values(files).forEach((file) => {
 
+          //fs.copyFile(file[0].path, config.attachmentPath + fields.id[0] + '_' + fileStamp + '_' + file[0].originalFilename, (err) => {
+          fs.copyFile(file[0].path, fields.id[0] + '_' + fileStamp + '_' + file[0].originalFilename, (err) => {
+            if (err) throw err;
+            //console.log(`${file[0].path} copied to ${config.attachmentPath+file[0].originalFilename}`);
+            blobService.createBlockBlobFromLocalFile(config.blobContainer, config.blobPath + fields.id[0] + '_' + fileStamp + '_' + file[0].originalFilename, fields.id[0] + '_' + fileStamp + '_' + file[0].originalFilename,
+              function (error, result, response) {
+                if (error) {
+                  console.log(error)
+                }
+                else {
+                  console.log("uploaded to azure");
+                  fs.unlink(fields.id[0] + '_' + fileStamp + '_' + file[0].originalFilename, (err) => {
+                    if (err) throw err;
+                    console.log(fields.id[0] + '_' + fileStamp + '_' + file[0].originalFilename + ' was deleted from local');
+                  });
+                }
+              }
+            )
+            var insert = new Query(`INSERT INTO eftattach(
+          id,
+          filename,
+          dateadded,
+          dateupdated,
+          datedeleted,
+          user
+          )
+          VALUES(?,?,?,?,?,?);`, [
+              fields.id[0],
+              fields.id[0] + '_' + fileStamp + '_' + file[0].originalFilename,
+              now.toLocaleDateString(),
+              now.toLocaleDateString(),
+              null,
+              req.userContext.userinfo.preferred_username
+            ]).run();
+          });
+        })
+        new Query().audit(req, [{ 'attachments': payload }], null, fields.id[0], 1);
+        res.send({ msg: '' });
+      });
+    }
+    catch (err) {
+      console.log(err);
+      res.status(500);
+      res.send(err);
+    }
+  })
+
+  /**
+   *
+   * */
+  app.get('/faq', oidc.ensureAuthenticated(), (req, res) => {
+    console.log(req.method + ' ' + req.url + ' ' + req.userContext.userinfo.preferred_username + ' ' + req.headers['x-real-ip']);
+    try {
+      fs.readFile(__dirname + '/../common/assets/documents/faq.pdf', (err, data) => {
+        if (err) {
+          res.send({ msg: 'File not found on server' + err });
+        }
+        else {
+          res.writeHead(200, { 'Content-Type': 'application/pdf', 'Content-Disposition': 'attachment;filename=faq.pdf' });
+          res.end(data, 'binary');
+        }
+      });
+    }
+    catch (err) {
+      console.log(err);
+      res.send({ msg: 'Unable to retrieve faq' });
+    }
+  });
+  /**
+   * Jorge Medina: 12/04/2018 -> Route to serve files on request
+   * */
+
+  app.get('/file/:filename', oidc.ensureAuthenticated(), (req, res) => {
+    console.log(req.method + ' ' + req.url + ' ' + req.userContext.userinfo.preferred_username + ' ' + req.headers['x-real-ip']);
+    try {
+      var filename = req.params.filename;
+      blobService.getBlobToLocalFile(config.blobContainer, config.blobPath + filename, config.attachmentPath + filename.substring(filename.indexOf('_', 5) + 1), (error, data) => {
+        if (!error) {
+          fs.readFile(config.attachmentPath + filename.substring(filename.indexOf('_', 5) + 1), (err, data) => {
+            if (err) {
+              res.send({ msg: "File not found on server" + err });
+            }
+            else {
+              // Blob available in serverBlob.blob variable
+              console.log(filename.substring(filename.indexOf('_', 5) + 1));
+              switch (filename.substring(filename.lastIndexOf('.')).toLowerCase()) {
+              case 'pdf':
+                res.writeHead(200, { 'Content-Type': 'application/pdf', 'Content-Disposition': 'attachment;filename=' + filename.substring(filename.indexOf('_', 5) + 1) });
+                break;
+              case 'jpg':
+              case 'jpeg':
+                res.writeHead(200, { 'Content-Type': 'image/jpeg', 'Content-Disposition': 'attachment;filename=' + filename.substring(filename.indexOf('_', 5) + 1) });
+                break;
+              case 'bmp':
+                res.writeHead(200, { 'Content-Type': 'image/bmp', 'Content-Disposition': 'attachment;filename=' + filename.substring(filename.indexOf('_', 5) + 1) });
+                break;
+              case 'xls':
+              case 'xlsx':
+              case 'xlsm':
+                res.writeHead(200, { 'Content-Type': 'application/excel', 'Content-Disposition': 'attachment;filename=' + filename.substring(filename.indexOf('_', 5) + 1) });
+                break;
+              case 'doc':
+              case 'docx':
+                res.writeHead(200, { 'Content-Type': 'application/msword', 'Content-Disposition': 'attachment;filename=' + filename.substring(filename.indexOf('_', 5) + 1) });
+                break;
+              case 'tiff':
+              case 'tif':
+                res.writeHead(200, { 'Content-Type': 'image/tiff', 'Content-Disposition': 'attachment;filename=' + filename.substring(filename.indexOf('_', 5) + 1) });
+                break;
+              case 'gif':
+                res.writeHead(200, { 'Content-Type': 'image/gif', 'Content-Disposition': 'attachment;filename=' + filename.substring(filename.indexOf('_', 5) + 1) });
+                break;
+              case 'txt':
+                res.writeHead(200, { 'Content-Type': 'text/plain', 'Content-Disposition': 'attachment;filename=' + filename.substring(filename.indexOf('_', 5) + 1) });
+                break;
+              case 'msg':
+                res.writeHead(200, { 'Content-Type': 'application/vnd.ms-outlook', 'Content-Disposition': 'attachment;filename=' + filename.substring(filename.indexOf('_', 5) + 1) });
+                break;
+              case 'zip':
+                res.writeHead(200, { 'Content-Type': 'application/x-compressed', 'Content-Disposition': 'attachment;filename=' + filename.substring(filename.indexOf('_', 5) + 1) });
+                break;
+              case 'ppt':
+              case 'pptx':
+                res.writeHead(200, { 'Content-Type': 'application/mspowerpoint', 'Content-Disposition': 'attachment;filename=' + filename.substring(filename.indexOf('_', 5) + 1) });
+                break
+              case 'png':
+                res.writeHead(200, { 'Content-Type': 'image/png', 'Content-Disposition': 'attachment;filename=' + filename.substring(filename.indexOf('_', 5) + 1) });
+                break;
+              default:
+                // code
+              }
+              res.end(data, 'binary');
+
+              //file sent to user ==> delete it
+
+              fs.unlink(config.attachmentPath + filename.substring(filename.indexOf('_', 5) + 1), (err) => {
+                if (err) throw err;
+              });
+
+            }
+          });
+        };
+
+      });
+    }
+    catch (err) {
+      console.log(err);
+      res.status(500);
+      res.send(err);
+    }
+  });
 
   /*====================================================
   Workflow: Get valid next steps for a given object
@@ -369,6 +578,10 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
       //console.log(del);
       del = new Query('DELETE FROM wfaction WHERE fk_object_id=? and fk_objtype_id = 1;', [req.params.id]).run();
       //console.log(del);
+      //delete attachments record
+      del = new Query('DELETE FROM eftattach WHERE fk_object_id=?;', [req.params.id]).run();
+
+      //delete from file server or move?
 
       //Write username and data to the audit log
       new Query().audit(req, null, null, req.params.id, 1);
@@ -382,14 +595,33 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
     }
 
   });
+  /**
+   * Audit for files attach to a record
+   * */
 
+  app.get('/auditFiles/:id', oidc.ensureAuthenticated(), (req, res) => {
+
+    console.log(req.method + ' ' + req.url + ' ' + req.userContext.userinfo.preferred_username + ' ' + req.headers['x-real-ip']);
+    var sql = 'select * from auditlog where fk_id = @id and action like @attachAction;';
+    var select = new Query(sql, { id: req.params.id, attachAction: '%attach%' }).all();
+
+
+    for (var row of select) {
+      if (row.payload !== null) {
+        row.payload = JSON.parse(row.payload);
+      }
+    }
+
+    res.json(select);
+
+  });
   /*====================================================
   Pull audit logs for a record*/
   app.get('/audit/:id', oidc.ensureAuthenticated(), (req, res) => {
 
     console.log(req.method + ' ' + req.url + ' ' + req.userContext.userinfo.preferred_username + ' ' + req.headers['x-real-ip']);
-    var sql = 'select * from auditlog where fk_id = @id;';
-    var select = new Query(sql, { id: req.params.id }).all();
+    var sql = 'select * from auditlog where fk_id = @id and action not like @attachAction;';
+    var select = new Query(sql, { id: req.params.id, attachAction: '%attach%' }).all();
 
 
     for (var row of select) {
@@ -427,11 +659,18 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
         where += ' AND NOT s.name = ?';
         queryParams.push('Approved');
       }
+      else if (req.query.workflow === 'All') {
+        //do nothing, all BES including incative ones
+      }
       else {
         where += ' AND s.name=?';
         queryParams.push(req.query.workflow);
       }
 
+    }
+    else {
+      where += ' AND NOT s.name =?';
+      queryParams.push('Inactive');
     };
     if (req.query.type !== undefined && req.query.type !== '') {
       //where += ' AND e1.paytype=\'' + req.query.type + '\'';
@@ -539,6 +778,11 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
       req.params.id
     ]).all();
 
+
+    //Get Attachments if Any
+    var attachments = new Query('SELECT * from eftattach where id=?', [req.params.id]).all();
+
+    //
     //Get the current workflow step for the item
     var currentstep = new CurrentStep(1, req.params.id);
 
@@ -567,7 +811,8 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
       obj: obj,
       nextsteps: nextsteps,
       currentstep: currentstep,
-      stephistory: stephistory
+      stephistory: stephistory,
+      attachments: attachments //send attachments on response
     };
 
     //console.log(payload);
@@ -596,32 +841,68 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
 
     //lazy shortcut
     var payload = req.body;
+    validatePayload(payload)
+      .then(function (validationErrors) {
 
-    //Update workflow first
-    var setWorkflow = new WorkflowAction(payload.wf_stepnext, 1, req.params.id, req.userContext.userinfo.preferred_username, payload.wf_notes);
+        if (validationErrors.length >= 1 && (payload.wf_stepnext === '2' || payload.wf_stepnext === null || payload.wf_stepnext === '')) { //onlyy return the error if bes in entry state
+          res.send({ msg: '', validationErrors: validationErrors });
+          return; //force end of execution
+        }
 
-    //console.log(setWorkflow);
 
-    /* Check for workflow validation */
-    if (setWorkflow.msg !== '') {
-      //Return the error message if validation fails
-      res.send(setWorkflow);
+        var setWorkflow = new WorkflowAction(payload.wf_stepnext, 1, req.params.id, req.userContext.userinfo.preferred_username, payload.wf_notes);
 
-    }
-    else if (setWorkflow.CurrentStep.id !== 1) {
+        //console.log(setWorkflow);
 
-      //Only 1.ENTRY step is valid to save changes other than workflow. Skip saving changes if any other step.
-      new Query().audit(req, [{ 'eftpayee': payload }], null, req.params.id, 1);
-      res.send({ msg: '' });
 
-    }
-    else {
 
-      //Only save edits if the workflow action is valid
-      //if (setWorkflow.msg.err === null) {
 
-      try {
-        var select = new Query(`UPDATE eftpayee
+        /* Check for workflow validation */
+        if (setWorkflow.msg !== '') {
+          //Return the error message if validation fails
+          res.send(setWorkflow);
+
+        }
+        else if (setWorkflow.CurrentStep.id !== 1) {
+
+          //Only 1.ENTRY step is valid to save changes other than workflow. Skip saving changes if any other step.
+          new Query().audit(req, [{ 'eftpayee': payload }], null, req.params.id, 1);
+
+          //send email notification to next step approver
+          if (payload.wf_stepnext === '3') {
+            //email treasury
+            res.send({ msg: '' });
+            sendEmail(config.treasuryEmail, req.params.id, payload.payeename)
+              .then(() => {
+                console.log('email sent!');
+              })
+              .catch((err) => {
+                console.log('Unable to email users');
+                res.send({ msg: '' });
+              })
+
+          }
+          else
+            res.send({ msg: '' });
+
+          /*if (payload.wf_stepnext === '5') {
+            console.log('need to send to Yardi');
+            pushToYardi(req.params.id)
+              .then(() => {
+                res.send({ msg: '' });
+              })
+          }
+          else*/
+          //res.send({ msg: '' });
+
+        }
+        else {
+
+          //Only save edits if the workflow action is valid
+          //if (setWorkflow.msg.err === null) {
+
+          try {
+            var select = new Query(`UPDATE eftpayee
         SET vendorid = ?,
          sourcesystem = ?,
          payeename = ?,
@@ -652,57 +933,78 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
          interswift = ?,
          notes = ?
          WHERE id = ?;`, [
-          payload.vendorid,
-          payload.sourcesystem,
-          payload.payeename,
-          payload.payeeaddress,
-          payload.payeecity,
-          payload.payeestate,
-          payload.payeezip,
-          payload.payeecountry,
-          payload.forfurthercredit,
-          payload.bankname,
-          payload.bankaddress,
-          payload.bankcity,
-          payload.bankstate,
-          payload.bankzip,
-          payload.bankcountry,
-          payload.paytype,
-          payload.achsec,
-          payload.routing,
-          payload.account,
-          payload.swift,
-          payload.interbankname,
-          payload.interbankaddress,
-          payload.interbankcity,
-          payload.interbankstate,
-          payload.interbankzip,
-          payload.interbankcountry,
-          payload.interrouting,
-          payload.interswift,
-          payload.notes,
-          req.params.id
-        ]).run();
+              payload.vendorid,
+              payload.sourcesystem,
+              payload.payeename,
+              payload.payeeaddress,
+              payload.payeecity,
+              payload.payeestate,
+              payload.payeezip,
+              payload.payeecountry,
+              payload.forfurthercredit,
+              payload.bankname,
+              payload.bankaddress,
+              payload.bankcity,
+              payload.bankstate,
+              payload.bankzip,
+              payload.bankcountry,
+              payload.paytype,
+              payload.achsec,
+              payload.routing,
+              payload.account,
+              payload.swift,
+              payload.interbankname,
+              payload.interbankaddress,
+              payload.interbankcity,
+              payload.interbankstate,
+              payload.interbankzip,
+              payload.interbankcountry,
+              payload.interrouting,
+              payload.interswift,
+              payload.notes,
+              req.params.id
+            ]).run();
 
-        //Write username and data to the audit log
-        //new Query().audit(req, [{'eftpayee' : payload}]);
-        new Query().audit(req, [{ 'eftpayee': payload }], null, req.params.id, 1);
+            //Write username and data to the audit log
+            //new Query().audit(req, [{'eftpayee' : payload}]);
+            new Query().audit(req, [{ 'eftpayee': payload }], null, req.params.id, 1);
 
-        res.send({ msg: '' });
-      }
-      catch (err) {
-        console.log(err);
-        res.status(500);
-        res.send(err);
-      }
 
-      /*
-      } else {
-        res.send({msg: setWorkflow.msg.err});
-      }
-      */
-    }
+            if (payload.wf_stepnext === '2') {
+              //need to email review
+              res.send({ msg: '' });
+              sendEmail(config.reviewEmail, req.params.id, payload.payeename)
+                .then(() => {
+                  console.log('email sent!')
+                })
+                .catch((err) => {
+                  console.log('Unable to email users');
+                  res.send({ msg: '' });
+                })
+
+            }
+            else
+              res.send({ msg: '' });
+          }
+          catch (err) {
+            console.log(err);
+            res.status(500);
+            res.send(err);
+          }
+
+          /*
+          } else {
+            res.send({msg: setWorkflow.msg.err});
+          }
+          */
+        }
+
+      })
+    //Update workflow first
+
   });
+
+
 
 
 
@@ -732,7 +1034,15 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
       //console.log(payload);
 
       try {
-        var insert = new Query(`INSERT INTO eftpayee(
+
+        validatePayload(payload)
+          .then(function (validationErrors) {
+
+            if (validationErrors.length >= 1) {
+              res.send({ msg: '', validationErrors: validationErrors });
+              return; //force end of execution
+            }
+            var insert = new Query(`INSERT INTO eftpayee(
           vendorid,
           sourcesystem,
           payeename,
@@ -764,48 +1074,50 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
           notes
           )
           VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);`, [
-          payload.vendorid,
-          payload.sourcesystem,
-          payload.payeename,
-          payload.payeeaddress,
-          payload.payeecity,
-          payload.payeestate,
-          payload.payeezip,
-          payload.payeecountry,
-          payload.forfurthercredit,
-          payload.bankname,
-          payload.bankaddress,
-          payload.bankcity,
-          payload.bankstate,
-          payload.bankzip,
-          payload.bankcountry,
-          payload.paytype,
-          payload.achsec,
-          payload.routing,
-          payload.account,
-          payload.swift,
-          payload.interbankname,
-          payload.interbankaddress,
-          payload.interbankcity,
-          payload.interbankstate,
-          payload.interbankzip,
-          payload.interbankcountry,
-          payload.interrouting,
-          payload.interswift,
-          payload.notes
-        ]).run();
+              payload.vendorid,
+              payload.sourcesystem,
+              payload.payeename,
+              payload.payeeaddress,
+              payload.payeecity,
+              payload.payeestate,
+              payload.payeezip,
+              payload.payeecountry,
+              payload.forfurthercredit,
+              payload.bankname,
+              payload.bankaddress,
+              payload.bankcity,
+              payload.bankstate,
+              payload.bankzip,
+              payload.bankcountry,
+              payload.paytype,
+              payload.achsec,
+              payload.routing,
+              payload.account,
+              payload.swift,
+              payload.interbankname,
+              payload.interbankaddress,
+              payload.interbankcity,
+              payload.interbankstate,
+              payload.interbankzip,
+              payload.interbankcountry,
+              payload.interrouting,
+              payload.interswift,
+              payload.notes
+            ]).run();
 
-        //console.log(insert);
+            //console.log(insert);
 
-        //Write username and data to the audit log
-        //new Query().audit(req, {'eftpayee' : payload});
-        new Query().audit(req, [{ 'eftpayee': payload }], null, insert.lastInsertROWID, 1);
+            //Write username and data to the audit log
+            //new Query().audit(req, {'eftpayee' : payload});
+            new Query().audit(req, [{ 'eftpayee': payload }], null, insert.lastInsertROWID, 1);
 
-        //Set initial workflow step for new record
-        var setWorkflow = new WorkflowAction(1, 1, insert.lastInsertROWID, req.userContext.userinfo.preferred_username, payload.wf_notes, true);
-        //console.log(setWorkflow);
+            //Set initial workflow step for new record
+            var setWorkflow = new WorkflowAction(1, 1, insert.lastInsertROWID, req.userContext.userinfo.preferred_username, payload.wf_notes, true);
+            //console.log(setWorkflow);
 
-        res.send({ msg: '' });
+            res.send({ msg: '', id: insert.lastInsertROWID });
+          })
+
       }
       catch (err) {
 
@@ -821,8 +1133,519 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
   });
 
 
+  /**
+   * List all Submitted Vendors
+   * */
+  app.get('/vendor/list', oidc.ensureAuthenticated(), (req, res) => {
+
+    console.log(req.method + ' ' + req.url + ' ' + req.userContext.userinfo.preferred_username + ' ' + req.headers['x-real-ip']);
+
+    //Prepare an array to hold query parameters. Prevent SQL injection attacks.
+    var queryParams = [];
+
+    //build the where statement depending on the fields the user is searching by
+    var where = '';
+    if (req.query.id !== undefined && req.query.id !== '') {
+      //where += ' AND e1.rowid=' + req.query.id;
+      where += ' AND e1.rowid=?';
+      queryParams.push(req.query.id);
+    };
+
+    if (req.query.legalentityname !== undefined && req.query.legalentityname !== '') {
+      //where += ' AND e1.paytype=\'' + req.query.type + '\'';
+      where += ' AND e1.legalentityname=?';
+      queryParams.push(req.query.legalentityname);
+    };
+    if (req.query.taxid !== undefined && req.query.taxid !== '') {
+      //where += ' AND e1.sourcesystem=\'' + req.query.source + '\'';
+      where += ' AND e1.taxid like ?';
+      queryParams.push('%' + req.query.taxid + '%');
+    };
+
+    console.log(where);
+    console.log(queryParams);
+
+    var sql = `
+    select e1.* from vendorforms e1
+    	WHERE 1=1` + where + `
+    	order by e1.id desc;`;
+
+    //console.log(sql);
+
+    //get each object and the workflow step
+    var select = new Query(sql, queryParams).all();
+    res.json(select);
+  });
+
+  /**
+   * Get Vendor
+   * */
+  app.get('/vendor/:id', oidc.ensureAuthenticated(), (req, res) => {
+
+    var objType = 1;
+
+    console.log(req.method + ' ' + req.url + ' ' + req.userContext.userinfo.preferred_username + ' ' + req.headers['x-real-ip']);
+
+    //Get all payment instructions
+    var obj = new Query('SELECT * from vendorforms where id=?', [req.params.id]).get();
+
+
+    //Wrap everything up into an object to send out
+    var payload = {
+      obj: obj
+    };
+
+    //console.log(payload);
+
+    //res.json(JSON.payload);
+    res.send(JSON.stringify(payload, null, 4));
+
+  });
+  /**
+   * Jorge Medina 12/12/2018 - Save new external vendor forms
+   * */
+  app.post('/vendor/new', (req, res) => {
+
+    console.log(req.method + ' ' + req.url);
+
+    var payload = req.body;
+
+
+    try {
+
+      validateVendorPayload(payload)
+        .then(function (validationErrors) {
+
+          if (validationErrors.length >= 1) {
+            res.send({ msg: '', validationErrors: validationErrors });
+            return; //force end of execution
+          }
+          var insert = new Query(`INSERT INTO vendorforms(
+          legalentityname,
+          dba,
+          taxid,
+          email1099,
+          vendorname,
+          title,
+          address1,
+          address2,
+          city,
+          state,
+          zip
+          )
+          VALUES(?,?,?,?,?,?,?,?,?,?,?);`, [
+            payload.legalentityname,
+            payload.dba,
+            payload.taxid,
+            payload.email1099,
+            payload.vendorname,
+            payload.title,
+            payload.address1,
+            payload.address2,
+            payload.city,
+            payload.state,
+            payload.zip
+          ]).run();
+
+          //console.log(insert);
+
+
+          res.send({ msg: '', id: insert.lastInsertROWID });
+        })
+
+    }
+    catch (err) {
+
+      console.log(err);
+      res.status(500);
+      res.send(err);
+    }
+  });
+
+  /**
+   * Jorge Medina 12/05/2018 Handle 404 requests -> DO NOT REMOVE FROM BOTTOM OF SCRIPT!
+   * */
+  app.get('*', oidc.ensureAuthenticated(), (req, res) => {
+    res.render('404', {
+      isLoggedIn: !!req.userContext.userinfo,
+      userinfo: req.userContext.userinfo
+    });
+  });
+
+
+  /**
+   * Jorge Medina 12/06/2018 EFT Payload custom field validations
+   * */
+  function validatePayload(payload) {
+    return new Promise((resolve, reject) => {
+      var validationErrors = [];
+      try {
+
+        //avoid commas in fields
+        _.forOwn(payload, (value, key) => {
+          if (value && (value.indexOf(',') !== -1 || value.indexOf('#') !== -1 || value.indexOf("'") !== -1 || value.indexOf('"') !== -1)) {
+            validationErrors.push({
+              field: key,
+              msg: 'Invalid Characters found ("," , # , \" or \')'
+            });
+          }
+
+        });
+
+        //Payee name can’t be empty
+        if (validator.isEmpty(payload.payeename, { ignore_whitespace: true })) {
+          validationErrors.push({
+            field: 'payeename',
+            msg: 'Cannot be blank'
+          });
+        }
+
+        //Payee city is required
+        if (validator.isEmpty(payload.payeecity, { ignore_whitespace: true })) {
+          validationErrors.push({
+            field: 'payeecity',
+            msg: 'Cannot be blank'
+          });
+        }
+
+        //Payee Postal Code is required
+        if (validator.isEmpty(payload.payeezip, { ignore_whitespace: true })) {
+          validationErrors.push({
+            field: 'payeezip',
+            msg: 'Cannot be blank'
+          });
+        }
+
+        //Payee Country can’t be empty. Use only 2 letters ISO codes, examples: United States = US
+        if (!validator.isISO31661Alpha2(payload.payeecountry)) {
+          validationErrors.push({
+            field: 'payeecountry',
+            msg: 'Invalid value, please use only 2 letters ISO codes'
+          });
+        }
+
+
+        //Payee State is required. For US and CA, use two letters for states, example: Florida = FL
+        if (['US', 'CA'].indexOf(payload.payeecountry) !== -1 && !validator.isLength(payload.payeestate, { min: 2, max: 2 })) {
+          validationErrors.push({
+            field: 'payeestate',
+            msg: 'Use only 2 letter state code'
+          });
+        }
+        else if (validator.isEmpty(payload.payeestate, { ignore_whitespace: true })) {
+          validationErrors.push({
+            field: 'payeestate',
+            msg: 'Cannot be blank'
+          });
+        }
+
+        //bank name is required
+        if (validator.isEmpty(payload.bankname, { ignore_whitespace: true })) {
+          validationErrors.push({
+            field: 'bankname',
+            msg: 'Cannot be blank'
+          });
+        }
+
+
+        //bank city cannot be empty
+        if (validator.isEmpty(payload.bankcity, { ignore_whitespace: true })) {
+          validationErrors.push({
+            field: 'bankcity',
+            msg: 'Cannot be blank'
+          });
+        }
 
 
 
+
+
+        //bank country only allows 2 letters ISO codes
+        if (!validator.isISO31661Alpha2(payload.bankcountry)) {
+          validationErrors.push({
+            field: 'bankcountry',
+            msg: 'Invalid value, please use only 2 letters ISO codes'
+          });
+        }
+
+        //Bank Account can’t be empty, is required
+        if (validator.isEmpty(payload.account, { ignore_whitespace: true })) {
+          validationErrors.push({
+            field: 'account',
+            msg: 'Cannot be blank'
+          });
+        }
+        //account cannot include special characters
+        if (payload.account.indexOf('-') !== -1 || payload.account.indexOf('_') !== -1) {
+          validationErrors.push({
+            field: 'account',
+            msg: 'Invalid characters found ("-" or "_")'
+          });
+        }
+
+        //Bank State is required. For US and CA, use two letters for states, example: Florida = FL
+        if (['US', 'CA'].indexOf(payload.bankcountry) !== -1 && !validator.isLength(payload.bankstate, { min: 2, max: 2 })) {
+          validationErrors.push({
+            field: 'bankstate',
+            msg: 'Use only 2 letter state code'
+          });
+        }
+
+
+
+        //If the Bank Account is international and the country uses IBAN code, the IBAN code must be used, do not include the word IBAN as part of the account number
+        if (payload.bankcountry !== 'US' && payload.account.indexOf('IBAN') !== -1) {
+          validationErrors.push({
+            field: 'account',
+            msg: 'Remove word "IBAN" from account number'
+          });
+        }
+
+
+
+
+
+
+
+
+
+        //If Payee Country is not ‘US’ then SWIFT can’t be empty
+        if (payload.bankcountry !== 'US' && (validator.isEmpty(payload.swift, { ignore_whitespace: true }))) {
+          validationErrors.push({
+            field: 'swift',
+            msg: 'Swift is required for non US banks'
+          });
+        }
+
+        //If Payee Country is ‘US’ then Routing number can’t be empty
+        if (payload.bankcountry === 'US' && (validator.isEmpty(payload.routing, { ignore_whitespace: true }))) {
+          validationErrors.push({
+            field: 'routing',
+            msg: 'Routing is required for US banks'
+          });
+        }
+        if (payload.bankcountry === 'US' && !(validator.isEmpty(payload.routing, { ignore_whitespace: true })) && !validRoutingNumber(payload.routing)) {
+          validationErrors.push({
+            field: 'routing',
+            msg: 'Invalid routing number'
+          });
+        }
+
+        //If Payee Country is not ‘US’ then SWIFT can’t be empty
+        if (payload.interbankcountry && payload.interbankcountry !== 'US' && (validator.isEmpty(payload.interswift, { ignore_whitespace: true }))) {
+          validationErrors.push({
+            field: 'interswift',
+            msg: 'Swift is required for non US banks'
+          });
+        }
+
+        //If Payee Country is ‘US’ then Routing number can’t be empty
+        if (payload.interbankcountry === 'US' && (validator.isEmpty(payload.interrouting, { ignore_whitespace: true }))) {
+          validationErrors.push({
+            field: 'interrouting',
+            msg: 'Routing is required for US banks'
+          });
+        }
+        if (payload.interbankcountry === 'US' && !(validator.isEmpty(payload.interrouting, { ignore_whitespace: true })) && !validRoutingNumber(payload.interrouting)) {
+          validationErrors.push({
+            field: 'interrouting',
+            msg: 'Invalid routing number'
+          });
+        }
+
+
+        //Bank State is required. For US and CA, use two letters for states, example: Florida = FL
+        if (['US', 'CA'].indexOf(payload.interbankcountry) !== -1 && !validator.isLength(payload.interbankstate, { min: 2, max: 2 })) {
+          validationErrors.push({
+            field: 'interbankstate',
+            msg: 'Use only 2 letter state code'
+          });
+        }
+
+        //Payee Country can’t be empty. Use only 2 letters ISO codes, examples: United States = US
+        if (payload.interbankcountry && !validator.isISO31661Alpha2(payload.interbankcountry)) {
+          validationErrors.push({
+            field: 'interbankcountry',
+            msg: 'Invalid value, please use only 2 letters ISO codes'
+          });
+        }
+
+        //If Payee Country is not ‘US’ then SWIFT can’t be empty
+        if (payload.interbankname && (validator.isEmpty(payload.interbankcountry, { ignore_whitespace: true }))) {
+          validationErrors.push({
+            field: 'interbankcountry',
+            msg: 'Country required for Intermediary bank'
+          });
+        }
+
+
+
+
+
+
+
+        resolve(validationErrors);
+      }
+      catch (err) {
+        reject(err);
+      }
+
+    });
+
+  }
+
+
+  function validateVendorPayload(payload) {
+    return new Promise((resolve, reject) => {
+      var validationErrors = [];
+      try {
+
+        //avoid commas in fields
+        _.forOwn(payload, (value, key) => {
+          if (value && (value.indexOf(',') !== -1 || value.indexOf('#') !== -1 || value.indexOf("'") !== -1 || value.indexOf('"') !== -1)) {
+            validationErrors.push({
+              field: key,
+              msg: 'Invalid Characters found ("," , # , \" or \')'
+            });
+          }
+
+          if (key !== 'address2' && validator.isEmpty(value, { ignore_whitespace: true })) {
+            validationErrors.push({
+              field: key,
+              msg: 'Cannot be blank'
+            });
+          }
+
+        });
+
+        if (payload.email1099 && !validator.isEmail(payload.email1099)) {
+          validationErrors.push({
+            field: 'email1099',
+            msg: 'Invalid Email address found'
+          });
+        }
+
+
+
+        resolve(validationErrors);
+      }
+      catch (err) {
+        reject(err);
+      }
+
+    });
+
+  }
+
+
+  /**
+   * Jorge Medina 12/06/2018 Helper function to check routing numbers
+   */
+  function validRoutingNumber(routing) {
+    if (routing.length !== 9) {
+      return false;
+    }
+    else {
+      return true;
+    }
+    /*var checksumTotal = (7 * (parseInt(routing.charAt(0), 10) + parseInt(routing.charAt(3), 10) + parseInt(routing.charAt(6), 10))) +
+      (3 * (parseInt(routing.charAt(1), 10) + parseInt(routing.charAt(4), 10) + parseInt(routing.charAt(7), 10))) +
+      (9 * (parseInt(routing.charAt(2), 10) + parseInt(routing.charAt(5), 10) + parseInt(routing.charAt(8), 10)));
+
+    var checksumMod = checksumTotal % 10;
+    if (checksumMod !== 0) {
+      return false;
+    }
+    else {
+      return true;
+    }*/
+  }
+
+  function sendEmail(recipient, id, beneficiary) {
+    return new Promise((resolve, reject) => {
+      try {
+        var transporter = nodemailer.createTransport(config.emailSettings);
+        var mailOptions = config.mailOptions;
+        mailOptions.to = recipient;
+        mailOptions.subject = config.emailTemplate.subject.replace(/<BES>/g, id);
+        mailOptions.text = config.emailTemplate.message.replace(/<BES>/g, id).replace(/<BENEFICIARY_NAME>/g, beneficiary).replace(/<FORM_URL>/g, (config.besURL.replace(/<ID>/g, id)));
+
+        transporter.sendMail(mailOptions, function (error, info) {
+          if (error) {
+            console.log(error);
+            reject();
+          }
+          else {
+            console.log('Email sent: ' + info.response);
+            resolve();
+          }
+        });
+      }
+      catch (err) {
+        console.log(`Error sending email: ${err}`);
+        reject();
+      }
+    });
+  }
+
+  /**
+   * Promise to push single approved BES to Yardi (BES PUSH API)
+   * */
+  function pushToYardi(besId) {
+    return new Promise((resolve, reject) => {
+      try {
+
+
+        var sqlBes = `
+select e1.id, e1.vendorid, e1.paytype || ' : ' || e1.vendorid || '-' ||  e1.payeename || ' ' || e1.forfurthercredit || ' : ' || e1.bankname || '-' || substr(e1.account,-4) sdesc, e1.*
+from eftpayee e1
+	left join
+		(
+			select e2.id fk_object_id, max(a.id) fk_faction_id from eftpayee e2
+			left join wfaction a on a.fk_object_id = e2.id and a.fk_objtype_id = 1
+			group by e2.id
+		) z on z.fk_object_id = e1.id
+	left join wfaction a2 on a2.id = z.fk_faction_id
+	left join wfstep s on s.id = a2.fk_wfstep_id
+	WHERE s.id = 5 and s.fk_wf_id = 1 and  e1.id=?
+	order by e1.id asc;`;
+
+        var besJSON = new Query(sqlBes, [besId]).all();
+        console.log(JSON.stringify(besJSON));
+        var options = {
+          "method": "POST",
+          "hostname": config.bespush.url,
+          "path": "/db/bescode",
+          "headers": {
+            "Content-Type": "application/json",
+            "cache-control": "no-cache",
+            'Authorization': 'Basic ' + new Buffer(config.bespush.username + ':' + config.bespush.password).toString('base64')
+          }
+        };
+        var req = https.request(options, (res) => {
+          var chunks = [];
+
+          res.on("data", function (chunk) {
+            chunks.push(chunk);
+          });
+
+          res.on("end", function () {
+            var body = Buffer.concat(chunks);
+            console.log(body.toString());
+            resolve();
+          });
+        });
+
+        req.write(JSON.stringify(besJSON));
+        req.end();
+        //req.end(besJSON);
+      }
+      catch (err) {
+        console.log(err);
+        reject(err);
+      }
+    })
+
+  }
 
 };

@@ -11,24 +11,18 @@
       <div id="doc" class="column eight wide">
         <div class="doc-overview">
 
-          <h2 class="ui dividing header" data-se="overview-doc-header">
-            Related Treasury : Payments Portal
-          </h2>
+
 
           {{^isLoggedIn}}
             <p></p>
           {{/isLoggedIn}}
 
           {{#isLoggedIn}}
-            <p>Welcome back, {{userinfo.name}}!</p>
-            <p>You have successfully authenticated through single sign on.</p>
-            <p>More to come!</p>
-          {{/isLoggedIn}}
-
-          {{^isLoggedIn}}
-            <form method="get" action="/login">
-              <button id="login-button" class="ui primary button" type="submit">Log In</button>
-            </form>
+            <h1>
+              <b style="font-size:800%;"> 404</b>
+            </h1>
+            <div> The resource you requested was not found</div>
+            <div>  <a href='/'>Go to Home Page</a> </div>
           {{/isLoggedIn}}
         </div>
       </div>

@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    {{>head}}
+  </head>
+  <body>
+
+    {{>menu}}
+
+    <!--<div id="content" class="ui grid">-->
+    <div id="content" class="ui grid">
+
+      {{>vendor_right}}
+
+      <div id="doc" class="column twelve wide" style="overflow-y:auto;white-space:nowrap;height:100%;">
+        <div class="doc-overview" id="payInfoDocOverview">
+          <h2 class="ui dividing header" data-se="overview-doc-header">
+            Vendor Forms
+          </h2>
+          <table id="searchFilter" class="ui very compact celled table">
+            <thead>
+                <th>Vendor ID</th>
+                <th>Legal Entity Name</th>
+                <th>Tax ID</th>
+            </thead>
+            <tbody>
+              <tr>
+                <td><input type="text" value='{{id}}' id="vendor_id" class="input is-info" placeholder="Vendor ID" /></td>
+                <td><input type="text" id="legal_entity_name" class="input is-info" placeholder="Legal Entity Name" /></td>
+                <td><input type="text" id="tax_id" class="input is-info" placeholder="Tax ID" /></td>
+                </tr>
+              <tr>
+                <td><button type="button" id="btnVendorFilter" class="button is-info">Search</button>
+                <p class="control" id="newBtn">
+                 <a class="button is-info" onclick="generateVendorUrl();">
+                   <span class="icon is-small">
+                     <i class="fa fa-link" aria-hidden="true"></i>
+                   </span>
+                   <span>Generate New Vendor Link</span>
+                 </a>
+                </p>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+          <table id="vendorList" class="ui very compact celled selectable table striped">
+            <thead>
+              <th>Vendor ID</th>
+              <th>Legal Entity Name</th>
+              <th>DBA</th>
+              <th>Tax ID</th>
+              <th>1099 Email</th>
+              <th>Name</th>
+              <th>Title</th>
+              <th>Address Line 1</th>
+              <th>Address Line 2</th>
+              <th>City</th>
+              <th>State</th>
+              <th>Zip</th>
+            </thead>
+            <tbody></tbody>
+          </table>
+         <div>
+             <p class="control">
+                <a class="button is-info" onclick="saveCSV('vendorList')">
+                  <span class="icon is-small">
+                   <i class="fa fa-table" aria-hidden="true"></i>
+                  </span>
+                  <span>Export to Excel</span>
+                </a>
+              </p>
+         </div>
+        </div>
+
+      </div>
+
+    </div>
+
+    <div class="ui longer modal" id="logDiv">
+      <div class="header">Audit Log</div>
+      <div class="scrolling content">
+        <table id="auditlog">
+          <thead>
+            <th>BES ID</th>
+            <th>Action</th>
+            <th>Modified</th>
+            <th>Username</th>
+            <th>Data</th>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <div class="actions">
+      <div class="ui primary ok button">
+        OK
+        <i class="right chevron icon"></i>
+      </div>
+      </div>
+    </div>
+
+
+    <div class="ui longer modal" id="notificationDiv">
+      <div class="header"></div>
+      <div class="scrolling content">
+
+      </div>
+      <div class="actions">
+      <div class="ui primary ok button">
+        OK
+        <i class="right chevron icon"></i>
+      </div>
+      </div>
+    </div>
+
+  </body>
+</html>

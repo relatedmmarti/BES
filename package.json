@@ -6,12 +6,26 @@
   "repository": "",
   "author": "",
   "dependencies": {
-    "@okta/jwt-verifier": "0.0.12",
+    "@okta/jwt-verifier": "0.0.14",
     "@okta/oidc-middleware": "^1.0.0",
+    "azure-storage": "^2.10.2",
     "better-sqlite3": "^4.1.4",
+    "dotenv": "^6.1.0",
     "express": "^4.16.3",
     "express-basic-auth": "^1.1.5",
     "express-session": "^1.15.6",
-    "mustache-express": "^1.2.7"
+    "gulp": "^3.9.1",
+    "gulp-confirm": "^1.0.8",
+    "gulp-exec": "^3.0.2",
+    "lodash": "^4.17.11",
+    "multiparty": "^4.2.1",
+    "mustache-express": "^1.2.7",
+    "nodemailer": "^4.7.0",
+    "validator": "^10.9.0"
+  },
+  "devDependencies": {
+    "chai": "^4.2.0",
+    "gulp-minify": "^3.1.0",
+    "mocha": "^5.2.0"
   }
 }
