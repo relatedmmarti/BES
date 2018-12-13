@@ -1,5 +1,4 @@
 tests/
 test/
 treasury.db
-temp/
 .env
