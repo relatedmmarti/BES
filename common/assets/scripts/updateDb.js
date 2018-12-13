@@ -6,7 +6,7 @@ var statements = [{
   },
   {
     statement: `insert into wfstep ('id', 'fk_wf_id','name','notes','isfirst','isapproval','modified') values (?,?,?,?,?,?,?);`,
-    param: [6, 1, 'Inactive2', '', '', '', '2018-10-05 17:19:04']
+    param: [6, 1, 'Inactive', '', '', '', '2018-10-05 17:19:04']
   }, {
     statement: `insert into wfstepnext ('id', 'fk_wfstep_id', 'fk_step_id_next', 'sort', 'notes', 'modified') values (?,?,?,?,?,?);`,
     param: [12, 1, 6, , , '2018-10-05 17:19:40']

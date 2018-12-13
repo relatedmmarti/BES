@@ -8,7 +8,7 @@ updates the database
 */
 
 
-gulp.task('default', ['compress']);
+gulp.task('default', ['initdb']);
 
 gulp.task('initdb', function () {
 
