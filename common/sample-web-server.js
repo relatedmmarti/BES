@@ -18,7 +18,7 @@ if (process.env.NODE_ENV === 'development')
   require('dotenv').config();
 const config = require('./config');
 const azure = require('azure-storage');
-const blobService = azure.createBlobService();
+
 const multiparty = require('multiparty');
 const https = require('https');
 const qs = require('querystring');
@@ -35,6 +35,8 @@ const templateDir = path.join(__dirname, '..', 'common', 'views');
 const frontendDir = path.join(__dirname, '..', 'common', 'assets');
 
 module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePageTemplateName) {
+
+  const blobService = azure.createBlobService();
 
   const oidc = new ExpressOIDC(Object.assign({
     issuer: sampleConfig.oidc.issuer,
