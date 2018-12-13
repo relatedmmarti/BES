@@ -409,7 +409,27 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
     }
   })
 
-
+  /**
+   *
+   * */
+  app.get('/faq', oidc.ensureAuthenticated(), (req, res) => {
+    console.log(req.method + ' ' + req.url + ' ' + req.userContext.userinfo.preferred_username + ' ' + req.headers['x-real-ip']);
+    try {
+      fs.readFile(__dirname + '/../common/assets/documents/faq.pdf', (err, data) => {
+        if (err) {
+          res.send({ msg: 'File not found on server' + err });
+        }
+        else {
+          res.writeHead(200, { 'Content-Type': 'application/pdf', 'Content-Disposition': 'attachment;filename=faq.pdf' });
+          res.end(data, 'binary');
+        }
+      });
+    }
+    catch (err) {
+      console.log(err);
+      res.send({ msg: 'Unable to retrieve faq' });
+    }
+  });
   /**
    * Jorge Medina: 12/04/2018 -> Route to serve files on request
    * */
@@ -1545,7 +1565,6 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
     return new Promise((resolve, reject) => {
       try {
         var transporter = nodemailer.createTransport(config.emailSettings);
-
         var mailOptions = config.mailOptions;
         mailOptions.to = recipient;
         mailOptions.subject = config.emailTemplate.subject.replace(/<BES>/g, id);
