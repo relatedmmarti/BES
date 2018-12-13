@@ -822,7 +822,7 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
     validatePayload(payload)
       .then(function (validationErrors) {
 
-        if (validationErrors.length >= 1) {
+        if (validationErrors.length >= 1 && (payload.wf_stepnext === '2' || payload.wf_stepnext === null || payload.wf_stepnext === '')) { //onlyy return the error if bes in entry state
           res.send({ msg: '', validationErrors: validationErrors });
           return; //force end of execution
         }
@@ -831,6 +831,9 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
         var setWorkflow = new WorkflowAction(payload.wf_stepnext, 1, req.params.id, req.userContext.userinfo.preferred_username, payload.wf_notes);
 
         //console.log(setWorkflow);
+
+
+
 
         /* Check for workflow validation */
         if (setWorkflow.msg !== '') {
