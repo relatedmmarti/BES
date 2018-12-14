@@ -500,7 +500,15 @@ function saveCSV(tableId) {
  *
  */
 function attachFiles(id, action) {
-
+    if ($("#attachment")[0].files.length < 1) {
+        alert('no files to upload');
+        return;
+    }
+    $("#btnUploadFile, #attachment").prop("disabled", true);
+    $("#overlay").click(function () {
+        // do nothing
+    });
+    $("#overlay").show();
     var data = new FormData();
     for (var i = 0; i < $("#attachment")[0].files.length; i++) {
         data.append("file_" + i, $("#attachment")[0].files[i]);
@@ -521,8 +529,11 @@ function attachFiles(id, action) {
     }
 
     $.ajax(settings).done(function (response) {
+        $("#btnUploadFile, #attachment").prop("disabled", false);
+        $("#overlay").hide();
         response = JSON.parse(response);
         if (response.msg === '') {
+            $("#btnUploadFile").prop("disabled", true);
             if (action === "edit")
                 getEdit(id);
             else if (action !== "none")
@@ -591,6 +602,8 @@ function setFileName() {
             else {
                 alert("Invalid file extension found: " + filesToUpload[i].name.substring(filesToUpload[i].name.lastIndexOf(".") + 1));
                 $("#attachment")[0].value = ""; //remove all files
+                $("#uploadFileName").html("");
+
             }
         }
     }

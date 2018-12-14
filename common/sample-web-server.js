@@ -14,8 +14,7 @@ const mustacheExpress = require('mustache-express');
 const path = require('path');
 const { ExpressOIDC } = require('@okta/oidc-middleware');
 
-if (process.env.NODE_ENV === 'development')
-  require('dotenv').config();
+require('dotenv').config();
 const config = require('./config');
 const azure = require('azure-storage');
 
@@ -220,7 +219,7 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
       }
 
       //anyone can advance workflow in entry and review step
-      if (CurrentStep.authorized_user === null && CurrentStep.id !== 1 && CurrentStep.id !== 2) {
+      if (CurrentStep.authorized_user === null && CurrentStep.id !== 1 && CurrentStep.id !== 2 && CurrentStep.id !== 6) {
         msg = '' + username + ' is not authorized modify records in the ' + CurrentStep.name + ' step';
         //console.log(msg);
         this.msg = (msg);
@@ -356,50 +355,67 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
       var form = new multiparty.Form();
       var payload = { id: "", files: {} };
       form.parse(req, (err, fields, files) => {
-        var now = new Date();
-        var fileStamp = (now.getMonth() + 1) + '' + (now.getDate()) + '' + (now.getFullYear()) + '' + (now.getHours()) + '' + (now.getMinutes());
         payload.id = fields.id[0];
         payload.files = files;
+        var promiseArr = [];
         _.values(files).forEach((file) => {
+          promiseArr.push(uploadFile(file, fields, req.userContext.userinfo.preferred_username, req, payload));
+          /* var fileStamp = (now.getMonth() + 1) + '' + (now.getDate()) + '' + (now.getFullYear()) + '' + (now.getHours()) + '' + (now.getMinutes());
+           var insert = new Query(`INSERT INTO eftattach(
+           fk_object_id,
+           filename,
+           dateadded,
+           dateupdated,
+           datedeleted,
+           user
+           )
+           VALUES(?,?,?,?,?,?);`, [
+             fields.id[0],
+             fields.id[0] + '_' + fileStamp + '_' + file[0].originalFilename,
+             now.toLocaleDateString(),
+             now.toLocaleDateString(),
+             null,
+             req.userContext.userinfo.preferred_username
+           ]).run();
 
-          //fs.copyFile(file[0].path, config.attachmentPath + fields.id[0] + '_' + fileStamp + '_' + file[0].originalFilename, (err) => {
-          fs.copyFile(file[0].path, fields.id[0] + '_' + fileStamp + '_' + file[0].originalFilename, (err) => {
-            if (err) throw err;
-            //console.log(`${file[0].path} copied to ${config.attachmentPath+file[0].originalFilename}`);
-            blobService.createBlockBlobFromLocalFile(config.blobContainer, config.blobPath + fields.id[0] + '_' + fileStamp + '_' + file[0].originalFilename, fields.id[0] + '_' + fileStamp + '_' + file[0].originalFilename,
-              function (error, result, response) {
-                if (error) {
-                  console.log(error)
-                }
-                else {
-                  console.log("uploaded to azure");
-                  fs.unlink(fields.id[0] + '_' + fileStamp + '_' + file[0].originalFilename, (err) => {
-                    if (err) throw err;
-                    console.log(fields.id[0] + '_' + fileStamp + '_' + file[0].originalFilename + ' was deleted from local');
-                  });
-                }
-              }
-            )
-            var insert = new Query(`INSERT INTO eftattach(
-          id,
-          filename,
-          dateadded,
-          dateupdated,
-          datedeleted,
-          user
-          )
-          VALUES(?,?,?,?,?,?);`, [
-              fields.id[0],
-              fields.id[0] + '_' + fileStamp + '_' + file[0].originalFilename,
-              now.toLocaleDateString(),
-              now.toLocaleDateString(),
-              null,
-              req.userContext.userinfo.preferred_username
-            ]).run();
-          });
+           var fileID = insert.lastInsertROWID;
+
+           fs.copyFile(file[0].path, fields.id[0] + '_' + fileStamp + '_' + file[0].originalFilename, (err) => {
+             if (err) console.log(err);
+             //console.log(`${file[0].path} copied to ${config.attachmentPath+file[0].originalFilename}`);
+             blobService.createBlockBlobFromLocalFile(config.blobContainer, config.blobPath + fields.id[0] + '_' + fileStamp + '_' + file[0].originalFilename, fields.id[0] + '_' + fileStamp + '_' + file[0].originalFilename,
+               function (error, result, response) {
+                 if (error) {
+                   console.log(error)
+                   del = new Query('DELETE FROM eftattach WHERE id=?;', [fileID]).run();
+                   res.send({ msg: 'Unable to process file' });
+                 }
+                 else {
+                   console.log("uploaded to azure");
+                   fs.unlink(fields.id[0] + '_' + fileStamp + '_' + file[0].originalFilename, (err) => {
+                     if (err) {
+                       console.log(err)
+                       res.send({ msg: 'Unable to process file' });
+                     };
+                     console.log(fields.id[0] + '_' + fileStamp + '_' + file[0].originalFilename + ' was deleted from local');
+                     new Query().audit(req, [{ 'attachments': payload }], null, fields.id[0], 1);
+                     if (index == _.values(files).length - 1) res.send({ msg: '' });
+                   });
+                 }
+               }
+             )
+
+           });*/
         })
-        new Query().audit(req, [{ 'attachments': payload }], null, fields.id[0], 1);
-        res.send({ msg: '' });
+
+        Promise.all(promiseArr)
+          .then((values) => {
+            res.send({ msg: '' });
+          })
+          .catch((err) => {
+            console.log(err);
+            res.send({ msg: 'Unable to save all files' });
+          })
       });
     }
     catch (err) {
@@ -407,14 +423,68 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
       res.status(500);
       res.send(err);
     }
-  })
+  });
+
+  function uploadFile(file, fields, username, req, payload) {
+    return new Promise((resolve, reject) => {
+      var now = new Date();
+      var fileStamp = (now.getMonth() + 1) + '' + (now.getDate()) + '' + (now.getFullYear()) + '' + (now.getHours()) + '' + (now.getMinutes());
+      var insert = new Query(`INSERT INTO eftattach(
+          fk_object_id,
+          filename,
+          dateadded,
+          dateupdated,
+          datedeleted,
+          user
+          )
+          VALUES(?,?,?,?,?,?);`, [
+        fields.id[0],
+        fields.id[0] + '_' + fileStamp + '_' + file[0].originalFilename,
+        now.toLocaleDateString(),
+        now.toLocaleDateString(),
+        null,
+        username
+      ]).run();
+
+      var fileID = insert.lastInsertROWID;
+
+      fs.copyFile(file[0].path, fields.id[0] + '_' + fileStamp + '_' + file[0].originalFilename, (err) => {
+        if (err) console.log(err);
+        //console.log(`${file[0].path} copied to ${config.attachmentPath+file[0].originalFilename}`);
+        blobService.createBlockBlobFromLocalFile(config.blobContainer, config.blobPath + fields.id[0] + '_' + fileStamp + '_' + file[0].originalFilename, fields.id[0] + '_' + fileStamp + '_' + file[0].originalFilename,
+          function (error, result, response) {
+            if (error) {
+              console.log(error)
+              del = new Query('DELETE FROM eftattach WHERE id=?;', [fileID]).run();
+              reject();
+            }
+            else {
+              console.log("uploaded to azure");
+              fs.unlink(fields.id[0] + '_' + fileStamp + '_' + file[0].originalFilename, (err) => {
+                if (err) {
+                  console.log(err);
+                  reject();
+                };
+                console.log(fields.id[0] + '_' + fileStamp + '_' + file[0].originalFilename + ' was deleted from local');
+                new Query().audit(req, [{ 'attachments': payload }], null, fields.id[0], 1);
+                resolve();
+              });
+            }
+          }
+        )
+
+      })
+    })
+  };
+
+
 
   /**
    *
    * */
   app.get('/faq', oidc.ensureAuthenticated(), (req, res) => {
     console.log(req.method + ' ' + req.url + ' ' + req.userContext.userinfo.preferred_username + ' ' + req.headers['x-real-ip']);
-    try {
+    /*try {
       fs.readFile(__dirname + '/../common/assets/documents/faq.pdf', (err, data) => {
         if (err) {
           res.send({ msg: 'File not found on server' + err });
@@ -428,7 +498,11 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
     catch (err) {
       console.log(err);
       res.send({ msg: 'Unable to retrieve faq' });
-    }
+    }*/
+    res.render('faq', {
+      isLoggedIn: !!req.userContext.userinfo,
+      userinfo: req.userContext.userinfo
+    });
   });
   /**
    * Jorge Medina: 12/04/2018 -> Route to serve files on request
@@ -498,7 +572,7 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
               //file sent to user ==> delete it
 
               fs.unlink(config.attachmentPath + filename.substring(filename.indexOf('_', 5) + 1), (err) => {
-                if (err) throw err;
+                if (err) console.log(err);
               });
 
             }
@@ -780,7 +854,7 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
 
 
     //Get Attachments if Any
-    var attachments = new Query('SELECT * from eftattach where id=?', [req.params.id]).all();
+    var attachments = new Query('SELECT * from eftattach where fk_object_id=?', [req.params.id]).all();
 
     //
     //Get the current workflow step for the item
@@ -1038,10 +1112,10 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
         validatePayload(payload)
           .then(function (validationErrors) {
 
-            if (validationErrors.length >= 1) {
-              res.send({ msg: '', validationErrors: validationErrors });
-              return; //force end of execution
-            }
+            /* if (validationErrors.length >= 1) { //do not throw the error if new BES only when send to Review.
+               res.send({ msg: '', validationErrors: validationErrors });
+               return; //force end of execution
+             }*/
             var insert = new Query(`INSERT INTO eftpayee(
           vendorid,
           sourcesystem,
@@ -1301,7 +1375,7 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
         }
 
         //Payee city is required
-        if (validator.isEmpty(payload.payeecity, { ignore_whitespace: true })) {
+        if (['US', 'CA'].indexOf(payload.payeecountry) !== -1 && validator.isEmpty(payload.payeecity, { ignore_whitespace: true })) {
           validationErrors.push({
             field: 'payeecity',
             msg: 'Cannot be blank'
@@ -1309,7 +1383,7 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
         }
 
         //Payee Postal Code is required
-        if (validator.isEmpty(payload.payeezip, { ignore_whitespace: true })) {
+        if (['US', 'CA'].indexOf(payload.payeecountry) !== -1 && validator.isEmpty(payload.payeezip, { ignore_whitespace: true })) {
           validationErrors.push({
             field: 'payeezip',
             msg: 'Cannot be blank'
@@ -1332,7 +1406,7 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
             msg: 'Use only 2 letter state code'
           });
         }
-        else if (validator.isEmpty(payload.payeestate, { ignore_whitespace: true })) {
+        else if (['US', 'CA'].indexOf(payload.payeecountry) !== -1 && validator.isEmpty(payload.payeestate, { ignore_whitespace: true })) {
           validationErrors.push({
             field: 'payeestate',
             msg: 'Cannot be blank'

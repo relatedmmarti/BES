@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    {{>head}}
+  </head>
+  <body>
+
+    {{>menu}}
+
+    <div id="content" class="ui padded grid relaxed">
+      <div id="doc" class="column eight wide">
+        <div class="doc-overview">
+        <h1>Rules Associated with TM5 Payments</h1>
+
+        <br/>
+        <label class='label'>BES Codes</label>
+        <ol>
+          <li>Do not include commas “,” in any of the fields, a comma will damage the format of the file that will be sent</li>
+          <li>Bank Name can’t be empty, is required</li>
+          <li>Bank Country can’t be empty, is required. Use only 2 letters ISO codes, examples: United States = US; Canada = CA</li>
+          <li>Bank State is required. For US and CA, use two letters for states, example: Florida = FL</li>
+          <li>Bank City can’t be empty, is required. If for some reason you don’t have the city of the bank account, you can use the same city as the Payee</li>
+          <li>Bank Account can’t’ be empty, is required</li>
+          <li>Bank Accounts can’t have any special characters (examples: ‘-‘,’/’,’_’) or spaces</li>
+          <li>If the Bank Account is international and the country uses IBAN code, the IBAN code must be used, do not include the word IBAN as part of the account number</li>
+          <li>Payee name can’t be empty</li>
+          <li>Payee Country can’t be empty. Use only 2 letters ISO codes, examples: United States = US</li>
+          <li>If Payee Country is not ‘US’ then SWIFT can’t be empty</li>
+          <li>If Payee Country is ‘US’ then Routing number can’t be empty</li>
+          <li>If Payee Country is ‘US’ Payee city is required</li>
+          <li>If Payee Country is ‘US’ then Payee Postal Code is required</li>
+          <li>If Payee Country is ‘US’ or ‘CA’ payee State is required. For US and CA, use two letters for states, example: Florida = FL</li>
+          <li>When defining Payment type (Wire, ACH) make sure the Bank is providing this payment type to Related</li>
+        </ol>
+        </div>
+      </div>
+
+    </div>
+  </body>
+</html>
