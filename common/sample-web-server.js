@@ -357,12 +357,29 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
       var payload = { id: "", files: {} };
       form.parse(req, (err, fields, files) => {
         var now = new Date();
-        var fileStamp = (now.getMonth() + 1) + '' + (now.getDate()) + '' + (now.getFullYear()) + '' + (now.getHours()) + '' + (now.getMinutes());
         payload.id = fields.id[0];
         payload.files = files;
         _.values(files).forEach((file) => {
+          var fileStamp = (now.getMonth() + 1) + '' + (now.getDate()) + '' + (now.getFullYear()) + '' + (now.getHours()) + '' + (now.getMinutes());
+          var insert = new Query(`INSERT INTO eftattach(
+          fk_object_id,
+          filename,
+          dateadded,
+          dateupdated,
+          datedeleted,
+          user
+          )
+          VALUES(?,?,?,?,?,?);`, [
+            fields.id[0],
+            fields.id[0] + '_' + fileStamp + '_' + file[0].originalFilename,
+            now.toLocaleDateString(),
+            now.toLocaleDateString(),
+            null,
+            req.userContext.userinfo.preferred_username
+          ]).run();
 
-          //fs.copyFile(file[0].path, config.attachmentPath + fields.id[0] + '_' + fileStamp + '_' + file[0].originalFilename, (err) => {
+          var fileID = insert.lastInsertROWID;
+
           fs.copyFile(file[0].path, fields.id[0] + '_' + fileStamp + '_' + file[0].originalFilename, (err) => {
             if (err) throw err;
             //console.log(`${file[0].path} copied to ${config.attachmentPath+file[0].originalFilename}`);
@@ -374,32 +391,20 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
                 else {
                   console.log("uploaded to azure");
                   fs.unlink(fields.id[0] + '_' + fileStamp + '_' + file[0].originalFilename, (err) => {
-                    if (err) throw err;
+                    if (err) {
+                      console.log(err)
+                      res.send({ msg: '' })
+                    };
                     console.log(fields.id[0] + '_' + fileStamp + '_' + file[0].originalFilename + ' was deleted from local');
+                    new Query().audit(req, [{ 'attachments': payload }], null, fields.id[0], 1);
+                    res.send({ msg: '' });
                   });
                 }
               }
             )
-            var insert = new Query(`INSERT INTO eftattach(
-          id,
-          filename,
-          dateadded,
-          dateupdated,
-          datedeleted,
-          user
-          )
-          VALUES(?,?,?,?,?,?);`, [
-              fields.id[0],
-              fields.id[0] + '_' + fileStamp + '_' + file[0].originalFilename,
-              now.toLocaleDateString(),
-              now.toLocaleDateString(),
-              null,
-              req.userContext.userinfo.preferred_username
-            ]).run();
+
           });
         })
-        new Query().audit(req, [{ 'attachments': payload }], null, fields.id[0], 1);
-        res.send({ msg: '' });
       });
     }
     catch (err) {
@@ -784,7 +789,7 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
 
 
     //Get Attachments if Any
-    var attachments = new Query('SELECT * from eftattach where id=?', [req.params.id]).all();
+    var attachments = new Query('SELECT * from eftattach where fk_object_id=?', [req.params.id]).all();
 
     //
     //Get the current workflow step for the item

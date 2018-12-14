@@ -500,6 +500,10 @@ function saveCSV(tableId) {
  *
  */
 function attachFiles(id, action) {
+    if ($("#attachment")[0].files.length < 1) {
+        alert('no files to upload');
+        return;
+    }
     $("#btnUploadFile, #attachment").prop("disabled", true);
     $("#overlay").click(function () {
         // do nothing
