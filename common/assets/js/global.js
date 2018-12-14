@@ -500,7 +500,11 @@ function saveCSV(tableId) {
  *
  */
 function attachFiles(id, action) {
-
+    $("#btnUploadFile, #attachment").prop("disabled", true);
+    $("#overlay").click(function () {
+        // do nothing
+    });
+    $("#overlay").show();
     var data = new FormData();
     for (var i = 0; i < $("#attachment")[0].files.length; i++) {
         data.append("file_" + i, $("#attachment")[0].files[i]);
@@ -521,6 +525,8 @@ function attachFiles(id, action) {
     }
 
     $.ajax(settings).done(function (response) {
+        $("#btnUploadFile, #attachment").prop("disabled", false);
+        $("#overlay").hide();
         response = JSON.parse(response);
         if (response.msg === '') {
             if (action === "edit")

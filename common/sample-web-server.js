@@ -414,7 +414,7 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
    * */
   app.get('/faq', oidc.ensureAuthenticated(), (req, res) => {
     console.log(req.method + ' ' + req.url + ' ' + req.userContext.userinfo.preferred_username + ' ' + req.headers['x-real-ip']);
-    try {
+    /*try {
       fs.readFile(__dirname + '/../common/assets/documents/faq.pdf', (err, data) => {
         if (err) {
           res.send({ msg: 'File not found on server' + err });
@@ -428,7 +428,11 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
     catch (err) {
       console.log(err);
       res.send({ msg: 'Unable to retrieve faq' });
-    }
+    }*/
+    res.render('faq', {
+      isLoggedIn: !!req.userContext.userinfo,
+      userinfo: req.userContext.userinfo
+    });
   });
   /**
    * Jorge Medina: 12/04/2018 -> Route to serve files on request
@@ -1301,7 +1305,7 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
         }
 
         //Payee city is required
-        if (validator.isEmpty(payload.payeecity, { ignore_whitespace: true })) {
+        if (['US', 'CA'].indexOf(payload.payeecountry) !== -1 && validator.isEmpty(payload.payeecity, { ignore_whitespace: true })) {
           validationErrors.push({
             field: 'payeecity',
             msg: 'Cannot be blank'
@@ -1309,7 +1313,7 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
         }
 
         //Payee Postal Code is required
-        if (validator.isEmpty(payload.payeezip, { ignore_whitespace: true })) {
+        if (['US', 'CA'].indexOf(payload.payeecountry) !== -1 && validator.isEmpty(payload.payeezip, { ignore_whitespace: true })) {
           validationErrors.push({
             field: 'payeezip',
             msg: 'Cannot be blank'
@@ -1332,7 +1336,7 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
             msg: 'Use only 2 letter state code'
           });
         }
-        else if (validator.isEmpty(payload.payeestate, { ignore_whitespace: true })) {
+        else if (['US', 'CA'].indexOf(payload.payeecountry) !== -1 && validator.isEmpty(payload.payeestate, { ignore_whitespace: true })) {
           validationErrors.push({
             field: 'payeestate',
             msg: 'Cannot be blank'

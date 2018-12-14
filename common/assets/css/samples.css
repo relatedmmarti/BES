@@ -378,4 +378,20 @@ CSS for Vendor Form
     text-align:center;
 }
 
+#overlay {
+    background-color: rgba(0, 0, 0, 0.1);
+    z-index: 999;
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    display: none;
+}
+
+#loadingH1{
+    text-align:center;
+    color:navy;
+}
+
 
