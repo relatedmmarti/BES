@@ -219,7 +219,7 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
       }
 
       //anyone can advance workflow in entry and review step
-      if (CurrentStep.authorized_user === null && CurrentStep.id !== 1 && CurrentStep.id !== 2) {
+      if (CurrentStep.authorized_user === null && CurrentStep.id !== 1 && CurrentStep.id !== 2 && CurrentStep.id !== 6) {
         msg = '' + username + ' is not authorized modify records in the ' + CurrentStep.name + ' step';
         //console.log(msg);
         this.msg = (msg);
