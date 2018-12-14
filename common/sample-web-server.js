@@ -355,12 +355,81 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
       var form = new multiparty.Form();
       var payload = { id: "", files: {} };
       form.parse(req, (err, fields, files) => {
-        var now = new Date();
         payload.id = fields.id[0];
         payload.files = files;
-        _.values(files).forEach((file, index) => {
-          var fileStamp = (now.getMonth() + 1) + '' + (now.getDate()) + '' + (now.getFullYear()) + '' + (now.getHours()) + '' + (now.getMinutes());
-          var insert = new Query(`INSERT INTO eftattach(
+        var promiseArr = [];
+        _.values(files).forEach((file) => {
+          promiseArr.push(uploadFile(file, fields, req.userContext.userinfo.preferred_username, req, payload));
+          /* var fileStamp = (now.getMonth() + 1) + '' + (now.getDate()) + '' + (now.getFullYear()) + '' + (now.getHours()) + '' + (now.getMinutes());
+           var insert = new Query(`INSERT INTO eftattach(
+           fk_object_id,
+           filename,
+           dateadded,
+           dateupdated,
+           datedeleted,
+           user
+           )
+           VALUES(?,?,?,?,?,?);`, [
+             fields.id[0],
+             fields.id[0] + '_' + fileStamp + '_' + file[0].originalFilename,
+             now.toLocaleDateString(),
+             now.toLocaleDateString(),
+             null,
+             req.userContext.userinfo.preferred_username
+           ]).run();
+
+           var fileID = insert.lastInsertROWID;
+
+           fs.copyFile(file[0].path, fields.id[0] + '_' + fileStamp + '_' + file[0].originalFilename, (err) => {
+             if (err) console.log(err);
+             //console.log(`${file[0].path} copied to ${config.attachmentPath+file[0].originalFilename}`);
+             blobService.createBlockBlobFromLocalFile(config.blobContainer, config.blobPath + fields.id[0] + '_' + fileStamp + '_' + file[0].originalFilename, fields.id[0] + '_' + fileStamp + '_' + file[0].originalFilename,
+               function (error, result, response) {
+                 if (error) {
+                   console.log(error)
+                   del = new Query('DELETE FROM eftattach WHERE id=?;', [fileID]).run();
+                   res.send({ msg: 'Unable to process file' });
+                 }
+                 else {
+                   console.log("uploaded to azure");
+                   fs.unlink(fields.id[0] + '_' + fileStamp + '_' + file[0].originalFilename, (err) => {
+                     if (err) {
+                       console.log(err)
+                       res.send({ msg: 'Unable to process file' });
+                     };
+                     console.log(fields.id[0] + '_' + fileStamp + '_' + file[0].originalFilename + ' was deleted from local');
+                     new Query().audit(req, [{ 'attachments': payload }], null, fields.id[0], 1);
+                     if (index == _.values(files).length - 1) res.send({ msg: '' });
+                   });
+                 }
+               }
+             )
+
+           });*/
+        })
+
+        Promise.all(promiseArr)
+          .then((values) => {
+            res.send({ msg: '' });
+          })
+          .catch((err) => {
+            console.log(err);
+            res.send({ msg: 'Unable to save all files' });
+          })
+      });
+    }
+    catch (err) {
+      console.log(err);
+      res.status(500);
+      res.send(err);
+    }
+  });
+
+  function uploadFile(file, fields, username, req, payload) {
+    return new Promise((resolve, reject) => {
+      var now = new Date();
+      var fileStamp = (now.getMonth() + 1) + '' + (now.getDate()) + '' + (now.getFullYear()) + '' + (now.getHours()) + '' + (now.getMinutes());
+      var insert = new Query(`INSERT INTO eftattach(
           fk_object_id,
           filename,
           dateadded,
@@ -369,53 +438,46 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
           user
           )
           VALUES(?,?,?,?,?,?);`, [
-            fields.id[0],
-            fields.id[0] + '_' + fileStamp + '_' + file[0].originalFilename,
-            now.toLocaleDateString(),
-            now.toLocaleDateString(),
-            null,
-            req.userContext.userinfo.preferred_username
-          ]).run();
+        fields.id[0],
+        fields.id[0] + '_' + fileStamp + '_' + file[0].originalFilename,
+        now.toLocaleDateString(),
+        now.toLocaleDateString(),
+        null,
+        username
+      ]).run();
 
-          var fileID = insert.lastInsertROWID;
+      var fileID = insert.lastInsertROWID;
 
-          fs.copyFile(file[0].path, fields.id[0] + '_' + fileStamp + '_' + file[0].originalFilename, (err) => {
-            if (err) console.log(err);
-            //console.log(`${file[0].path} copied to ${config.attachmentPath+file[0].originalFilename}`);
-            blobService.createBlockBlobFromLocalFile(config.blobContainer, config.blobPath + fields.id[0] + '_' + fileStamp + '_' + file[0].originalFilename, fields.id[0] + '_' + fileStamp + '_' + file[0].originalFilename,
-              function (error, result, response) {
-                if (error) {
-                  console.log(error)
-                  del = new Query('DELETE FROM eftattach WHERE id=?;', [fileID]).run();
-                  res.send({ msg: 'Unable to process file' });
-                }
-                else {
-                  console.log("uploaded to azure");
-                  fs.unlink(fields.id[0] + '_' + fileStamp + '_' + file[0].originalFilename, (err) => {
-                    if (err) {
-                      console.log(err)
-                      res.send({ msg: 'Unable to process file' });
-                    };
-                    console.log(fields.id[0] + '_' + fileStamp + '_' + file[0].originalFilename + ' was deleted from local');
-                    new Query().audit(req, [{ 'attachments': payload }], null, fields.id[0], 1);
-                    console.log(index);
-                    console.log(_.values(files).length);
-                    if (index == _.values(files).length - 1) res.send({ msg: '' });
-                  });
-                }
-              }
-            )
+      fs.copyFile(file[0].path, fields.id[0] + '_' + fileStamp + '_' + file[0].originalFilename, (err) => {
+        if (err) console.log(err);
+        //console.log(`${file[0].path} copied to ${config.attachmentPath+file[0].originalFilename}`);
+        blobService.createBlockBlobFromLocalFile(config.blobContainer, config.blobPath + fields.id[0] + '_' + fileStamp + '_' + file[0].originalFilename, fields.id[0] + '_' + fileStamp + '_' + file[0].originalFilename,
+          function (error, result, response) {
+            if (error) {
+              console.log(error)
+              del = new Query('DELETE FROM eftattach WHERE id=?;', [fileID]).run();
+              reject();
+            }
+            else {
+              console.log("uploaded to azure");
+              fs.unlink(fields.id[0] + '_' + fileStamp + '_' + file[0].originalFilename, (err) => {
+                if (err) {
+                  console.log(err);
+                  reject();
+                };
+                console.log(fields.id[0] + '_' + fileStamp + '_' + file[0].originalFilename + ' was deleted from local');
+                new Query().audit(req, [{ 'attachments': payload }], null, fields.id[0], 1);
+                resolve();
+              });
+            }
+          }
+        )
 
-          });
-        })
-      });
-    }
-    catch (err) {
-      console.log(err);
-      res.status(500);
-      res.send(err);
-    }
-  })
+      })
+    })
+  };
+
+
 
   /**
    *
