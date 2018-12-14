@@ -16,6 +16,7 @@
 html, body {
   font-family: Roboto, sans-serif;
   height: 100%;
+  overflow: hidden;
 }
 
 a:link, a:visited, a:active {
@@ -280,6 +281,7 @@ input:disabled, select:disabled {
         width: 30%;
         background-color: #f5f5f5;
         padding-top: 10px;
+        margin-right: 15px !important;
     }
    /* #rightMaxim, #rightMin{
         display: none;
@@ -376,22 +378,6 @@ CSS for Vendor Form
 
 #vendorFormHdr, #vendoractionsDiv{
     text-align:center;
-}
-
-#overlay {
-    background-color: rgba(0, 0, 0, 0.1);
-    z-index: 999;
-    position: absolute;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    display: none;
-}
-
-#loadingH1{
-    text-align:center;
-    color:navy;
 }
 
 

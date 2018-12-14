@@ -387,13 +387,15 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
               function (error, result, response) {
                 if (error) {
                   console.log(error)
+                  del = new Query('DELETE FROM eftattach WHERE id=?;', [fileID]).run();
+                  res.send({ msg: 'Unable to process file' });
                 }
                 else {
                   console.log("uploaded to azure");
                   fs.unlink(fields.id[0] + '_' + fileStamp + '_' + file[0].originalFilename, (err) => {
                     if (err) {
                       console.log(err)
-                      res.send({ msg: '' })
+                      res.send({ msg: 'Unable to process file' })
                     };
                     console.log(fields.id[0] + '_' + fileStamp + '_' + file[0].originalFilename + ' was deleted from local');
                     new Query().audit(req, [{ 'attachments': payload }], null, fields.id[0], 1);
@@ -507,7 +509,7 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
               //file sent to user ==> delete it
 
               fs.unlink(config.attachmentPath + filename.substring(filename.indexOf('_', 5) + 1), (err) => {
-                if (err) throw err;
+                if (err) console.log(err);
               });
 
             }
