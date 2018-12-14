@@ -14,8 +14,7 @@ const mustacheExpress = require('mustache-express');
 const path = require('path');
 const { ExpressOIDC } = require('@okta/oidc-middleware');
 
-if (process.env.NODE_ENV === 'development')
-  require('dotenv').config();
+require('dotenv').config();
 const config = require('./config');
 const azure = require('azure-storage');
 
