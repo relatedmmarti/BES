@@ -68,6 +68,14 @@
                    <span>New</span>
                  </a>
                 </p>
+            <p class="control" style='display:inline;'>
+                <a class="button is-info" onclick="saveCSV('userList')">
+                  <span class="icon is-small">
+                   <i class="fa fa-table" aria-hidden="true"></i>
+                  </span>
+                  <span>Export to Excel</span>
+                </a>
+              </p>
                 </td>
               </tr>
             </tbody>
@@ -108,16 +116,6 @@
             </thead>
             <tbody></tbody>
           </table>
-         <div>
-             <p class="control">
-                <a class="button is-info" onclick="saveCSV('userList')">
-                  <span class="icon is-small">
-                   <i class="fa fa-table" aria-hidden="true"></i>
-                  </span>
-                  <span>Export to Excel</span>
-                </a>
-              </p>
-         </div>
         </div>
 
       </div>
@@ -159,6 +157,6 @@
       </div>
       </div>
     </div>
-    <div id="overlay"><h1 id="loadingH1">Loading files...</h1></div>
+
   </body>
 </html>
