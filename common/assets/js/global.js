@@ -602,6 +602,8 @@ function setFileName() {
             else {
                 alert("Invalid file extension found: " + filesToUpload[i].name.substring(filesToUpload[i].name.lastIndexOf(".") + 1));
                 $("#attachment")[0].value = ""; //remove all files
+                $("#uploadFileName").html("");
+
             }
         }
     }
