@@ -1042,10 +1042,10 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
         validatePayload(payload)
           .then(function (validationErrors) {
 
-            if (validationErrors.length >= 1) {
-              res.send({ msg: '', validationErrors: validationErrors });
-              return; //force end of execution
-            }
+            /* if (validationErrors.length >= 1) { //do not throw the error if new BES only when send to Review.
+               res.send({ msg: '', validationErrors: validationErrors });
+               return; //force end of execution
+             }*/
             var insert = new Query(`INSERT INTO eftpayee(
           vendorid,
           sourcesystem,
