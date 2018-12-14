@@ -533,6 +533,7 @@ function attachFiles(id, action) {
         $("#overlay").hide();
         response = JSON.parse(response);
         if (response.msg === '') {
+            $("#btnUploadFile").prop("disabled", true);
             if (action === "edit")
                 getEdit(id);
             else if (action !== "none")

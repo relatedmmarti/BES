@@ -359,7 +359,7 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
         var now = new Date();
         payload.id = fields.id[0];
         payload.files = files;
-        _.values(files).forEach((file) => {
+        _.values(files).forEach((file, index) => {
           var fileStamp = (now.getMonth() + 1) + '' + (now.getDate()) + '' + (now.getFullYear()) + '' + (now.getHours()) + '' + (now.getMinutes());
           var insert = new Query(`INSERT INTO eftattach(
           fk_object_id,
@@ -381,7 +381,7 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
           var fileID = insert.lastInsertROWID;
 
           fs.copyFile(file[0].path, fields.id[0] + '_' + fileStamp + '_' + file[0].originalFilename, (err) => {
-            if (err) throw err;
+            if (err) console.log(err);
             //console.log(`${file[0].path} copied to ${config.attachmentPath+file[0].originalFilename}`);
             blobService.createBlockBlobFromLocalFile(config.blobContainer, config.blobPath + fields.id[0] + '_' + fileStamp + '_' + file[0].originalFilename, fields.id[0] + '_' + fileStamp + '_' + file[0].originalFilename,
               function (error, result, response) {
@@ -395,11 +395,13 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
                   fs.unlink(fields.id[0] + '_' + fileStamp + '_' + file[0].originalFilename, (err) => {
                     if (err) {
                       console.log(err)
-                      res.send({ msg: 'Unable to process file' })
+                      res.send({ msg: 'Unable to process file' });
                     };
                     console.log(fields.id[0] + '_' + fileStamp + '_' + file[0].originalFilename + ' was deleted from local');
                     new Query().audit(req, [{ 'attachments': payload }], null, fields.id[0], 1);
-                    res.send({ msg: '' });
+                    console.log(index);
+                    console.log(_.values(files).length);
+                    if (index == _.values(files).length - 1) res.send({ msg: '' });
                   });
                 }
               }
