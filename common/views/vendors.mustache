@@ -31,6 +31,14 @@
                 </tr>
               <tr>
                 <td><button type="button" id="btnVendorFilter" class="button is-info">Search</button>
+             <p class="control" style="display:inline;">
+                <a class="button is-info" onclick="saveCSV('vendorList')">
+                  <span class="icon is-small">
+                   <i class="fa fa-table" aria-hidden="true"></i>
+                  </span>
+                  <span>Export to Excel</span>
+                </a>
+              </p>
                 <p class="control" id="newBtn">
                  <a class="button is-info" onclick="generateVendorUrl();">
                    <span class="icon is-small">
@@ -47,29 +55,28 @@
             <thead>
               <th>Vendor ID</th>
               <th>Legal Entity Name</th>
-              <th>DBA</th>
-              <th>Tax ID</th>
-              <th>1099 Email</th>
+              <th>Email for 1099 Contact</th>
               <th>Name</th>
               <th>Title</th>
               <th>Address Line 1</th>
               <th>Address Line 2</th>
               <th>City</th>
               <th>State</th>
-              <th>Zip</th>
+              <th>Zip Code</th>
+              <th>Country</th>
+              <th>Bank Name</th>
+              <th>Bank Address</th>
+              <th>Bank City</th>
+              <th>Bank State/Province</th>
+              <th>Bank ZIP/Postal</th>
+              <th>Bank Country</th>
+              <th>Routing Number</th>
+              <th>Account Number</th>
+              <th>Swift</th>
+              <th>Tax Id #</th>
             </thead>
             <tbody></tbody>
           </table>
-         <div>
-             <p class="control">
-                <a class="button is-info" onclick="saveCSV('vendorList')">
-                  <span class="icon is-small">
-                   <i class="fa fa-table" aria-hidden="true"></i>
-                  </span>
-                  <span>Export to Excel</span>
-                </a>
-              </p>
-         </div>
         </div>
 
       </div>
@@ -111,6 +118,6 @@
       </div>
       </div>
     </div>
-
+  <input type="hidden" id="clipboard"/>
   </body>
 </html>

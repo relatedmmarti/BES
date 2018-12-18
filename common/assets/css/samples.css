@@ -16,7 +16,7 @@
 html, body {
   font-family: Roboto, sans-serif;
   height: 100%;
-  overflow: hidden;
+  overflow-y: hidden;
 }
 
 a:link, a:visited, a:active {
@@ -107,6 +107,10 @@ input:disabled, select:disabled {
 *Custom CSS  - Jorge Medina - BEGIN
 */
 @media screen and (max-width: 900px){ /*Mpbile Mode*/
+
+#w9Lbl,#insuranceCertLbl, #workerCompLbl{
+    width: 100%;
+}
     #content{
         /*padding-left: 10rem;*/
     }
@@ -297,7 +301,9 @@ input:disabled, select:disabled {
     /*label.file-label{
     width: 20%;
 }*/
-
+#w9Lbl,#insuranceCertLbl, #workerCompLbl{
+    width: 20%;
+}
 
 }
 
@@ -394,6 +400,12 @@ CSS for Vendor Form
     text-align:center;
     color:navy;
 }
+
+#w9FileName, #insuranceCertFileName, #workerCompFileName{
+    max-width: none !important;
+}
+
+
 
 
 

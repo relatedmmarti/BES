@@ -35,6 +35,8 @@ config.mailOptions = {
 };
 config.besURL = process.env.besURL + '/payinfo?id=<ID>';
 
+config.appURL = process.env.besURL;
+
 
 config.bespush = {
   url: process.env.bespushurl,

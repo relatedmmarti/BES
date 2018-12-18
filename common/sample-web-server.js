@@ -125,7 +125,7 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
    * */
   app.get('/vendorform', (req, res) => {
     res.render('vendorform', {
-
+      token: (req.query.token) ? req.query.token : '' //pass form token if present
     });
   });
 
@@ -1188,7 +1188,18 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
             //Set initial workflow step for new record
             var setWorkflow = new WorkflowAction(1, 1, insert.lastInsertROWID, req.userContext.userinfo.preferred_username, payload.wf_notes, true);
             //console.log(setWorkflow);
-
+            if (payload.vendor_id) {
+              var insertAttach = new Query(`INSERT INTO eftattach(
+                fk_object_id,
+                filename,
+                dateadded,
+                dateupdated,
+                datedeleted,
+                user
+                ) SELECT ?, filename,dateadded,dateupdated,'','external' from vendorattach WHERE fk_object_id=?;`, [
+                insert.lastInsertROWID, payload.vendor_id
+              ]).run();
+            }
             res.send({ msg: '', id: insert.lastInsertROWID });
           })
 
@@ -1206,6 +1217,56 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
     }
   });
 
+  /**
+   * Jorge Medina 12/17/2018
+   * */
+
+  app.get('/vendorURL', oidc.ensureAuthenticated(), (req, res) => {
+    try {
+      console.log(req.method + ' ' + req.url + ' ' + req.userContext.userinfo.preferred_username + ' ' + req.headers['x-real-ip']);
+      var token = new Date().valueOf();
+      var url = config.appURL + '/vendorform?token=' + token;
+      var insert = new Query(`INSERT INTO vendorurl(
+      token,
+      datecreated,
+      user
+     ) values(?,?,?);`, [token, new Date().toLocaleDateString(), req.userContext.userinfo.preferred_username]).run();
+      res.status(200).json({ url: url, msg: '' });
+    }
+    catch (err) {
+      console.log(err);
+      res.json({ msg: 'Unable to create URL: ' + err });
+    }
+  });
+
+  /***
+   * Jorge Medina 12/17/2018 Validate Vendor Form Urls
+   * */
+
+  app.get('/validateUrl/:token', (req, res) => {
+    try {
+      console.log(req.method + ' ' + req.url);
+
+      var result = new Query(`
+    select id from vendorurl
+    where
+    token = ? and datesubmitted is null;`, [
+        req.params.token + '.0',
+      ]).get();
+
+      if (result === undefined) {
+        res.status(200).json({ msg: 'Invalid token provided' });
+      }
+      else {
+        res.status(200).json({ msg: '' });
+      }
+
+    }
+    catch (err) {
+      console.log(err);
+      res.json({ msg: 'Error validating token: ' + err });
+    }
+  });
 
   /**
    * List all Submitted Vendors
@@ -1264,9 +1325,13 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
     var obj = new Query('SELECT * from vendorforms where id=?', [req.params.id]).get();
 
 
+    //Get Attachments if Any
+    var attachments = new Query('SELECT * from vendorattach where fk_object_id=?', [req.params.id]).all();
+
     //Wrap everything up into an object to send out
     var payload = {
-      obj: obj
+      obj: obj,
+      attachments: attachments
     };
 
     //console.log(payload);
@@ -1294,35 +1359,65 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
             res.send({ msg: '', validationErrors: validationErrors });
             return; //force end of execution
           }
+
+          var now = new Date();
           var insert = new Query(`INSERT INTO vendorforms(
           legalentityname,
-          dba,
-          taxid,
           email1099,
-          vendorname,
+          name,
           title,
           address1,
           address2,
           city,
           state,
-          zip
+          zip,
+          country,
+          bankname,
+          bankaddress,
+          bankcity,
+          bankstate,
+          bankzip,
+          bankcountry,
+          routing,
+          account,
+          swift,
+          taxid,
+          datecreated
           )
-          VALUES(?,?,?,?,?,?,?,?,?,?,?);`, [
+          VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);`, [
             payload.legalentityname,
-            payload.dba,
-            payload.taxid,
             payload.email1099,
-            payload.vendorname,
+            payload.name,
             payload.title,
             payload.address1,
             payload.address2,
             payload.city,
             payload.state,
-            payload.zip
+            payload.zip,
+            payload.country,
+            payload.bankname,
+            payload.bankaddress,
+            payload.bankcity,
+            payload.bankstate,
+            payload.bankzip,
+            payload.bankcountry,
+            payload.routing,
+            payload.account,
+            payload.swift,
+            payload.taxid,
+            now.toLocaleDateString()
           ]).run();
 
           //console.log(insert);
-
+          var update = new Query(`UPDATE vendorurl
+        set datesubmitted=?,
+            ip=?
+        WHERE
+              token=? and datesubmitted is null;`, [
+            new Date().toLocaleDateString(),
+            req.headers['x-forwarded-for'] || req.connection.remoteAddress,
+            payload.token + '.0'
+          ]).run();
 
           res.send({ msg: '', id: insert.lastInsertROWID });
         })
@@ -1335,6 +1430,99 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
       res.send(err);
     }
   });
+
+
+
+  /**
+   *  Jorge Medina  12/03/2018 Route to store vendor attachments
+   * */
+
+  app.post('/attachVendor', (req, res) => {
+    console.log(req.method + ' ' + req.url);
+
+    try {
+      var form = new multiparty.Form();
+      var payload = { id: "", files: {} };
+      form.parse(req, (err, fields, files) => {
+        payload.id = fields.id[0];
+        payload.files = files;
+        var promiseArr = [];
+        _.values(files).forEach((file) => {
+          promiseArr.push(uploadVendorFile(file, fields, req, payload));
+        })
+
+        Promise.all(promiseArr)
+          .then((values) => {
+            res.send({ msg: '' });
+          })
+          .catch((err) => {
+            console.log(err);
+            res.send({ msg: 'Unable to save all files' });
+          })
+      });
+    }
+    catch (err) {
+      console.log(err);
+      res.status(500);
+      res.send(err);
+    }
+  });
+
+  /**
+   * Jorge Medina 12/17/2018 Upload Vendor attachments
+   * */
+
+  function uploadVendorFile(file, fields, req, payload) {
+    return new Promise((resolve, reject) => {
+      var now = new Date();
+      var fileStamp = (now.getMonth() + 1) + '' + (now.getDate()) + '' + (now.getFullYear()) + '' + (now.getHours()) + '' + (now.getMinutes());
+      var insert = new Query(`INSERT INTO vendorattach(
+          fk_object_id,
+          filename,
+          dateadded,
+          dateupdated,
+          datedeleted
+          )
+          VALUES(?,?,?,?,?);`, [
+        fields.id[0],
+        fields.id[0] + '_' + fileStamp + '_v_' + file[0].originalFilename,
+        now.toLocaleDateString(),
+        now.toLocaleDateString(),
+        null
+      ]).run();
+
+      var fileID = insert.lastInsertROWID;
+
+      fs.copyFile(file[0].path, fields.id[0] + '_' + fileStamp + '_v_' + file[0].originalFilename, (err) => {
+        if (err) console.log(err);
+        //console.log(`${file[0].path} copied to ${config.attachmentPath+file[0].originalFilename}`);
+        blobService.createBlockBlobFromLocalFile(config.blobContainer, config.blobPath + fields.id[0] + '_' + fileStamp + '_v_' + file[0].originalFilename, fields.id[0] + '_' + fileStamp + '_v_' + file[0].originalFilename,
+          function (error, result, response) {
+            if (error) {
+              console.log(error)
+              del = new Query('DELETE FROM vendorattach WHERE id=?;', [fileID]).run();
+              reject();
+            }
+            else {
+              console.log("uploaded to azure");
+              fs.unlink(fields.id[0] + '_' + fileStamp + '_v_' + file[0].originalFilename, (err) => {
+                if (err) {
+                  console.log(err);
+                  reject();
+                };
+                console.log(fields.id[0] + '_' + fileStamp + '_v_' + file[0].originalFilename + ' was deleted from local');
+                resolve();
+              });
+            }
+          }
+        )
+
+      })
+    })
+  };
+
+
+
 
   /**
    * Jorge Medina 12/05/2018 Handle 404 requests -> DO NOT REMOVE FROM BOTTOM OF SCRIPT!
@@ -1582,20 +1770,164 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
               msg: 'Invalid Characters found ("," , # , \" or \')'
             });
           }
-
-          if (key !== 'address2' && validator.isEmpty(value, { ignore_whitespace: true })) {
-            validationErrors.push({
-              field: key,
-              msg: 'Cannot be blank'
-            });
-          }
-
         });
 
         if (payload.email1099 && !validator.isEmail(payload.email1099)) {
           validationErrors.push({
             field: 'email1099',
             msg: 'Invalid Email address found'
+          });
+        }
+
+
+
+        if (validator.isEmpty(payload.legalentityname, { ignore_whitespace: true })) {
+          validationErrors.push({
+            field: 'legalentityname',
+            msg: 'Cannot be blank'
+          });
+        }
+        if (validator.isEmpty(payload.name, { ignore_whitespace: true })) {
+          validationErrors.push({
+            field: 'name',
+            msg: 'Cannot be blank'
+          });
+        }
+        if (validator.isEmpty(payload.title, { ignore_whitespace: true })) {
+          validationErrors.push({
+            field: 'title',
+            msg: 'Cannot be blank'
+          });
+        }
+
+        //Payee city is required
+        if (['US', 'CA'].indexOf(payload.country) !== -1 && validator.isEmpty(payload.city, { ignore_whitespace: true })) {
+          validationErrors.push({
+            field: 'country',
+            msg: 'Cannot be blank'
+          });
+        }
+
+        //Payee Postal Code is required
+        if (['US', 'CA'].indexOf(payload.country) !== -1 && validator.isEmpty(payload.zip, { ignore_whitespace: true })) {
+          validationErrors.push({
+            field: 'zip',
+            msg: 'Cannot be blank'
+          });
+        }
+
+        //Payee Country can’t be empty. Use only 2 letters ISO codes, examples: United States = US
+        if (!validator.isISO31661Alpha2(payload.country)) {
+          validationErrors.push({
+            field: 'country',
+            msg: 'Invalid value, please use only 2 letters ISO codes'
+          });
+        }
+
+
+        //Payee State is required. For US and CA, use two letters for states, example: Florida = FL
+        if (['US', 'CA'].indexOf(payload.country) !== -1 && !validator.isLength(payload.state, { min: 2, max: 2 })) {
+          validationErrors.push({
+            field: 'state',
+            msg: 'Use only 2 letter state code'
+          });
+        }
+        else if (['US', 'CA'].indexOf(payload.country) !== -1 && validator.isEmpty(payload.state, { ignore_whitespace: true })) {
+          validationErrors.push({
+            field: 'state',
+            msg: 'Cannot be blank'
+          });
+        }
+
+        //bank name is required
+        if (validator.isEmpty(payload.bankname, { ignore_whitespace: true })) {
+          validationErrors.push({
+            field: 'bankname',
+            msg: 'Cannot be blank'
+          });
+        }
+
+
+        //bank city cannot be empty
+        if (validator.isEmpty(payload.bankcity, { ignore_whitespace: true })) {
+          validationErrors.push({
+            field: 'bankcity',
+            msg: 'Cannot be blank'
+          });
+        }
+
+
+
+
+
+        //bank country only allows 2 letters ISO codes
+        if (!validator.isISO31661Alpha2(payload.bankcountry)) {
+          validationErrors.push({
+            field: 'bankcountry',
+            msg: 'Invalid value, please use only 2 letters ISO codes'
+          });
+        }
+
+        //Bank Account can’t be empty, is required
+        if (validator.isEmpty(payload.account, { ignore_whitespace: true })) {
+          validationErrors.push({
+            field: 'account',
+            msg: 'Cannot be blank'
+          });
+        }
+        //account cannot include special characters
+        if (payload.account.indexOf('-') !== -1 || payload.account.indexOf('_') !== -1) {
+          validationErrors.push({
+            field: 'account',
+            msg: 'Invalid characters found ("-" or "_")'
+          });
+        }
+
+        //Bank State is required. For US and CA, use two letters for states, example: Florida = FL
+        if (['US', 'CA'].indexOf(payload.bankcountry) !== -1 && !validator.isLength(payload.bankstate, { min: 2, max: 2 })) {
+          validationErrors.push({
+            field: 'bankstate',
+            msg: 'Use only 2 letter state code'
+          });
+        }
+
+
+
+        //If the Bank Account is international and the country uses IBAN code, the IBAN code must be used, do not include the word IBAN as part of the account number
+        if (payload.bankcountry !== 'US' && payload.account.indexOf('IBAN') !== -1) {
+          validationErrors.push({
+            field: 'account',
+            msg: 'Remove word "IBAN" from account number'
+          });
+        }
+
+
+
+
+
+
+
+
+
+        //If Payee Country is not ‘US’ then SWIFT can’t be empty
+        if (payload.bankcountry !== 'US' && (validator.isEmpty(payload.swift, { ignore_whitespace: true }))) {
+          validationErrors.push({
+            field: 'swift',
+            msg: 'Swift is required for non US banks'
+          });
+        }
+
+        //If Payee Country is ‘US’ then Routing number can’t be empty
+        if (payload.bankcountry === 'US' && (validator.isEmpty(payload.routing, { ignore_whitespace: true }))) {
+          validationErrors.push({
+            field: 'routing',
+            msg: 'Routing is required for US banks'
+          });
+        }
+        if (payload.bankcountry === 'US' && !(validator.isEmpty(payload.routing, { ignore_whitespace: true })) && !validRoutingNumber(payload.routing)) {
+          validationErrors.push({
+            field: 'routing',
+            msg: 'Invalid routing number'
           });
         }
 
