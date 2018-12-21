@@ -374,6 +374,10 @@ html{
 #newBtn{
     display: inline;
 }
+
+#searchFilter{
+  width: 10%;
+}
 /**
 Custom CSS - Jorge Medina END
 */

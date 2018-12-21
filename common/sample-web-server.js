@@ -6,6 +6,7 @@
 
 //Query helper
 const Query = require('../common/query.js');
+const besQuery = require('./bessync_query');
 
 const express = require('express'),
   bodyParser = require('body-parser');
@@ -25,13 +26,19 @@ const qs = require('querystring');
 const _ = require('lodash');
 const fs = require('fs');
 
+const W3CWebSocket = require('websocket').w3cwebsocket;
+
+
 const validator = require('validator');
 const nodemailer = require('nodemailer');
 
 
 
+
 const templateDir = path.join(__dirname, '..', 'common', 'views');
 const frontendDir = path.join(__dirname, '..', 'common', 'assets');
+
+
 
 module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePageTemplateName) {
 
@@ -955,6 +962,17 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
                 res.send({ msg: '' });
               })
 
+          }
+          if (payload.wf_stepnext === '5') {
+            console.log('need to send to Yardi');
+            pushToYardi(req.params.id)
+              .then(() => {
+                res.send({ msg: '' });
+              })
+              .catch((err) => {
+                console.log(err);
+                res.send({ msg: 'Unable to send to Yardi automatically' });
+              })
           }
           else
             res.send({ msg: '' });
@@ -2018,33 +2036,47 @@ from eftpayee e1
 
         var besJSON = new Query(sqlBes, [besId]).all();
         console.log(JSON.stringify(besJSON));
-        var options = {
-          "method": "POST",
-          "hostname": config.bespush.url,
-          "path": "/db/bescode",
-          "headers": {
-            "Content-Type": "application/json",
-            "cache-control": "no-cache",
-            'Authorization': 'Basic ' + new Buffer(config.bespush.username + ':' + config.bespush.password).toString('base64')
+        var insert = new besQuery(`
+          INSERT INTO bestransaction
+          (
+          payload,
+          datecreated,
+          processing
+          )
+          values(?,?,?);`, [
+          JSON.stringify(besJSON),
+          new Date().toLocaleDateString(),
+          'N'
+        ]).run();
+
+        //BES Push Socket
+        //Socket Initialize
+
+        var client = new W3CWebSocket('ws://treasurynode-test-innersphere.c9users.io:8082/', 'echo-protocol');
+
+        client.onerror = function () {
+          console.log('Connection Error');
+        };
+
+        client.onopen = function () {
+          console.log('WebSocket Client Connected');
+          client.send(insert.lastInsertROWID.toString());
+
+        };
+
+        client.onclose = function () {
+          console.log('echo-protocol Client Closed');
+        };
+
+
+
+        client.onmessage = function (e) {
+          if (typeof e.data === 'string') {
+            console.log("Received: '" + e.data + "'");
           }
         };
-        var req = https.request(options, (res) => {
-          var chunks = [];
 
-          res.on("data", function (chunk) {
-            chunks.push(chunk);
-          });
-
-          res.on("end", function () {
-            var body = Buffer.concat(chunks);
-            console.log(body.toString());
-            resolve();
-          });
-        });
-
-        req.write(JSON.stringify(besJSON));
-        req.end();
-        //req.end(besJSON);
+        resolve();
       }
       catch (err) {
         console.log(err);
