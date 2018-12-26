@@ -1,0 +1,519 @@
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    {{>head}}
+    <script>
+
+    </script>
+  </head>
+  <body>
+    <section class="hero banner">
+  <div class="hero-body" style="text-align:center;">
+    <div>
+      <img src="/assets/images/related_logo.svg" class="bannerImg"/>
+      <label class="label"></label>
+    </div>
+  </div>
+</section>
+    <div id="vendorExternalform" class="ui very wide center vertical visible">
+  <h3 id="vendorExternalHdr">Vendor Request Form</h3>
+    <div class="control" id="formTypeDiv">
+      <label class="radio">
+        <input type="radio" name="formType" style="-webkit-appearance: radio">New Vendor
+      </label>
+      <label class="radio" style="margin-left: 20px;">
+        <input type="radio" name="formType" style="-webkit-appearance: radio">Modify Vendor Information
+        </label>
+    </div>
+    <hr/>
+    <table class="table is-fullwith is-narrow ui compact" id="vendorInformationTbl">
+      <thead></thead>
+      <tbody>
+        <tr>
+          <td>
+            <label class="label">Legal Name</label>
+          </td>
+          <td>
+            <input class="input is-info" type="text" id="legalname" placeholder="Entity Legal Name"/>
+          </td>
+          <td style="width:15%;">
+          </td>
+          <td>
+            <label class="label">DBA</label>
+          </td>
+          <td>
+            <input class="input is-info" type="text" id="dba" placeholder="DBA"/>
+          </td>
+        </tr>
+        <tr class="fieldTR">
+          <td colspan="5">
+            <label class="label">Field Contact</label>
+          </td>
+        </tr>
+        <tr class="fieldTR">
+          <td>
+            <label class="label">Name</label>
+          </td>
+          <td>
+            <input class="input is-info" type="text" id="fieldname" placeholder="Field Contact Name"/>
+          </td>
+          <td style="width:15%;">
+          </td>
+          <td>
+            <label class="label">Title</label>
+          </td>
+          <td>
+            <input class="input is-info" type="text" id="fieldtitle" placeholder="Field Contact Title"/>
+          </td>
+        </tr>
+        <tr class="fieldTR">
+          <td>
+            <label class="label">Email</label>
+          </td>
+          <td>
+            <input class="input is-info" type="text" id="fieldemail" placeholder="Field Contact Email"/>
+          </td>
+          <td style="width:15%;">
+          </td>
+          <td>
+            <label class="label">Phone</label>
+          </td>
+          <td>
+            <input class="input is-info" type="text" id="fieldphone" placeholder="Field Contact Phone"/>
+          </td>
+        </tr>
+        <tr class="accountingTR">
+          <td colspan="5">
+            <label class="label">Accounting Contact</label>
+          </td>
+        </tr>
+        <tr class="accountingTR">
+          <td>
+            <label class="label">Name</label>
+          </td>
+          <td>
+            <input class="input is-info" type="text" id="accountingname" placeholder="Accounting Contact Name"/>
+          </td>
+          <td style="width:15%;">
+          </td>
+          <td>
+            <label class="label">Title</label>
+          </td>
+          <td>
+            <input class="input is-info" type="text" id="accountingtitle" placeholder="Accounting Contact Title"/>
+          </td>
+        </tr>
+        <tr class="accountingTR">
+          <td>
+            <label class="label">Email</label>
+          </td>
+          <td>
+            <input class="input is-info" type="text" id="accountingemail" placeholder="Accounting Contact Email"/>
+          </td>
+          <td style="width:15%;">
+          </td>
+          <td>
+            <label class="label">Phone</label>
+          </td>
+          <td>
+            <input class="input is-info" type="text" id="accountingphone" placeholder="Accounting Contact Phone"/>
+          </td>
+        </tr>
+        <tr>
+          <td>
+
+          </td>
+        </tr>
+         <tr>
+          <td>
+            <label class="label">Email for 1099 purposes</label>
+          </td>
+          <td>
+            <input class="input is-info" type="text" id="email1099" placeholder="email for 1099"/>
+          </td>
+          <td style="width:15%;">
+          </td>
+          <td>
+            <label class="label">Tax ID Number</label>
+          </td>
+          <td>
+            <input class="input is-info" type="text" id="taxid" placeholder="Tax ID Number"/>
+          </td>
+        </tr>
+        <tr class="addressTR">
+          <td>
+            <label class="label">Remittance address same as W-9 address</label>
+          </td>
+          <td colspan="4">
+            <div class="control">
+              <label class="radio">
+                <input type="radio" name="remitAddress" style="-webkit-appearance: radio">Yes
+              </label>
+              <label class="radio">
+                <input type="radio" name="remitAddress" style="-webkit-appearance: radio">No
+                </label>
+            </div>
+          </td>
+        </tr>
+        <tr class="addressTR">
+          <td colspan="5">** If different please complete section below. If you have more than one mailing address, please enter them as well.
+          </td>
+        </tr>
+      <tr name="addressTR" class="addressTR">
+        <td><label class="label">Address Line:</label>
+        </td>
+        <td colspan="4">
+          <input class="input is-info" type="text" name="addressLine1" placeholder="Address 1"/>
+        </td>
+      </tr>
+      <tr class="addressTR">
+        <td>
+          <label class="label">City</label>
+        </td>
+        <td>
+          <input type="text" class="input is-info" name="city" placeholder="City"/>
+        </td>
+        <td colspan="3">
+          <label class="label inlineLbl">State</label>
+            <div class="select">
+              <select name="state">
+                <option value="">Select state</option>
+                <option value="AL">Alabama</option>
+	              <option value="AK">Alaska</option>
+	              <option value="AZ">Arizona</option>
+	              <option value="AR">Arkansas</option>
+	              <option value="CA">California</option>
+	              <option value="CO">Colorado</option>
+	              <option value="CT">Connecticut</option>
+	              <option value="DE">Delaware</option>
+	              <option value="DC">District Of Columbia</option>
+	              <option value="FL">Florida</option>
+	              <option value="GA">Georgia</option>
+	              <option value="HI">Hawaii</option>
+	              <option value="ID">Idaho</option>
+	              <option value="IL">Illinois</option>
+	              <option value="IN">Indiana</option>
+	              <option value="IA">Iowa</option>
+	              <option value="KS">Kansas</option>
+	              <option value="KY">Kentucky</option>
+	              <option value="LA">Louisiana</option>
+	              <option value="ME">Maine</option>
+	              <option value="MD">Maryland</option>
+	              <option value="MA">Massachusetts</option>
+	              <option value="MI">Michigan</option>
+	              <option value="MN">Minnesota</option>
+	              <option value="MS">Mississippi</option>
+	              <option value="MO">Missouri</option>
+	              <option value="MT">Montana</option>
+	              <option value="NE">Nebraska</option>
+	              <option value="NV">Nevada</option>
+	              <option value="NH">New Hampshire</option>
+	              <option value="NJ">New Jersey</option>
+	              <option value="NM">New Mexico</option>
+	              <option value="NY">New York</option>
+	              <option value="NC">North Carolina</option>
+	              <option value="ND">North Dakota</option>
+	              <option value="OH">Ohio</option>
+	              <option value="OK">Oklahoma</option>
+	              <option value="OR">Oregon</option>
+	              <option value="PA">Pennsylvania</option>
+	              <option value="RI">Rhode Island</option>
+	              <option value="SC">South Carolina</option>
+	              <option value="SD">South Dakota</option>
+	              <option value="TN">Tennessee</option>
+	              <option value="TX">Texas</option>
+	              <option value="UT">Utah</option>
+	              <option value="VT">Vermont</option>
+	              <option value="VA">Virginia</option>
+	              <option value="WA">Washington</option>
+	              <option value="WV">West Virginia</option>
+	              <option value="WI">Wisconsin</option>
+	              <option value="WY">Wyoming</option>
+              </select>
+            </div>
+            <label class="label inlineLbl">Zip Code</label>
+            <input class="input is-info" type="text" name="zipcode" placeholder="Zip Code"/>
+        </td>
+      </tr>
+      <tr class="addressTR">
+        <td colspan="5" style="text-align:right;">
+          <button class="button is-info" type="button">+ Add Address</button>
+          <button class="button is-danger" type="button">- Remove Address</button>
+        </td>
+      </tr>
+      <tr>
+        <td colspan="5"></td>
+      </tr>
+      <tr class="servicesTR">
+        <td colspan="5">
+         <label class="label">Please list types of service provided along with the list of projects you are working with:</label>
+        </td>
+      </tr>
+      <tr class="servicesTR">
+        <td colspan="5">
+          <textarea class="textarea" id="services"></textarea>
+        </td>
+      </tr>
+      <tr class="relationTR">
+          <td colspan="5">
+            <label class="label">Does vendor have any business, financial or personal relationship with any employee or relative of any employee of TRG Management Company of Florida or any of its affiliates?</label>
+            <div class="control">
+              <label class="radio">
+                <input type="radio" name="remitAddress" style="-webkit-appearance: radio">Yes
+              </label>
+              <label class="radio">
+                <input type="radio" name="remitAddress" style="-webkit-appearance: radio">No
+                </label>
+            </div>
+          </td>
+        </tr>
+        <tr class="relationTR">
+          <td>
+            <label class="label">Explanation if Yes:</label>
+          </td>
+          <td colspan="4">
+            <input type="text" class="input is-info" id="employee_relation_explanation"/>
+          </td>
+        </tr>
+        <tr>
+          <td colspan="5">
+
+          </td>
+        </tr>
+        <tr>
+          <td colspan="5">
+            <label class="label">Attachments:</label>
+          </td>
+        </tr>
+        <tr class="attachTR">
+          <td colspan="2">
+            1. W9 (Most recent, signed with the current year)
+          </td>
+          <td colspan="3">
+            <div class="file is-boxed is-primary" id="w9Div">
+              <label class="file-label" id="w9Lbl">
+                <input class="file-input" type="file" name="attachment" id="w9Attachment" onchange="setFileNamesExternal('w9Div');" multiple>
+                <span class="file-cta">
+                  <span class="file-icon">
+                    <i class="fas fa-upload"></i>
+                  </span>
+                  <span class="file-label">
+                   W9
+                  </span>
+                </span>
+                  <span class="file-name" id="w9FileName">
+
+                </span>
+              </label>
+            </div>
+          </td>
+        </tr>
+       <tr class="attachTR">
+          <td>
+            <label class="label">Explanation if No:</label>
+          </td>
+          <td colspan="4">
+            <input type="text" class="input is-info" id="no_w9_expl"/>
+          </td>
+        </tr>
+         <tr class="attachTR">
+          <td colspan="2">
+            2. Certificates of Insurance (COI) (Commercial and Automobile Liabilities):
+          </td>
+          <td colspan="3">
+            <div class="file is-boxed is-primary" id="coiDiv">
+              <label class="file-label" id="w9Lbl">
+                <input class="file-input" type="file" name="attachment" id="coiAttachment" onchange="setFileNamesExternal('w9Div');" multiple>
+                <span class="file-cta">
+                  <span class="file-icon">
+                    <i class="fas fa-upload"></i>
+                  </span>
+                  <span class="file-label">
+                   COI
+                  </span>
+                </span>
+                  <span class="file-name" id="coiFileName">
+
+                </span>
+              </label>
+            </div>
+          </td>
+        </tr>
+       <tr class="attachTR">
+          <td>
+            <label class="label">Explanation if No:</label>
+          </td>
+          <td colspan="4">
+            <input type="text" class="input is-info" id="no_coi_expl"/>
+          </td>
+        </tr>
+         <tr class="attachTR">
+          <td colspan="2">
+            3. Certificate of Insurance - Worker's Compensation:
+          </td>
+          <td colspan="3">
+            <div class="file is-boxed is-primary" id="coiDiv">
+              <label class="file-label" id="w9Lbl">
+                <input class="file-input" type="file" name="attachment" id="coiAttachment" onchange="setFileNamesExternal('w9Div');" multiple>
+                <span class="file-cta">
+                  <span class="file-icon">
+                    <i class="fas fa-upload"></i>
+                  </span>
+                  <span class="file-label">
+                   Worker's Compensation
+                  </span>
+                </span>
+                  <span class="file-name" id="coiFileName">
+
+                </span>
+              </label>
+            </div>
+          </td>
+        </tr>
+        <tr class="attachTR">
+          <td colspan="5">
+            **If you don't have employees, please attach Exemption document for Worker's Compensation/Employer's Liability. You can apply for an exemption here: <a href="https://apps.fldfs.com/bocexempt/" target="_blank">https://apps.fldfs.com/bocexempt/</a>
+            <div class="file is-boxed is-primary" id="coiDiv">
+              <label class="file-label" id="w9Lbl">
+                <input class="file-input" type="file" name="attachment" id="coiAttachment" onchange="setFileNamesExternal('w9Div');" multiple>
+                <span class="file-cta">
+                  <span class="file-icon">
+                    <i class="fas fa-upload"></i>
+                  </span>
+                  <span class="file-label">
+                  Attach Exemption
+                  </span>
+                </span>
+              </label>
+            </div>
+          </td>
+        </tr>
+        <tr class="attachTR">
+          <td colspan="2">
+            4. Additional Documentation
+          </td>
+          <td colspan="3">
+            <div class="file is-boxed is-primary" id="coiDiv">
+              <label class="file-label" id="w9Lbl">
+                <input class="file-input" type="file" name="attachment" id="coiAttachment" onchange="setFileNamesExternal('w9Div');" multiple>
+                <span class="file-cta">
+                  <span class="file-icon">
+                    <i class="fas fa-upload"></i>
+                  </span>
+                  <span class="file-label">
+                   Other Documents
+                  </span>
+                </span>
+                  <span class="file-name" id="coiFileName">
+
+                </span>
+              </label>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td colspan="5"></td>
+        </tr>
+        <tr>
+          <td colspan="5"><label class="label">Notes</label></td>
+        </tr>
+        <tr class="notesTR">
+          <td colspan="5">
+            1. Please make sure you are billing the legal name of the project (not project DBA or The Related Group)
+          </td>
+        </tr>
+        <tr class="notesTR">
+          <td colspan="5">
+            2. Please send ACH and Wire Instructions form via separate email to <i>vendorrequest@domain.com</i>
+          </td>
+        </tr>
+        <tr class="notesTR">
+          <td colspan="5">
+            3. We will be sending you billing instructions via email along with an invitation to vendor cafe portal
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div id="vendoractionsDiv">
+      <button type="button" id="btnClearForm" class="button is-info">Clear Form</button>
+      <button type="button" id="btnSubmitVendor" class="button is-info">Submit Form</button>
+  </div>
+
+
+
+<!--
+
+ <div class="file is-boxed is-primary" id="w9Div">
+  <label class="file-label" id="w9Lbl">
+    <input class="file-input" type="file" name="attachment" id="w9Attachment" onchange="setFileNamesExternal('w9Div');" multiple>
+    <span class="file-cta">
+      <span class="file-icon">
+        <i class="fas fa-upload"></i>
+      </span>
+      <span class="file-label">
+       W9
+      </span>
+    </span>
+      <span class="file-name" id="w9FileName">
+
+    </span>
+  </label>
+</div>
+ <div class="file is-boxed is-primary" id="insuranceCertDiv">
+  <label class="file-label" id="insuranceCertLbl">
+    <input class="file-input" type="file" name="attachment" id="insuranceCertAttachment" onchange="setFileNamesExternal('insuranceCertDiv');" multiple>
+    <span class="file-cta">
+      <span class="file-icon">
+        <i class="fas fa-upload"></i>
+      </span>
+      <span class="file-label">
+       Certificate of Insurance
+      </span>
+    </span>
+      <span class="file-name" id="insuranceCertFileName">
+
+    </span>
+  </label>
+</div>
+ <div class="file is-boxed is-primary" id="workerCompDiv">
+  <label class="file-label" id="workerCompLbl">
+    <input class="file-input" type="file" name="attachment" id="workerCompAttachment" onchange="setFileNamesExternal('workerCompDiv');" multiple>
+    <span class="file-cta">
+      <span class="file-icon">
+        <i class="fas fa-upload"></i>
+      </span>
+      <span class="file-label">
+       Workers Compensation Statement
+      </span>
+    </span>
+      <span class="file-name" id="workerCompFileName">
+
+    </span>
+  </label>
+</div>
+
+<div id="vendoractionsDiv">
+      <button type="button" id="btnClearForm" class="button is-info">Clear Form</button>
+      <button type="button" id="btnSubmitVendor" class="button is-info">Submit Form</button>
+  </div>
+
+-->
+
+<div class="ui longer modal" id="notificationDiv">
+      <div class="header"></div>
+      <div class="scrolling content">
+
+      </div>
+      <div class="actions">
+      <div class="ui primary ok button">
+        OK
+        <i class="right chevron icon"></i>
+      </div>
+      </div>
+    </div>
+    <input type="hidden" value='{{token}}' id="token"/>
+    <div id="overlay"><h1 id="loadingH1">Saving Form...</h1></div>
+    </body>
+    </html>

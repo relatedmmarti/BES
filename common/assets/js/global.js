@@ -43,6 +43,9 @@ $(document).ready(function () {
         $("body").css("overflow", "auto");
         validateVendorUrl();
     }
+    if ($("#vendorExternalHdr").html() && $("#vendorExternalHdr").html().indexOf("Vendor") != -1) { // in vendor form
+        $("body").css("overflow", "auto");
+    }
     document.getElementById("filesDiv").ondragover = document.getElementById("filesDiv").ondragenter = function (evt) {
         evt.preventDefault();
     };
@@ -558,6 +561,10 @@ function attachFiles(id, action) {
         else {
             alert('Attachment Error: ' + response.msg);
         }
+    }).fail(function (err) {
+        alert('Unable to attach files ' + err);
+        $("#btnUploadFile, #attachment").prop("disabled", false);
+        $("#overlay").hide();
     })
 }
 

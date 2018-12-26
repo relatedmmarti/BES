@@ -19,8 +19,8 @@
           </h2>
           <table id="searchFilter" class="ui very compact celled table">
             <thead>
-                <th>Vendor ID</th>
-                <th>Legal Entity Name</th>
+                <th class='tableColumn'>Vendor ID</th>
+                <th class='tableColumn'>Legal Entity Name</th>
                 <th>Tax ID</th>
             </thead>
             <tbody>
@@ -30,7 +30,7 @@
                 <td><input type="text" id="tax_id" class="input is-info" placeholder="Tax ID" /></td>
                 </tr>
               <tr>
-                <td><button type="button" id="btnVendorFilter" class="button is-info">Search</button>
+                <td colspan="3"><button type="button" id="btnVendorFilter" class="button is-info">Search</button>
              <p class="control" style="display:inline;">
                 <a class="button is-info" onclick="saveCSV('vendorList')">
                   <span class="icon is-small">

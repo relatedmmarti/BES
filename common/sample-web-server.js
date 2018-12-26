@@ -136,6 +136,16 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
     });
   });
 
+
+  /**
+   * Jorge Medina 12/26/2018 Vendor Request form initial setup
+   * */
+  app.get('/vendorexternal', (req, res) => {
+    res.render('vendor_external', {
+      token: (req.query.token) ? req.query.token : '' //pass form token if present
+    });
+  });
+
   app.get('/logout', (req, res) => {
     req.logout();
     res.redirect('/');
