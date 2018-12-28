@@ -1590,11 +1590,35 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
           });
         }
 
+        //Payee name can’t over 70 characters
+        if (!validator.isLength(payload.payeename, { min: 1, max: 70 })) {
+          validationErrors.push({
+            field: 'payeename',
+            msg: 'Length should be between 1 and 70 spaces'
+          });
+        }
+
+        //Payee address can’t over 70 characters
+        if (!validator.isEmpty(payload.payeeaddress, { ignore_whitespace: true }) && !validator.isLength(payload.payeeaddress, { min: 1, max: 70 })) {
+          validationErrors.push({
+            field: 'payeeaddress',
+            msg: 'Length should be between 1 and 70 spaces'
+          });
+        }
+
         //Payee city is required
         if (['US', 'CA'].indexOf(payload.payeecountry) !== -1 && validator.isEmpty(payload.payeecity, { ignore_whitespace: true })) {
           validationErrors.push({
             field: 'payeecity',
             msg: 'Cannot be blank'
+          });
+        }
+
+        //Payee city is can’t over 35 characters
+        if (['US', 'CA'].indexOf(payload.payeecountry) !== -1 && !validator.isLength(payload.payeecity, { min: 1, max: 35 })) {
+          validationErrors.push({
+            field: 'payeecity',
+            msg: 'Length should be between 1 and 35 spaces'
           });
         }
 
@@ -1637,12 +1661,27 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
           });
         }
 
+        //Bank address can’t over 70 characters
+        if (!validator.isEmpty(payload.bankaddress, { ignore_whitespace: true }) && !validator.isLength(payload.bankaddress, { min: 1, max: 70 })) {
+          validationErrors.push({
+            field: 'bankaddress',
+            msg: 'Length should be between 1 and 70 spaces'
+          });
+        }
 
         //bank city cannot be empty
         if (validator.isEmpty(payload.bankcity, { ignore_whitespace: true })) {
           validationErrors.push({
             field: 'bankcity',
             msg: 'Cannot be blank'
+          });
+        }
+
+        //Bank city can’t over 35 characters
+        if (!validator.isEmpty(payload.bankcity, { ignore_whitespace: true }) && !validator.isLength(payload.bankcity, { min: 1, max: 35 })) {
+          validationErrors.push({
+            field: 'bankcity',
+            msg: 'Length should be between 1 and 35 spaces'
           });
         }
 
@@ -1765,6 +1804,23 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
           validationErrors.push({
             field: 'interbankcountry',
             msg: 'Country required for Intermediary bank'
+          });
+        }
+
+        //InterBank address can’t over 70 characters
+        if (!validator.isEmpty(payload.interbankaddress, { ignore_whitespace: true }) && !validator.isLength(payload.interbankaddress, { min: 1, max: 70 })) {
+          validationErrors.push({
+            field: 'interbankaddress',
+            msg: 'Length should be between 1 and 70 spaces'
+          });
+        }
+
+
+        //InterBank city can’t over 70 characters
+        if (!validator.isEmpty(payload.interbankcity, { ignore_whitespace: true }) && !validator.isLength(payload.interbankcity, { min: 1, max: 70 })) {
+          validationErrors.push({
+            field: 'interbankcity',
+            msg: 'Length should be between 1 and 70 spaces'
           });
         }
 
