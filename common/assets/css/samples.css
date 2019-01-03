@@ -436,16 +436,20 @@ CSS for Vendor Form
   width: 100%;
 }
 
-.fieldTR{
-  background-color: aliceblue;
-  border:none;
-}
-.accountingTR{
-  background-color: antiquewhite;
+.fieldTR, .addressTR, .relationTR, .notesTR{
+  background-color: honeydew;
   border:none;
 }
 
-.fieldTR td{
+
+.vendorTR, .accountingTR, .servicesTR, .attachTR{
+  background-color: aliceblue;
+  border:none;
+}
+
+
+
+.fieldTR td, .vendorTR td, .servicesTR td, .addressTR td, .relationTR td, .attachTR td, .notesTR td{
   border:none;
   border-top:none !important;
 }
@@ -455,50 +459,8 @@ CSS for Vendor Form
 
 }
 
-.addressTR{
-  background-color: aliceblue;
-  border:none;
-}
 
-.addressTR td{
-  border:none;
-  border-top:none !important;
 
-}
-
-.servicesTR{
- border:none;
- background-color: antiquewhite;
-}
-.servicesTR td{
-  border:none;
-  border-top:none !important;
-
-}
-.relationTR{
- border:none;
-}
-.relationTR td{
-  border:none;
-  border-top:none !important;
-
-}
-.attachTR{
- border:none;
-}
-.attachTR td{
-  border:none;
-  border-top:none !important;
-
-}
-.notesTR{
- border:none;
-}
-.notesTR td{
-  border:none;
-  border-top:none !important;
-
-}
 
 
 

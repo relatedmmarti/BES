@@ -6,7 +6,7 @@
 
 //Query helper
 const Query = require('../common/query.js');
-const besQuery = require('./bessync_query');
+//const besQuery = require('./bessync_query');
 
 const express = require('express'),
   bodyParser = require('body-parser');
@@ -25,8 +25,6 @@ const qs = require('querystring');
 
 const _ = require('lodash');
 const fs = require('fs');
-
-const W3CWebSocket = require('websocket').w3cwebsocket;
 
 
 const validator = require('validator');
@@ -2102,7 +2100,7 @@ from eftpayee e1
 
         var besJSON = new Query(sqlBes, [besId]).all();
         console.log(JSON.stringify(besJSON));
-        var insert = new besQuery(`
+        /*var insert = new besQuery(`
           INSERT INTO bestransaction
           (
           payload,
@@ -2113,34 +2111,22 @@ from eftpayee e1
           JSON.stringify(besJSON),
           new Date().toLocaleDateString(),
           'N'
-        ]).run();
+        ]).run();*/
 
         //BES Push Socket
         //Socket Initialize
+        var socket = require('socket.io-client')('http://localhost:8081');
 
-        var client = new W3CWebSocket('ws://treasurynode-test-innersphere.c9users.io:8082/', 'echo-protocol');
-
-        client.onerror = function () {
-          console.log('Connection Error');
-        };
-
-        client.onopen = function () {
-          console.log('WebSocket Client Connected');
-          client.send(insert.lastInsertROWID.toString());
-
-        };
-
-        client.onclose = function () {
-          console.log('echo-protocol Client Closed');
-        };
-
-
-
-        client.onmessage = function (e) {
-          if (typeof e.data === 'string') {
-            console.log("Received: '" + e.data + "'");
-          }
-        };
+        socket.on('connect', function () {
+          console.log('connected');
+          socket.emit('message', besJSON);
+        });
+        socket.on('message', function (data) {
+          console.log(data);
+        });
+        socket.on('disconnect', function () {
+          console.log('disconnected');
+        });
 
         resolve();
       }
