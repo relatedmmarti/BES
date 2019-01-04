@@ -27,14 +27,6 @@
         <td><label class='label'>Legal Entity Name</label></td>
         <td colspan='5'><input type="text" placeholder="Legal Entity Name" id="legalentityname" class="input is-info " onclick="inputShow(this)"/></td>
       </tr>
-      <tr>
-        <td><label class='label'>Email for 1099 Contact</label></td>
-        <td><input type="text" placeholder="1099 Email" id="email1099" class="input is-info " onclick="inputShow(this)"/></td>
-        <td><label class='label'>Name</label></td>
-        <td><input type="text" placeholder="Name" id="name" class="input is-info " onclick="inputShow(this)"/></td>
-        <td><label class='label'>Title</label></td>
-        <td><input type="text" placeholder="Title" id="title" class="input is-info " onclick="inputShow(this)"/></td>
-      </tr>
        <tr>
         <td><label class='label'>Address Line 1</label></td>
         <td colspan='5'><input type="text" placeholder="Address Line 1" id="address1" class="input is-info " onclick="inputShow(this)"/></td>
@@ -52,6 +44,11 @@
         <td><input type="text" placeholder="Zip Code" id="zip" class="input is-info " onclick="inputShow(this)"/></td>
          <td><label class='label'>Country</label></td>
         <td><input type="text" placeholder="Country" id="country" class="input is-info " onclick="inputShow(this)"/></td>
+      </tr>
+       <tr style="background-color:aliceblue">
+        <td colspan="6">
+          <hr style="margin:0"/>
+        </td>
       </tr>
       <tr>
         <td><label class='label'>Bank Name</label></td>
@@ -78,10 +75,36 @@
       <tr>
         <td><label class='label'>Swift</label></td>
         <td><input type="text" placeholder="Swift" id="swift" class="input is-info " onclick="inputShow(this)"/></td>
-        <td><label class='label'>Tax Id #</label></td>
-        <td><input type="text" placeholder="Tax Id #" id="taxid" class="input is-info " onclick="inputShow(this)"/></td>
-        <td colspan='2'></td>
+        <td colspan='4'></td>
       </tr>
+      <tr style="background-color:aliceblue">
+        <td colspan="6">
+          <hr style="margin:0"/>
+        </td>
+      </tr>
+      <tr>
+        <td><label class='label'>Intermediary  Bank Name</label></td>
+        <td><input type="text" placeholder="Intermediary Bank Name" id="interbankname" class="input is-info " onclick="inputShow(this)"/></td>
+         <td><label class='label'>Intermediary Bank Address</label></td>
+        <td colspan='3'><input type="text" placeholder="Intermediary Bank Address" id="interbankaddress" class="input is-info " onclick="inputShow(this)"/></td>
+      </tr>
+      <tr>
+        <td><label class='label'>Intermediary Bank City</label></td>
+        <td><input type="text" placeholder="Intermediary Bank City" id="interbankcity" class="input is-info " onclick="inputShow(this)"/></td>
+        <td><label class='label'>Intermediary Bank State/Province</label></td>
+        <td><input type="text" placeholder="Intermediary Bank State Province" id="interbankstate" class="input is-info " onclick="inputShow(this)"/></td>
+        <td><label class='label'>Intermediary Bank ZIP/Postal</label></td>
+        <td><input type="text" placeholder="Intermediary Bank ZIP/Postal" id="interbankzip" class="input is-info " onclick="inputShow(this)"/></td>
+      </tr>
+      <tr>
+        <td><label class='label'>Intermediary Bank Country</label></td>
+        <td><input type="text" placeholder="Intermediary Bank Country" id="interbankcountry" class="input is-info " onclick="inputShow(this)"/></td>
+        <td><label class='label'>Intermediary Routing Number</label></td>
+        <td><input type="text" placeholder="Routing Number" id="interrouting" class="input is-info " onclick="inputShow(this)"/></td>
+        <td><label class='label'>Intermediary Swift</label></td>
+        <td><input type="text" placeholder="Intermediary Swift" id="interswift" class="input is-info " onclick="inputShow(this)"/></td>
+      </tr>
+
 
 
     </tbody>
@@ -91,56 +114,24 @@
 
 
 
- <div class="file is-boxed is-primary" id="w9Div">
+ <div class="file is-boxed is-primary" id="wiringInstructionsDiv">
   <label class="file-label" id="w9Lbl">
-    <input class="file-input" type="file" name="attachment" id="w9Attachment" onchange="setFileNamesExternal('w9Div');" multiple>
+    <input class="file-input" type="file" name="attachment" id="wiringInstructionsAttachment" multiple>
     <span class="file-cta">
       <span class="file-icon">
         <i class="fas fa-upload"></i>
       </span>
       <span class="file-label">
-       W9
+       Wiring Instructions
       </span>
     </span>
-      <span class="file-name" id="w9FileName">
+     <!-- <span class="file-name" id="wiringInstructionsFileName">
 
-    </span>
-  </label>
-</div>
- <div class="file is-boxed is-primary" id="insuranceCertDiv">
-  <label class="file-label" id="insuranceCertLbl">
-    <input class="file-input" type="file" name="attachment" id="insuranceCertAttachment" onchange="setFileNamesExternal('insuranceCertDiv');" multiple>
-    <span class="file-cta">
-      <span class="file-icon">
-        <i class="fas fa-upload"></i>
-      </span>
-      <span class="file-label">
-       Certificate of Insurance
-      </span>
-    </span>
-      <span class="file-name" id="insuranceCertFileName">
-
-    </span>
-  </label>
-</div>
- <div class="file is-boxed is-primary" id="workerCompDiv">
-  <label class="file-label" id="workerCompLbl">
-    <input class="file-input" type="file" name="attachment" id="workerCompAttachment" onchange="setFileNamesExternal('workerCompDiv');" multiple>
-    <span class="file-cta">
-      <span class="file-icon">
-        <i class="fas fa-upload"></i>
-      </span>
-      <span class="file-label">
-       Workers Compensation Statement
-      </span>
-    </span>
-      <span class="file-name" id="workerCompFileName">
-
-    </span>
+    </span>-->
   </label>
 </div>
 
-<div id="vendoractionsDiv">
+<div id="vendoractionsDiv" style="margin-top:20px;">
       <button type="button" id="btnClearForm" class="button is-info">Clear Form</button>
       <button type="button" id="btnSubmitVendor" class="button is-info">Submit Form</button>
   </div>

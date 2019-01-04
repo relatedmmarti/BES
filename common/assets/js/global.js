@@ -435,6 +435,9 @@ function doAction(event) {
                         if ($("#vendorId").val() === undefined) {
                             populateTable();
                         }
+                        else {
+                            alert('BES ' + response.id + ' was created');
+                        }
                     }
                     // Update the table
 
@@ -553,8 +556,10 @@ function attachFiles(id, action) {
             $("#btnUploadFile").prop("disabled", true);
             if (action === "edit")
                 getEdit(id);
-            else if (action !== "none")
+            else if (action !== "none") {
                 populateTable();
+                //alert("BES " + id + " was created");
+            }
             $("#attachment")[0].value = "";
             setFileName();
         }
@@ -747,9 +752,6 @@ function doVendorAction(event) {
     // Assemble object to save
     var newVendor = {
         'legalentityname': $('#legalentityname').val(),
-        'email1099': $('#email1099').val(),
-        'name': $('#name').val(),
-        'title': $('#title').val(),
         'address1': $('#address1').val(),
         'address2': $('#address2').val(),
         'city': $('#city').val(),
@@ -766,7 +768,15 @@ function doVendorAction(event) {
         'routing': $('#routing').val(),
         'account': $('#account').val(),
         'swift': $('#swift').val(),
-        'taxid': $('#taxid').val(),
+        'interbankname': $('#bankname').val(),
+        'interbankaddress': $('#interbankaddress').val(),
+        'interbankname': $('#interbankname').val(),
+        'interbankcity': $('#interbankcity').val(),
+        'interbankstate': $('#interbankstate').val(),
+        'interbankzip': $('#interbankzip').val(),
+        'interbankcountry': $('#interbankcountry').val(),
+        'interrouting': $('#interbankcountry').val(),
+        'interswift': $('#interswift').val(),
         'token': $('#token').val()
     };
 
@@ -813,8 +823,7 @@ function populateVendorTable() {
     //build a list of filter values
     var filters = {
         'id': $('#vendor_id').val(),
-        'legalentityname': $('#legal_entity_name').val(),
-        'taxid': $('#tax_id').val()
+        'legalentityname': $('#legal_entity_name').val()
     }
 
     //drop any filters that are blank
@@ -842,9 +851,6 @@ function populateVendorTable() {
             tableContent += '<tr id="vendor_' + this.id + '">'
             tableContent += '<td><button class="button is-primary" value="' + this.id + '">' + this.id + '</button></td>';
             tableContent += '<td>' + this.legalentityname + '</td>';
-            tableContent += '<td>' + this.email1099 + '</td>';
-            tableContent += '<td>' + this.name + '</td>';
-            tableContent += '<td>' + this.title + '</td>';
             tableContent += '<td>' + this.address1 + '</td>';
             tableContent += '<td>' + this.address2 + '</td>';
             tableContent += '<td>' + this.city + '</td>';
@@ -860,7 +866,14 @@ function populateVendorTable() {
             tableContent += '<td>' + this.routing + '</td>';
             tableContent += '<td>' + this.account + '</td>';
             tableContent += '<td>' + this.swift + '</td>';
-            tableContent += '<td>' + this.taxid + '</td>';
+            tableContent += '<td>' + this.interbankname + '</td>';
+            tableContent += '<td>' + this.interbankaddress + '</td>';
+            tableContent += '<td>' + this.interbankcity + '</td>';
+            tableContent += '<td>' + this.interbankstate + '</td>';
+            tableContent += '<td>' + this.interbankzip + '</td>';
+            tableContent += '<td>' + this.interbankcountry + '</td>';
+            tableContent += '<td>' + this.interrouting + '</td>';
+            tableContent += '<td>' + this.interswift + '</td>';
             tableContent += '</tr>';
         });
 
@@ -873,15 +886,12 @@ function populateVendorTable() {
 
 // Get record to edit
 function getVendorEdit(id) {
-    $("#rightbar").html('<h3 id="recordInfoHdr">Vendor Info</h3>    <button class="delete is-danger" id="rightClose" aria-label="close" onclick="hideDiv(\"rightbar\")"></button>      <span class="icon" id="rightMaxim" onclick="showFullDiv(\"rightbar\");">   <i class="fa fa-arrows-alt" aria-hidden="true"></i> </span>  <span class="icon" id="rightMin" onclick="showMinDiv(\"rightbar\");">   <i class="fa fa-window-minimize" aria-hidden="true"></i> </span>   <table class="ui table compact" id="payinfofields">     <thead>       <tr>         <th>Setting</th>         <th>Value</th>       </tr>     </thead>     <tbody>       <tr>         <td>Vendor ID</td>         <td id="vendorid"></td>       </tr>       <tr>         <td>Legal Entity Name</td>         <td id="legalentityname"></td>       </tr>       <tr>         <td>Email for 1099 Contact</td>         <td id="email1099"></td>       </tr>       <tr>         <td>Name</td>         <td id="name"></td>       </tr>       <tr>         <td>Title</td>         <td id="title"></td>       </tr>       <tr>         <td>Address Line 1</td>         <td id="address1"></td>       </tr>       <tr>         <td>Address Line 2</td>         <td id="address2"></td>       </tr>       <tr>         <td>City</td>         <td id="city"></td>       </tr>       <tr>         <td>State</td>         <td id="state"></td>       </tr>       <tr>         <td>Zip Code</td>         <td id="zip"></td>       </tr>       <tr>         <td>Country</td>         <td id="country"></td>       </tr>       <tr>         <td>Bank Name</td>         <td id="bankname"></td>       </tr>       <tr>         <td>Bank Address</td>         <td id="bankaddress"></td>       </tr>       <tr>         <td>Bank City</td>         <td id="bankcity"></td>       </tr>       <tr>         <td>Bank State/Province</td>         <td id="bankstate"></td>       </tr>       <tr>         <td>Bank ZIP/Postal</td>         <td id="bankzip"></td>       </tr>       <tr>         <td>Bank Country</td>         <td id="bankcountry"></td>       </tr>       <tr>         <td>Routing Number</td>         <td id="routing"></td>       </tr>       <tr>         <td>Account Number</td>         <td id="account"></td>       </tr>       <tr>         <td>Swift</td>         <td id="swift"></td>       </tr>       <tr>         <td>Tax Id #</td>         <td id="taxid"></td>       </tr>       <tr>         <td>Date Created:</td>         <td id="datecreated"></td>       </tr>      </tbody>   </table>  <table class="ui table compact collapsing" id="attachmentsTable"><thead><tr><th>Filename</th><th>Date</th><th>View</th></tr></thead><tbody></tbody></table> <div>       <button type="button" id="btnBESCreate" class="button is-info">Create BES</button> </div>');
+    $("#rightbar").html('<h3 id="recordInfoHdr">Vendor Info</h3>  <button class="delete is-danger" id="rightClose" aria-label="close" onclick="hideDiv(\"rightbar\")"></button>  <span class="icon" id="rightMaxim" onclick="showFullDiv(\"rightbar\");">   <i class="fa fa-arrows-alt" aria-hidden="true"></i> </span>  <span class="icon" id="rightMin" onclick="showMinDiv(\"rightbar\");">   <i class="fa fa-window-minimize" aria-hidden="true"></i> </span>   <table class="ui table compact" id="payinfofields">     <thead>  <tr>    <th>Setting</th>    <th>Value</th>  </tr>     </thead>     <tbody>  <tr>    <td>Vendor ID</td>    <td id="vendorid"></td>  </tr>  <tr>    <td>Legal Entity Name</td>    <td id="legalentityname"></td>  </tr>  <tr>    <td>Address Line 1</td>    <td id="address1"></td>  </tr>  <tr>    <td>Address Line 2</td>    <td id="address2"></td>  </tr>  <tr>    <td>City</td>    <td id="city"></td>  </tr>  <tr>    <td>State</td>    <td id="state"></td>  </tr>  <tr>    <td>Zip Code</td>    <td id="zip"></td>  </tr>  <tr>    <td>Country</td>    <td id="country"></td>  </tr>  <tr>    <td>Bank Name</td>    <td id="bankname"></td>  </tr>  <tr>    <td>Bank Address</td>    <td id="bankaddress"></td>  </tr>  <tr>    <td>Bank City</td>    <td id="bankcity"></td>  </tr>  <tr>    <td>Bank State/Province</td>    <td id="bankstate"></td>  </tr>  <tr>    <td>Bank ZIP/Postal</td>    <td id="bankzip"></td>  </tr>  <tr>    <td>Bank Country</td>    <td id="bankcountry"></td>  </tr>  <tr>    <td>Routing Number</td>    <td id="routing"></td>  </tr>  <tr>    <td>Account Number</td>    <td id="account"></td>  </tr>  <tr>    <td>Swift</td>    <td id="swift"></td>  </tr>  <tr>      <td>Intermediary Bank Name</td>      <td id="interbankname"></td>    </tr>    <tr>      <td>Intermediary Bank Address</td>      <td id="interbankaddress"></td>    </tr>    <tr>      <td>Intermediary Bank City</td>      <td id="interbankcity"></td>    </tr>    <tr>      <td>Intermediary Bank State/Province</td>      <td id="interbankstate"></td>    </tr>    <tr>      <td>Intermediary Bank ZIP/Postal</td>      <td id="interbankzip"></td>    </tr>    <tr>      <td>Intermediary Bank Country</td>      <td id="interbankcountry"></td>    </tr>    <tr>      <td>Intermediary Routing Number</td>      <td id="interrouting"></td>    </tr>    <tr>      <td>Intermediary Swift</td>      <td id="interswift"></td>    </tr>  <tr>    <td>Date Created:</td>    <td id="datecreated"></td>  </tr>      </tbody>   </table>  <table class="ui table compact collapsing" id="attachmentsTable"><thead><tr><th>Filename</th><th>Date</th><th>View</th></tr></thead><tbody></tbody></table> <div>  <button type="button" id="btnBESCreate" class="button is-info">Create BES</button> </div>');
     $('#btnBESCreate').on('click', newEntryFromVendor);
     $.getJSON('/vendor/' + id, function (data) {
 
         $('#vendorid').html(data.obj.id);
         $('#legalentityname').html(data.obj.legalentityname);
-        $('#email1099').html(data.obj.email1099);
-        $('#name').html(data.obj.name);
-        $('#title').html(data.obj.title);
         $('#address1').html(data.obj.address1);
         $('#address2').html(data.obj.address2);
         $('#city').html(data.obj.city);
@@ -897,7 +907,14 @@ function getVendorEdit(id) {
         $('#routing').html(data.obj.routing);
         $('#account').html(data.obj.account);
         $('#swift').html(data.obj.swift);
-        $('#taxid').html(data.obj.taxid);
+        $('#interbankname').html(data.obj.interbankname);
+        $('#interbankaddress').html(data.obj.inter);
+        $('#interbankcity').html(data.obj.interbankcity);
+        $('#interbankstate').html(data.obj.interbankstate);
+        $('#interbankzip').html(data.obj.interbankzip);
+        $('#interbankcountry').html(data.obj.interbankcountry);
+        $('#interrouting').html(data.obj.interrouting);
+        $('#interswift').html(data.obj.interswift);
         $('#datecreated').html(data.obj.datecreated);
 
         $("#rightbar").show(); //Allow users to show/hide details panel
@@ -923,9 +940,6 @@ function getVendorEdit(id) {
 function newEntryFromVendor() {
     var payload = {
         legalentityname: $("#legalentityname").html(),
-        email1099: $("#email1099").html(),
-        name: $("#name").html(),
-        title: $("#title").html(),
         address1: $("#address1").html(),
         address2: $("#address2").html(),
         city: $("#city").html(),
@@ -941,6 +955,14 @@ function newEntryFromVendor() {
         routing: $("#routing").html(),
         account: $("#account").html(),
         swift: $("#swift").html(),
+        interbankname: $("#interbankname").html(),
+        interbankaddress: $("#interbankaddress").html(),
+        interbankcity: $("#interbankcity").html(),
+        interbankstate: $("#interbankstate").html(),
+        interbankzip: $("#interbankzip").html(),
+        interbankcountry: $("#interbankcountry").html(),
+        interrouting: $("#interrouting").html(),
+        interswift: $("#interswift").html(),
         vendorId: $("#vendorid").html()
     };
     var attachmentHTMLTemp = $('#attachmentsTable tbody').html();
@@ -967,6 +989,14 @@ function newEntryFromVendor() {
     $("#routing").val(payload.routing);
     $("#account").val(payload.account);
     $("#swift").val(payload.swift);
+    $("#interbankname").val(payload.interbankname);
+    $("#interbankaddress").val(payload.interbankaddress);
+    $("#interbankcity").val(payload.interbankcity);
+    $("#interbankstate").val(payload.interbankstate);
+    $("#interbankzip").val(payload.interbankzip);
+    $("#interbankcountry").val(payload.interbankcountry);
+    $("#interrouting").val(payload.interrouting);
+    $("#interswift").val(payload.interswift);
     $("#vendorId").val(payload.vendorId);
 
     $('#attachmentsTable tbody').html(attachmentHTMLTemp);
@@ -990,37 +1020,7 @@ function newEntryFromVendor() {
 
 
 
-/**
- * Jorge Medina - 12/03/2018 - Set File Upload descriptor
- */
 
-function setFileNamesExternal(fileDiv) {
-    if (fileDiv.length < 1)
-        return;
-
-    var validextensions = "pdf,jpg,jpeg,bmp,xls,doc,tiff,tif,gif,docx,xlsx,txt,msg,xlsm,xlsb,zip,ppt,pptx,png";
-    var fileNameSpan = fileDiv.toString().replace("Div", "FileName");
-    var fileInput = fileDiv.toString().replace("Div", "Attachment");
-
-    $("#" + fileNameSpan).html("");
-
-
-    var filesToUpload = $("#" + fileInput)[0].files;
-    if (filesToUpload.length > 0) {
-        for (var i = 0; i < filesToUpload.length; i++) {
-            if (validextensions.indexOf(filesToUpload[i].name.substring(filesToUpload[i].name.lastIndexOf(".") + 1)) != -1) {
-                $("#" + fileNameSpan).html($("#" + fileNameSpan).html() + " " + filesToUpload[i].name);
-            }
-            else {
-                alert("Invalid file extension found: " + filesToUpload[i].name.substring(filesToUpload[i].name.lastIndexOf(".") + 1));
-                $("#" + fileInput)[0].value = ""; //remove all files
-                $("#" + fileNameSpan).html("");
-            }
-        }
-    }
-    else
-        $("#" + fileNameSpan).html("");
-}
 
 /**
  * Jorge Medina : 12/17/2018 - Helper function to save attachment by Vendor ID
@@ -1028,14 +1028,8 @@ function setFileNamesExternal(fileDiv) {
  */
 function attachVendorFiles(vendorId) {
     var data = new FormData();
-    for (var i = 0; i < $("#w9Attachment")[0].files.length; i++) {
-        data.append("file_" + i, $("#w9Attachment")[0].files[i]);
-    }
-    for (var i = 0; i < $("#insuranceCertAttachment")[0].files.length; i++) {
-        data.append("file_" + i, $("#insuranceCertAttachment")[0].files[i]);
-    }
-    for (var i = 0; i < $("#workerCompAttachment")[0].files.length; i++) {
-        data.append("file_" + i, $("#workerCompAttachment")[0].files[i]);
+    for (var i = 0; i < $("#wiringInstructionsAttachment")[0].files.length; i++) {
+        data.append("file_" + i, $("#wiringInstructionsAttachment")[0].files[i]);
     }
     data.append("id", vendorId);
     var settings = {
@@ -1071,6 +1065,9 @@ function attachVendorFiles(vendorId) {
  * Jorge Medina 12/17/2018 Validate Valid Vendor URL before allowing access to form
  * */
 function validateVendorUrl() {
+    //temporarily bypass
+    return true;
+
     $.getJSON('/validateUrl/' + $("#token").val(), function (data) {
         if (data.msg === '') {
             return true;

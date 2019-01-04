@@ -5,5 +5,4 @@ treasury.db
 bessync/.env
 bessync.db
 .samples.config.json
-vendorForm.js
 socket_server

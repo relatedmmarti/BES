@@ -314,7 +314,7 @@ input:disabled, select:disabled {
     width: 20%;
 }*/
 #w9Lbl,#insuranceCertLbl, #workerCompLbl{
-    width: 20%;
+    width: 25%;
 }
 
 }
@@ -457,6 +457,10 @@ CSS for Vendor Form
   border:none;
   border-top:none !important;
 
+}
+
+@media print {
+  .servicesTR {page-break-after: always;}
 }
 
 

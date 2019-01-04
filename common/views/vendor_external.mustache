@@ -17,6 +17,9 @@
 </section>
     <div id="vendorExternalform" class="ui very wide center vertical visible">
   <h3 id="vendorExternalHdr">Vendor Request Form</h3>
+  <div id="instructionsDiv">
+    <button class="button is-rounded is-primary" style="float:right;" onclick="showInstructions();">View Instructions</button>
+  </div>
     <div class="control" id="formTypeDiv">
       <label class="radio">
         <input type="radio" name="formType" style="-webkit-appearance: radio">New Vendor
@@ -26,13 +29,13 @@
         </label>
     </div>
     <hr/>
-    <label class="label">Please provide the following information when doing business with any of our projects/main divisions and/or corporate office</label>
+    <label class="label">Please provide the following information when doing business with any of our projects/divisions and/or corporate office</label>
     <table class="table is-fullwith is-narrow ui compact" id="vendorInformationTbl">
       <thead></thead>
       <tbody>
         <tr class="vendorTR">
           <td colspan="5">
-            <label class="label">I. Vendor Information</label>
+            <label class="label">I. Vendor Information - Main Contact</label>
           </td>
         </tr>
         <tr class="vendorTR">
@@ -53,7 +56,7 @@
         </tr>
         <tr class="vendorTR">
           <td>
-            <label class="label">Main Contact Name</label>
+            <label class="label">Name</label>
           </td>
           <td>
             <input class="input is-info" type="text" id="contactname" placeholder="Main Contact Name"/>
@@ -61,7 +64,7 @@
           <td style="width:5%;">
           </td>
           <td>
-            <label class="label">Main Contact Title</label>
+            <label class="label">Title</label>
           </td>
           <td>
             <input class="input is-info" type="text" id="contacttitle" placeholder="Main Contact Title"/>
@@ -69,7 +72,7 @@
         </tr>
         <tr class="vendorTR">
           <td>
-            <label class="label">Main Contact Email</label>
+            <label class="label">Email</label>
           </td>
           <td>
             <input class="input is-info" type="text" id="contactemail" placeholder="Main Contact Email"/>
@@ -77,10 +80,10 @@
           <td style="width:5%;">
           </td>
           <td>
-            <label class="label">Main Contact Phone</label>
+            <label class="label">Phone</label>
           </td>
           <td>
-            <input class="input is-info" type="text" id="fieldphone" placeholder="Main Contact Phone"/>
+            <input class="input is-info" type="text" id="contactphone" placeholder="Main Contact Phone"/>
           </td>
         </tr>
         <tr>
@@ -90,7 +93,7 @@
         </tr>
         <tr class="fieldTR">
           <td colspan="5">
-            <label class="label">II. Related/TRGM Hiring Vendor</label>
+            <label class="label">II. Project, Division and/or Corporate Office - Main Contact/Owners Rep.</label>
           </td>
         </tr>
         <tr class="fieldTR">
@@ -98,7 +101,7 @@
             <label class="label">Name</label>
           </td>
           <td>
-            <input class="input is-info" type="text" id="fieldname" placeholder="Related/TRGM Contact Name"/>
+            <input class="input is-info" type="text" id="fieldname" placeholder="Contact Name"/>
           </td>
           <td style="width:5%;">
           </td>
@@ -106,7 +109,7 @@
             <label class="label">Title</label>
           </td>
           <td>
-            <input class="input is-info" type="text" id="fieldtitle" placeholder="Related/TRGM Contact Title"/>
+            <input class="input is-info" type="text" id="fieldtitle" placeholder="Contact Title"/>
           </td>
         </tr>
         <tr class="fieldTR">
@@ -114,7 +117,7 @@
             <label class="label">Email</label>
           </td>
           <td>
-            <input class="input is-info" type="text" id="fieldemail" placeholder="Related/TRGM Contact Email"/>
+            <input class="input is-info" type="text" id="fieldemail" placeholder="Contact Email"/>
           </td>
           <td style="width:5%;">
           </td>
@@ -122,7 +125,7 @@
             <label class="label">Phone</label>
           </td>
           <td>
-            <input class="input is-info" type="text" id="fieldphone" placeholder="Related/TRGM Contact Phone"/>
+            <input class="input is-info" type="text" id="fieldphone" placeholder="Contact Phone"/>
           </td>
         </tr>
         <tr class="fieldTR">
@@ -223,10 +226,10 @@
           <td colspan="4">
             <div class="control">
               <label class="radio">
-                <input type="radio" name="remitAddress" style="-webkit-appearance: radio">Yes
+                <input type="radio" name="remitAddress" style="-webkit-appearance: radio" id="remitAddress_Yes">Yes
               </label>
               <label class="radio">
-                <input type="radio" name="remitAddress" style="-webkit-appearance: radio">No
+                <input type="radio" name="remitAddress" style="-webkit-appearance: radio" id="remitAddress_No">No
                 </label>
             </div>
           </td>
@@ -311,10 +314,10 @@
             <input class="input is-info" type="text" name="zipcode" placeholder="Zip Code"/>
         </td>
       </tr>
-      <tr class="addressTR">
+      <tr class="addressTR" id="addressActionsTR">
         <td colspan="5" style="text-align:right;">
-          <button class="button is-info" type="button">+ Add Address</button>
-          <button class="button is-danger" type="button">- Remove Address</button>
+          <button class="button is-info" type="button" onclick="addAddress();">+ Add Address</button>
+          <button class="button is-danger" type="button" onclick="removeAddress();">- Remove Address</button>
         </td>
       </tr>
       <tr>
@@ -322,7 +325,7 @@
       </tr>
       <tr class="servicesTR">
         <td colspan="5">
-         <label class="label">Please list types of service you are providing along with any others you will be working on:</label>
+         <label class="label">Please list types of service you are providing along with any other projects you will be working on:</label>
         </td>
       </tr>
       <tr class="servicesTR">
@@ -335,10 +338,10 @@
             <label class="label">Does vendor have any business, financial or personal relationship with any employee or relative of any employee of PRH Investments and/or TRG Management Company of Florida or any of its affiliates?</label>
             <div class="control">
               <label class="radio">
-                <input type="radio" name="remitAddress" style="-webkit-appearance: radio">Yes
+                <input type="radio" name="personalRelation" style="-webkit-appearance: radio" id="personalRelation_Yes">Yes
               </label>
               <label class="radio">
-                <input type="radio" name="remitAddress" style="-webkit-appearance: radio">No
+                <input type="radio" name="personalRelation" style="-webkit-appearance: radio" id="personalRelation_No">No
                 </label>
             </div>
           </td>
@@ -358,7 +361,7 @@
         </tr>
         <tr>
           <td colspan="5">
-            <label class="label">Attachments:</label>
+            <label class="label">IV. Attachments:</label>
           </td>
         </tr>
         <tr class="attachTR">
@@ -399,7 +402,7 @@
           <td colspan="3">
             <div class="file is-boxed is-primary" id="coiDiv">
               <label class="file-label" id="w9Lbl">
-                <input class="file-input" type="file" name="attachment" id="coiAttachment" onchange="setFileNamesExternal('w9Div');" multiple>
+                <input class="file-input" type="file" name="attachment" id="coiAttachment" onchange="setFileNamesExternal('coiDiv');" multiple>
                 <span class="file-cta">
                   <span class="file-icon">
                     <i class="fas fa-upload"></i>
@@ -428,9 +431,9 @@
             3. Certificate of Insurance - Worker's Compensation:
           </td>
           <td colspan="3">
-            <div class="file is-boxed is-primary" id="coiDiv">
+            <div class="file is-boxed is-primary" id="workCompDiv">
               <label class="file-label" id="w9Lbl">
-                <input class="file-input" type="file" name="attachment" id="coiAttachment" onchange="setFileNamesExternal('w9Div');" multiple>
+                <input class="file-input" type="file" name="attachment" id="workCompAttachment" onchange="setFileNamesExternal('workCompDiv');" multiple>
                 <span class="file-cta">
                   <span class="file-icon">
                     <i class="fas fa-upload"></i>
@@ -439,7 +442,7 @@
                    Worker's Compensation
                   </span>
                 </span>
-                  <span class="file-name" id="coiFileName">
+                  <span class="file-name" id="workCompFileName">
 
                 </span>
               </label>
@@ -449,9 +452,9 @@
         <tr class="attachTR">
           <td colspan="5">
             **If applicable, please attach Exemption document for Worker's Compensation. You can apply for an exemption here: <a href="https://apps.fldfs.com/bocexempt/" target="_blank">https://apps.fldfs.com/bocexempt/</a>
-            <div class="file is-boxed is-primary" id="coiDiv">
+            <div class="file is-boxed is-primary" id="workCompDiv2">
               <label class="file-label" id="w9Lbl">
-                <input class="file-input" type="file" name="attachment" id="coiAttachment" onchange="setFileNamesExternal('w9Div');" multiple>
+                <input class="file-input" type="file" name="attachment" id="workCompExempt" multiple>
                 <span class="file-cta">
                   <span class="file-icon">
                     <i class="fas fa-upload"></i>
@@ -469,9 +472,9 @@
             4. Contract/Quote/PO/Invoice
           </td>
           <td colspan="3">
-            <div class="file is-boxed is-primary" id="coiDiv">
+            <div class="file is-boxed is-primary" id="otherAttachDiv">
               <label class="file-label" id="w9Lbl">
-                <input class="file-input" type="file" name="attachment" id="coiAttachment" onchange="setFileNamesExternal('w9Div');" multiple>
+                <input class="file-input" type="file" name="attachment" id="otherAttachAttachment" onchange="setFileNamesExternal('otherAttachDiv');" multiple>
                 <span class="file-cta">
                   <span class="file-icon">
                     <i class="fas fa-upload"></i>
@@ -480,7 +483,7 @@
                    Other Documents
                   </span>
                 </span>
-                  <span class="file-name" id="coiFileName">
+                  <span class="file-name" id="otherAttachFileName">
 
                 </span>
               </label>
@@ -491,7 +494,7 @@
           <td colspan="5"></td>
         </tr>
         <tr>
-          <td colspan="5"><label class="label">Notes</label></td>
+          <td colspan="5"><label class="label">V. Notes</label></td>
         </tr>
         <tr class="notesTR">
           <td colspan="5">
@@ -500,7 +503,9 @@
         </tr>
         <tr class="notesTR">
           <td colspan="5">
-            2. Please send ACH and Wire Instructions form via separate email to <i>vendorrequest@domain.com</i>. (Use email subject: <u>Payment Instructions_<i>Vendor Name</i></u>)
+           <!-- 2. Please send ACH and Wire Instructions form via separate email to <i>vendorrequest@domain.com</i>. (Use email subject: <u>Payment Instructions_<i>Vendor Name</i></u>)-->
+            2. Please click the following link to submit <a href="https://treasurynode-test-innersphere.c9users.io/vendorform?token=1546630078892" target="_blank">ACH and Wire Instructions form</a>.
+            <label class="checkbox" style="width:100%"><input type="checkbox" style="-webkit-appearance: checkbox;width:3%"><b>Select this option if you decline to provide ACH and Wire Instructions</b></label>
           </td>
         </tr>
         <tr class="notesTR">
@@ -508,12 +513,22 @@
             3. We will be sending you billing instructions via email along with an invitation to vendor cafe portal
           </td>
         </tr>
+         <tr>
+          <td colspan="5">
+           <hr style="margin:0"/>
+          </td>
+        </tr>
+        <tr>
+          <td colspan="5">
+           <label class="checkbox" style="width:100%" id="agreeementLbl"><input type="checkbox" style="-webkit-appearance: checkbox;width:3%" id="agreementChk"><b>By clicking here you agree we may add you as additional insured with a waiver of subgregation on all applicable policies.</b></label>
+          </td>
+        </tr>
       </tbody>
     </table>
 
     <div id="vendoractionsDiv">
-      <button type="button" id="btnClearForm" class="button is-info">Clear Form</button>
-      <button type="button" id="btnSubmitVendor" class="button is-info">Submit Form</button>
+      <button type="button" id="externalVendor_btnClearForm" class="button is-info" onclick="clearForm();">Clear Form</button>
+      <button type="button" id="externalVendor_btnSubmitVendor" class="button is-info" onclick="vendorForm_validateForm()">Submit Form</button>
   </div>
 
 <div class="ui longer modal" id="notificationDiv">
