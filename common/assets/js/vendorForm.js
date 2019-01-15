@@ -1,3 +1,8 @@
+$(document).ready(function () {
+  $("#eftURL").prop("href", "https://treasurynode-test-innersphere.c9users.io/vendorform?token=" + $("#efttoken").val());
+  validateVendorUrlExternal();
+});
+
 function vendorForm_validateForm() {
   event.preventDefault();
 
@@ -34,6 +39,7 @@ function vendorForm_validateForm() {
     'fieldphone': $('#fieldphone').val(),
     'project_legal_entity': $('#project_legal_entity').val(),
     'project_code': $('#project_code').val(),
+    'project_name': $('#project_name').val(),
     'po': $('#po').val(),
     'accountingname': $('#accountingname').val(),
     'accountingtitle': $('#accountingtitle').val(),
@@ -47,7 +53,7 @@ function vendorForm_validateForm() {
     'cities': cities,
     'states': states,
     'zipcodes': zipcodes,
-    'services': $("#services").text(),
+    //'services': $("#services").text(),
     'personalRelation_Yes': ($('#personalRelation_Yes').prop("checked")) ? "yes" : "no",
     'personalRelation_No': ($('#personalRelation_No').prop("checked")) ? "yes" : "no",
     'employee_relation_explanation': $("#employee_relation_explanation").val(),
@@ -151,7 +157,106 @@ function clearForm() {
 }
 
 function showInstructions() {
+  var instructionsHtml = "<p>Please see below description of all fields in the form</p>";
+  instructionsHtml += "<ul>";
+  instructionsHtml += "<li><u><b>New Vendor</b>:</u> Select if this is the first time you are submitting this form</li>";
+  instructionsHtml += "<li><u><b>Modify Vendor Information</b>:</u> Select if you have already submitted this form and would like to update your information</li>";
+  instructionsHtml += "<hr/>";
+  instructionsHtml += "<li><u><b>I. Project, Division and/or Corporate Office - Main Contact/Owners Rep.</b>:</u>";
+  instructionsHtml += "<ul>";
+  instructionsHtml += "<li><u><b>Project Legal Entity</b>:</u> Project in which the Vendor will be working on</li>";
+  instructionsHtml += "<li><u><b>Project Name</b>:</u> Project Name in which the Vendor will be working on</li>";
+  instructionsHtml += "<li><u><b>Name</b>:</u> Name of Owners Rep from PRH Investments and/or TRG Management Company of Florida that hired the vendor</li>";
+  instructionsHtml += "<li><u><b>Title</b>:</u> Business Title of Owners Rep from PRH Investments and/or TRG Management Company of Florida that hired the vendor</li>";
+  instructionsHtml += "<li><u><b>Email</b>:</u> Email of Owners Rep from PRH Investments and/or TRG Management Company of Florida that hired the vendor</li>";
+  instructionsHtml += "<li><u><b>Phone</b>:</u> Phone of Owners Rep from PRH Investments and/or TRG Management Company of Florida that hired the vendor</li>";
+  instructionsHtml += "<li><u><b>Project Code</b>:</u> Project Code in which the Vendor will be working on</li>";
+  instructionsHtml += "<li><u><b>PO #</b>:</u> PO# provided to Vendor</li>";
+  instructionsHtml += "</ul>";
+  instructionsHtml += "</li>";
+  instructionsHtml += "<hr/>";
+  instructionsHtml += "<li><u><b>II. Vendor Information - Main Contact</b>:</u>";
+  instructionsHtml += "<ul>";
+  instructionsHtml += "<li><u><b>Legal Entity Name</b>:</u> Vendor Legal Name</li>";
+  instructionsHtml += "<li><u><b>DBA</b>:</u> Vendor's \"Doing Business As\" information</li>";
+  instructionsHtml += "<li><u><b>Name</b>:</u> Name of employee that will serve as main contact on Vendor's side</li>";
+  instructionsHtml += "<li><u><b>Title</b>:</u> Business Title of employee that will serve as main contact on Vendor's side</li>";
+  instructionsHtml += "<li><u><b>Email</b>:</u> Email of employee that will serve as main contact on Vendor's side</li>";
+  instructionsHtml += "<li><u><b>Phone</b>:</u> Phone of employee that will serve as main contact on Vendor's side</li>";
+  instructionsHtml += "</ul>";
+  instructionsHtml += "</li>";
+  instructionsHtml += "<hr/>";
+  instructionsHtml += "<li><u><b>III. Vendor Accounting Contact</b>:</u>";
+  instructionsHtml += "<ul>";
+  instructionsHtml += "<li><u><b>Name</b>:</u> Name of Main Contact on Vendor's Accounting Department</li>";
+  instructionsHtml += "<li><u><b>Title</b>:</u> Business Title of Main Contact on Vendor's Accounting Department</li>";
+  instructionsHtml += "<li><u><b>Email</b>:</u> Email of Main Contact on Vendor's Accounting Department</li>";
+  instructionsHtml += "<li><u><b>Phone</b>:</u> Phone of Main Contact on Vendor's Accounting Department</li>";
+  instructionsHtml += "<li><u><b>Email for 1099 purposes</b>:</u> Email address to use when emailing 1099s to Vendor</li>";
+  instructionsHtml += "<li><u><b>Tax ID or SSN</b>:</u> Vendor's Tax ID/SSN</li>";
+  instructionsHtml += "</ul>";
+  instructionsHtml += "</li>";
+  instructionsHtml += "<hr/>";
+  instructionsHtml += "<li><u><b>Remittance address same as W-9 address</b>:</u>";
+  instructionsHtml += "<ul>";
+  instructionsHtml += "<li><u><b>Yes/No</b>:</u> Whether the Vendor's remittance address is the same as the address listed on its W9. Add Remittance Address is different.</li>";
+  instructionsHtml += "</ul>";
+  instructionsHtml += "</li>";
+  instructionsHtml += "<hr/>";
+  instructionsHtml += "<li><u><b>Types of service you are providing along with any other projects you will be working on</b>:</u>";
+  instructionsHtml += "<ul>";
+  instructionsHtml += "<li>Detailed Description of all services you will provide.</li>";
+  instructionsHtml += "</ul>";
+  instructionsHtml += "</li>";
+  instructionsHtml += "<hr/>";
+  instructionsHtml += "<li><u><b>Does vendor have any business, financial or personal relationship with any employee or relative of any employee of PRH Investments and/or TRG Management Company of Florida or any of its affiliates?</b>:</u>";
+  instructionsHtml += "<ul>";
+  instructionsHtml += "<li><u><b>Yes/No</b>:</u> Whether the vendor have any business, financial or personal relationship with any employee or relative of any employee of PRH Investments and/or TRG Management Company of Florida or any of its affiliates. If the answer is <i>Yes</i> then an explanation is required</li>";
+  instructionsHtml += "</ul>";
+  instructionsHtml += "</li>";
+  instructionsHtml += "<hr/>";
+  instructionsHtml += "<li><u><b>Attachments</b>:</u>";
+  instructionsHtml += "<ul>";
+  instructionsHtml += "<li><u><b>W9/W8</b>:</u> Attach most recent signed W9/W8. If not attached then provide explanation</li>";
+  instructionsHtml += "<li><u><b>Certificates of Insurance (COI) (Commercial and Automobile Liabilities)</b>:</u> Attach most recent Certificates of Insurance (COI) (Commercial and Automobile Liabilities). If not attached then provide explanation</li>";
+  instructionsHtml += "<li><u><b>Certificate of Insurance - Worker's Compensation</b>:</u> Attach most recent Certificate of Insurance - Worker's Compensation. If not attached then attach exemption document for Worker's Compensation. You can apply for an exemption here: <a href=\"https://apps.fldfs.com/bocexempt/\" target=\"_blank\">https://apps.fldfs.com/bocexempt/</a></li>";
+  instructionsHtml += "<li><u><b>Contract/Quote/PO/Invoice</b>:</u> Attach Contract/Quote/PO/Invoice</li>";
+  instructionsHtml += "</ul>";
+  instructionsHtml += "</li>";
+  instructionsHtml += "<hr/>";
+  instructionsHtml += "<li>Click in the <i>ACH and Wire Instructions form</i> link on the Notes section to provide ACH/Wire information</li>";
+  instructionsHtml += "<li>You must agree we may add you as additional insured with a waiver of subgregation on all applicable policies</li>";
+  instructionsHtml += "</ul>";
   $("#notificationDiv .header").html("How to Complete form");
-  $("#notificationDiv .content").html("<p>In progress...</p>");
+  $("#notificationDiv .content").html(instructionsHtml);
   $("#notificationDiv").modal("show");
 }
+
+
+function addServiceRow(elem) {
+  var servicesHTML = "<tr>                <td>                  <input type=\"text\" class=\"input is-info\" name=\"project\" placeholder=\"Project Name\">                </td>                 <td>                  <input type=\"text\" class=\"input is-info\" name=\"services\" placeholder=\"Services Provided\">                </td>                <td>                  <button class=\"button is-info\" onclick=\"addServiceRow(this)\">+</button>                  <button class=\"button is-danger\" onclick=\"removeServiceRow(this)\">-</button>                </td>              </tr>";
+  $("#servicesTbl tbody").append(servicesHTML);
+}
+
+function removeServiceRow(elem) {
+  if ($("#servicesTbl tbody tr").length > 1)
+    elem.parentElement.parentElement.remove();
+}
+
+
+
+/***
+ * Jorge Medina 12/17/2018 Validate Valid Vendor URL before allowing access to form
+ * */
+function validateVendorUrlExternal() {
+
+  $.getJSON('/validateUrl/' + $("#token").val(), function (data) {
+    if (data.msg === '') {
+      return true;
+    }
+    else {
+      $("body").html("Invalid URL");
+    }
+
+  });
+};

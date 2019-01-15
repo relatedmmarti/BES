@@ -140,7 +140,8 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
    * */
   app.get('/vendorexternal', (req, res) => {
     res.render('vendor_external', {
-      token: (req.query.token) ? req.query.token : '' //pass form token if present
+      token: (req.query.token) ? req.query.token : '', //pass form token if present
+      efttoken: (req.query.efttoken) ? req.query.efttoken : '' //pass form token if present
     });
   });
 
@@ -1002,6 +1003,8 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
           //if (setWorkflow.msg.err === null) {
 
           try {
+            var now = new Date();
+            var timestamp = (now.getFullYear()) + '-' + (now.getMonth() + 1) + '-' + (now.getDate()) + ' ' + (now.getHours()) + ':' + (now.getMinutes()) + ':' + (now.getSeconds());
             var select = new Query(`UPDATE eftpayee
         SET vendorid = ?,
          sourcesystem = ?,
@@ -1031,7 +1034,8 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
          interbankcountry = ?,
          interrouting = ?,
          interswift = ?,
-         notes = ?
+         notes = ?,
+         modified= ?
          WHERE id = ?;`, [
               payload.vendorid,
               payload.sourcesystem,
@@ -1062,6 +1066,7 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
               payload.interrouting,
               payload.interswift,
               payload.notes,
+              timestamp,
               req.params.id
             ]).run();
 
@@ -1248,6 +1253,34 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
    * */
 
   app.get('/vendorURL', oidc.ensureAuthenticated(), (req, res) => {
+    try {
+      console.log(req.method + ' ' + req.url + ' ' + req.userContext.userinfo.preferred_username + ' ' + req.headers['x-real-ip']);
+      var token = new Date().valueOf();
+      var insert = new Query(`INSERT INTO vendorurl(
+      token,
+      datecreated,
+      user
+     ) values(?,?,?);`, [token, new Date().toLocaleDateString(), req.userContext.userinfo.preferred_username]).run();
+      var efttoken = new Date().valueOf();
+      var insert = new Query(`INSERT INTO vendorurl(
+      token,
+      datecreated,
+      user
+     ) values(?,?,?);`, [efttoken, new Date().toLocaleDateString(), req.userContext.userinfo.preferred_username]).run();
+
+      var url = config.appURL + '/vendorexternal?token=' + token + '&efttoken=' + efttoken;
+      res.status(200).json({ url: url, msg: '' });
+    }
+    catch (err) {
+      console.log(err);
+      res.json({ msg: 'Unable to create URL: ' + err });
+    }
+  });
+  /**
+   * Jorge Medina 12/17/2018
+   * */
+
+  app.get('/vendorEFTURL', oidc.ensureAuthenticated(), (req, res) => {
     try {
       console.log(req.method + ' ' + req.url + ' ' + req.userContext.userinfo.preferred_username + ' ' + req.headers['x-real-ip']);
       var token = new Date().valueOf();
@@ -2373,6 +2406,34 @@ function validateExternalVendorForm(payload) {
           msg: 'Cannot be blank'
         });
       }
+      if (validator.isEmpty(payload.project_name, { ignore_whitespace: true })) {
+        validationErrors.push({
+          field: 'project_name',
+          container: 'project_name',
+          msg: 'Cannot be blank'
+        });
+      }
+      if (validator.isEmpty(payload.project_code, { ignore_whitespace: true })) {
+        validationErrors.push({
+          field: 'project_code',
+          container: 'project_code',
+          msg: 'Cannot be blank'
+        });
+      }
+      if (validator.isEmpty(payload.project_legal_entity, { ignore_whitespace: true })) {
+        validationErrors.push({
+          field: 'project_legal_entity',
+          container: 'project_legal_entity',
+          msg: 'Cannot be blank'
+        });
+      }
+      if (validator.isEmpty(payload.po, { ignore_whitespace: true })) {
+        validationErrors.push({
+          field: 'po',
+          container: 'po',
+          msg: 'Cannot be blank'
+        });
+      }
 
       if (payload.accountingemail && !validator.isEmail(payload.accountingemail)) {
         validationErrors.push({
@@ -2406,6 +2467,15 @@ function validateExternalVendorForm(payload) {
         });
       }
 
+      var ssnOrTinRegex = /^(?:\d{3}-\d{2}-\d{4}|\d{2}-\d{7})$/; //regex for SSN or TIN
+      if (!ssnOrTinRegex.test(payload.taxid)) {
+        validationErrors.push({
+          field: 'taxid',
+          container: 'taxid',
+          msg: 'Invalid value'
+        });
+      }
+
       if (payload.remitAddress_Yes === 'no' && payload.remitAddress_No === 'no') {
         validationErrors.push({
           field: 'remitAddress',
@@ -2414,13 +2484,13 @@ function validateExternalVendorForm(payload) {
         });
       }
 
-      if (validator.isEmpty(payload.services, { ignore_whitespace: true })) {
+      /*if (validator.isEmpty(payload.services, { ignore_whitespace: true })) {
         validationErrors.push({
           field: 'services',
           container: 'services',
           msg: 'Cannot be blank'
         });
-      }
+      }*/
 
       if (payload.personalRelation_Yes === 'no' && payload.personalRelation_No === 'no') {
         validationErrors.push({

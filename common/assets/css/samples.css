@@ -437,7 +437,7 @@ CSS for Vendor Form
 }
 
 .fieldTR, .addressTR, .relationTR, .notesTR{
-  background-color: honeydew;
+  background-color: aliceblue;
   border:none;
 }
 
@@ -445,6 +445,10 @@ CSS for Vendor Form
 .vendorTR, .accountingTR, .servicesTR, .attachTR{
   background-color: aliceblue;
   border:none;
+}
+
+.noborder{
+      border:none;
 }
 
 
@@ -459,8 +463,47 @@ CSS for Vendor Form
 
 }
 
+.full_width{
+    width: 100%;
+}
+
+.headingTR{
+    text-align:center;
+}
+
+.headingTR label{
+    font-size:20px;
+}
+
 @media print {
-  .servicesTR {page-break-after: always;}
+  body{
+      width: 95%;
+      margin-left: 2%;
+      overflow-y: visible !important;
+  }
+
+  #viewInstrBtn, #externalVendor_btnClearForm, #externalVendor_btnSubmitVendor{
+      display: none;
+  }
+  .print_page_delimiter{
+      page-break-after:always !important;
+  }
+
+  #vendorInformationTbl{
+      float:none;
+      overflow:visible !important;
+      border:0;
+  }
+  html{
+    overflow:visible !important;
+    font-size:12px !important;
+  }
+  .print_hidden, .file{
+    display:none;
+  }
+  .headingTR label{
+    font-size:12px;
+}
 }
 
 

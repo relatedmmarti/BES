@@ -717,8 +717,30 @@ function clearAllInputs() {
 /**
  * Jorge Medina 12/12/2018 Vendor Forms Helper functions
  * */
-function generateVendorUrl() {
+function generateVendorEFTUrl() {
     var str = "https://treasurynode-test-innersphere.c9users.io/vendorform";
+
+    $.getJSON('/vendorEFTURL', function (data) {
+
+        if (data.msg !== '') {
+            alert('Unable to generate vendor url');
+            return;
+        }
+        $("#clipboard").val(data.url.toString());
+
+        $("#clipboard")[0].select();
+        document.execCommand('copy');
+        alert('URL: ' + $("#clipboard").val());
+
+    })
+
+}
+
+/**
+ * Jorge Medina 12/12/2018 Vendor Forms Helper functions
+ * */
+function generateVendorUrl() {
+    var str = "https://treasurynode-test-innersphere.c9users.io/vendorexternal";
 
     $.getJSON('/vendorURL', function (data) {
 
@@ -1065,8 +1087,6 @@ function attachVendorFiles(vendorId) {
  * Jorge Medina 12/17/2018 Validate Valid Vendor URL before allowing access to form
  * */
 function validateVendorUrl() {
-    //temporarily bypass
-    return true;
 
     $.getJSON('/validateUrl/' + $("#token").val(), function (data) {
         if (data.msg === '') {
