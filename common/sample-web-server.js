@@ -972,8 +972,19 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
               })
 
           }
-          if (payload.wf_stepnext === '5') {
+          else if (payload.wf_stepnext === '5') {
             console.log('need to send to Yardi');
+            pushToYardi(req.params.id)
+              .then(() => {
+                res.send({ msg: '' });
+              })
+              .catch((err) => {
+                console.log(err);
+                res.send({ msg: 'Unable to send to Yardi automatically' });
+              })
+          }
+          else if (payload.wf_stepnext === '1' && setWorkflow.CurrentStep.id === 5) {
+            //approved BES set back to entry -> removed from Yardi
             pushToYardi(req.params.id)
               .then(() => {
                 res.send({ msg: '' });
@@ -2197,7 +2208,7 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
 
 
         var sqlBes = `
-select e1.id, e1.vendorid, e1.paytype || ' : ' || e1.vendorid || '-' ||  e1.payeename || ' ' || e1.forfurthercredit || ' : ' || e1.bankname || '-' || substr(e1.account,-4) sdesc, e1.*
+select e1.id, e1.vendorid, e1.paytype || ' : ' || e1.vendorid || '-' ||  e1.payeename || ' ' || e1.forfurthercredit || ' : ' || e1.bankname || '-' || substr(e1.account,-4) sdesc,s.id wf_step, e1.*
 from eftpayee e1
 	left join
 		(
@@ -2207,11 +2218,11 @@ from eftpayee e1
 		) z on z.fk_object_id = e1.id
 	left join wfaction a2 on a2.id = z.fk_faction_id
 	left join wfstep s on s.id = a2.fk_wfstep_id
-	WHERE s.id = 5 and s.fk_wf_id = 1 and  e1.id=?
+	WHERE s.id in(5,1) and s.fk_wf_id = 1 and  e1.id=?
 	order by e1.id asc;`;
 
         var besJSON = new Query(sqlBes, [besId]).all();
-        console.log(JSON.stringify(besJSON));
+        //console.log(JSON.stringify(besJSON));
         /*var insert = new besQuery(`
           INSERT INTO bestransaction
           (
@@ -2227,11 +2238,17 @@ from eftpayee e1
 
         //BES Push Socket
         //Socket Initialize
-        var socket = require('socket.io-client')('http://localhost:8081');
+        var socket = require('socket.io-client')(config.besapi_url);
 
         socket.on('connect', function () {
           console.log('connected');
-          socket.emit('message', besJSON);
+          socket.emit('authentication', { username: config.socketAuth.username, password: config.socketAuth.password });
+          socket.on('authenticated', function () {
+            // use the socket as usual
+            console.log('auth done');
+            socket.emit('message', besJSON);
+          });
+
         });
         socket.on('message', function (data) {
           console.log(data);
