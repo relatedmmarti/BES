@@ -35,6 +35,18 @@ config.mailOptions = {
 };
 config.besURL = process.env.besURL + '/payinfo?id=<ID>';
 
+config.appURL = process.env.besURL;
+
+
+config.socketAuth = {
+  username: process.env.socket_auth_username,
+  password: process.env.socket_auth_password
+
+};
+
+config.besapi_url = process.env.besapi_url;
+
+
 
 config.bespush = {
   url: process.env.bespushurl,

@@ -6,6 +6,7 @@
 
 //Query helper
 const Query = require('../common/query.js');
+//const besQuery = require('./bessync_query');
 
 const express = require('express'),
   bodyParser = require('body-parser');
@@ -25,13 +26,17 @@ const qs = require('querystring');
 const _ = require('lodash');
 const fs = require('fs');
 
+
 const validator = require('validator');
 const nodemailer = require('nodemailer');
 
 
 
+
 const templateDir = path.join(__dirname, '..', 'common', 'views');
 const frontendDir = path.join(__dirname, '..', 'common', 'assets');
+
+
 
 module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePageTemplateName) {
 
@@ -125,7 +130,18 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
    * */
   app.get('/vendorform', (req, res) => {
     res.render('vendorform', {
+      token: (req.query.token) ? req.query.token : '' //pass form token if present
+    });
+  });
 
+
+  /**
+   * Jorge Medina 12/26/2018 Vendor Request form initial setup
+   * */
+  app.get('/vendorexternal', (req, res) => {
+    res.render('vendor_external', {
+      token: (req.query.token) ? req.query.token : '', //pass form token if present
+      efttoken: (req.query.efttoken) ? req.query.efttoken : '' //pass form token if present
     });
   });
 
@@ -956,6 +972,28 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
               })
 
           }
+          else if (payload.wf_stepnext === '5') {
+            console.log('need to send to Yardi');
+            pushToYardi(req.params.id)
+              .then(() => {
+                res.send({ msg: '' });
+              })
+              .catch((err) => {
+                console.log(err);
+                res.send({ msg: 'Unable to send to Yardi automatically' });
+              })
+          }
+          else if (payload.wf_stepnext === '1' && setWorkflow.CurrentStep.id === 5) {
+            //approved BES set back to entry -> removed from Yardi
+            pushToYardi(req.params.id)
+              .then(() => {
+                res.send({ msg: '' });
+              })
+              .catch((err) => {
+                console.log(err);
+                res.send({ msg: 'Unable to send to Yardi automatically' });
+              })
+          }
           else
             res.send({ msg: '' });
 
@@ -976,6 +1014,8 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
           //if (setWorkflow.msg.err === null) {
 
           try {
+            var now = new Date();
+            var timestamp = (now.getFullYear()) + '-' + (now.getMonth() + 1) + '-' + (now.getDate()) + ' ' + (now.getHours()) + ':' + (now.getMinutes()) + ':' + (now.getSeconds());
             var select = new Query(`UPDATE eftpayee
         SET vendorid = ?,
          sourcesystem = ?,
@@ -1005,7 +1045,8 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
          interbankcountry = ?,
          interrouting = ?,
          interswift = ?,
-         notes = ?
+         notes = ?,
+         modified= ?
          WHERE id = ?;`, [
               payload.vendorid,
               payload.sourcesystem,
@@ -1036,6 +1077,7 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
               payload.interrouting,
               payload.interswift,
               payload.notes,
+              timestamp,
               req.params.id
             ]).run();
 
@@ -1188,7 +1230,18 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
             //Set initial workflow step for new record
             var setWorkflow = new WorkflowAction(1, 1, insert.lastInsertROWID, req.userContext.userinfo.preferred_username, payload.wf_notes, true);
             //console.log(setWorkflow);
-
+            if (payload.vendor_id) {
+              var insertAttach = new Query(`INSERT INTO eftattach(
+                fk_object_id,
+                filename,
+                dateadded,
+                dateupdated,
+                datedeleted,
+                user
+                ) SELECT ?, filename,dateadded,dateupdated,'','external' from vendorattach WHERE fk_object_id=?;`, [
+                insert.lastInsertROWID, payload.vendor_id
+              ]).run();
+            }
             res.send({ msg: '', id: insert.lastInsertROWID });
           })
 
@@ -1206,6 +1259,84 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
     }
   });
 
+  /**
+   * Jorge Medina 12/17/2018
+   * */
+
+  app.get('/vendorURL', oidc.ensureAuthenticated(), (req, res) => {
+    try {
+      console.log(req.method + ' ' + req.url + ' ' + req.userContext.userinfo.preferred_username + ' ' + req.headers['x-real-ip']);
+      var token = new Date().valueOf();
+      var insert = new Query(`INSERT INTO vendorurl(
+      token,
+      datecreated,
+      user
+     ) values(?,?,?);`, [token, new Date().toLocaleDateString(), req.userContext.userinfo.preferred_username]).run();
+      var efttoken = new Date().valueOf();
+      var insert = new Query(`INSERT INTO vendorurl(
+      token,
+      datecreated,
+      user
+     ) values(?,?,?);`, [efttoken, new Date().toLocaleDateString(), req.userContext.userinfo.preferred_username]).run();
+
+      var url = config.appURL + '/vendorexternal?token=' + token + '&efttoken=' + efttoken;
+      res.status(200).json({ url: url, msg: '' });
+    }
+    catch (err) {
+      console.log(err);
+      res.json({ msg: 'Unable to create URL: ' + err });
+    }
+  });
+  /**
+   * Jorge Medina 12/17/2018
+   * */
+
+  app.get('/vendorEFTURL', oidc.ensureAuthenticated(), (req, res) => {
+    try {
+      console.log(req.method + ' ' + req.url + ' ' + req.userContext.userinfo.preferred_username + ' ' + req.headers['x-real-ip']);
+      var token = new Date().valueOf();
+      var url = config.appURL + '/vendorform?token=' + token;
+      var insert = new Query(`INSERT INTO vendorurl(
+      token,
+      datecreated,
+      user
+     ) values(?,?,?);`, [token, new Date().toLocaleDateString(), req.userContext.userinfo.preferred_username]).run();
+      res.status(200).json({ url: url, msg: '' });
+    }
+    catch (err) {
+      console.log(err);
+      res.json({ msg: 'Unable to create URL: ' + err });
+    }
+  });
+
+  /***
+   * Jorge Medina 12/17/2018 Validate Vendor Form Urls
+   * */
+
+  app.get('/validateUrl/:token', (req, res) => {
+    try {
+      console.log(req.method + ' ' + req.url);
+
+      var result = new Query(`
+    select id from vendorurl
+    where
+    token = ? and datesubmitted is null;`, [
+        req.params.token + '.0',
+      ]).get();
+
+      if (result === undefined) {
+        res.status(200).json({ msg: 'Invalid token provided' });
+      }
+      else {
+        res.status(200).json({ msg: '' });
+      }
+
+    }
+    catch (err) {
+      console.log(err);
+      res.json({ msg: 'Error validating token: ' + err });
+    }
+  });
 
   /**
    * List all Submitted Vendors
@@ -1264,9 +1395,13 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
     var obj = new Query('SELECT * from vendorforms where id=?', [req.params.id]).get();
 
 
+    //Get Attachments if Any
+    var attachments = new Query('SELECT * from vendorattach where fk_object_id=?', [req.params.id]).all();
+
     //Wrap everything up into an object to send out
     var payload = {
-      obj: obj
+      obj: obj,
+      attachments: attachments
     };
 
     //console.log(payload);
@@ -1294,35 +1429,73 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
             res.send({ msg: '', validationErrors: validationErrors });
             return; //force end of execution
           }
+
+          var now = new Date();
           var insert = new Query(`INSERT INTO vendorforms(
           legalentityname,
-          dba,
-          taxid,
-          email1099,
-          vendorname,
-          title,
           address1,
           address2,
           city,
           state,
-          zip
+          zip,
+          country,
+          bankname,
+          bankaddress,
+          bankcity,
+          bankstate,
+          bankzip,
+          bankcountry,
+          routing,
+          account,
+          swift,
+          interbankname,
+          interbankaddress,
+          interbankcity,
+          interbankstate,
+          interbankzip,
+          interbankcountry,
+          interrouting,
+          interswift,
+          datecreated
           )
-          VALUES(?,?,?,?,?,?,?,?,?,?,?);`, [
+          VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);`, [
             payload.legalentityname,
-            payload.dba,
-            payload.taxid,
-            payload.email1099,
-            payload.vendorname,
-            payload.title,
             payload.address1,
             payload.address2,
             payload.city,
             payload.state,
-            payload.zip
+            payload.zip,
+            payload.country,
+            payload.bankname,
+            payload.bankaddress,
+            payload.bankcity,
+            payload.bankstate,
+            payload.bankzip,
+            payload.bankcountry,
+            payload.routing,
+            payload.account,
+            payload.swift,
+            payload.interbankname,
+            payload.interbankaddress,
+            payload.interbankcity,
+            payload.interbankstate,
+            payload.interbankzip,
+            payload.interbankcountry,
+            payload.interrouting,
+            payload.interswift,
+            now.toLocaleDateString()
           ]).run();
 
           //console.log(insert);
-
+          var update = new Query(`UPDATE vendorurl
+        set datesubmitted=?,
+            ip=?
+        WHERE
+              token=? and datesubmitted is null;`, [
+            new Date().toLocaleDateString(),
+            req.headers['x-forwarded-for'] || req.connection.remoteAddress,
+            payload.token + '.0'
+          ]).run();
 
           res.send({ msg: '', id: insert.lastInsertROWID });
         })
@@ -1335,6 +1508,188 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
       res.send(err);
     }
   });
+
+
+
+  /**
+   *  Jorge Medina  12/03/2018 Route to store vendor attachments
+   * */
+
+  app.post('/attachVendor', (req, res) => {
+    console.log(req.method + ' ' + req.url);
+
+    try {
+      var form = new multiparty.Form();
+      var payload = { id: "", files: {} };
+      form.parse(req, (err, fields, files) => {
+        payload.id = fields.id[0];
+        payload.files = files;
+        var promiseArr = [];
+        _.values(files).forEach((file) => {
+          promiseArr.push(uploadVendorFile(file, fields, req, payload));
+        })
+
+        Promise.all(promiseArr)
+          .then((values) => {
+            res.send({ msg: '' });
+          })
+          .catch((err) => {
+            console.log(err);
+            res.send({ msg: 'Unable to save all files' });
+          })
+      });
+    }
+    catch (err) {
+      console.log(err);
+      res.status(500);
+      res.send(err);
+    }
+  });
+
+  /**
+   * Jorge Medina 12/17/2018 Upload Vendor attachments
+   * */
+
+  function uploadVendorFile(file, fields, req, payload) {
+    return new Promise((resolve, reject) => {
+      var now = new Date();
+      var fileStamp = (now.getMonth() + 1) + '' + (now.getDate()) + '' + (now.getFullYear()) + '' + (now.getHours()) + '' + (now.getMinutes());
+      var insert = new Query(`INSERT INTO vendorattach(
+          fk_object_id,
+          filename,
+          dateadded,
+          dateupdated,
+          datedeleted
+          )
+          VALUES(?,?,?,?,?);`, [
+        fields.id[0],
+        fields.id[0] + '_' + fileStamp + '_v_' + file[0].originalFilename,
+        now.toLocaleDateString(),
+        now.toLocaleDateString(),
+        null
+      ]).run();
+
+      var fileID = insert.lastInsertROWID;
+
+      fs.copyFile(file[0].path, fields.id[0] + '_' + fileStamp + '_v_' + file[0].originalFilename, (err) => {
+        if (err) console.log(err);
+        //console.log(`${file[0].path} copied to ${config.attachmentPath+file[0].originalFilename}`);
+        blobService.createBlockBlobFromLocalFile(config.blobContainer, config.blobPath + fields.id[0] + '_' + fileStamp + '_v_' + file[0].originalFilename, fields.id[0] + '_' + fileStamp + '_v_' + file[0].originalFilename,
+          function (error, result, response) {
+            if (error) {
+              console.log(error)
+              del = new Query('DELETE FROM vendorattach WHERE id=?;', [fileID]).run();
+              reject();
+            }
+            else {
+              console.log("uploaded to azure");
+              fs.unlink(fields.id[0] + '_' + fileStamp + '_v_' + file[0].originalFilename, (err) => {
+                if (err) {
+                  console.log(err);
+                  reject();
+                };
+                console.log(fields.id[0] + '_' + fileStamp + '_v_' + file[0].originalFilename + ' was deleted from local');
+                resolve();
+              });
+            }
+          }
+        )
+
+      })
+    })
+  };
+
+  /**
+   * Jorge Medina 01/04/2019 - Save new external vendor forms
+   * */
+  app.post('/vendor_external/new', (req, res) => {
+
+    console.log(req.method + ' ' + req.url);
+
+    var payload = req.body;
+
+
+    try {
+
+      validateExternalVendorForm(payload)
+        .then(function (validationErrors) {
+
+          if (validationErrors.length >= 1) {
+            res.send({ msg: '', validationErrors: validationErrors });
+            return; //force end of execution
+          }
+
+          /*var now = new Date();
+          var insert = new Query(`INSERT INTO vendorforms(
+          legalentityname,
+          email1099,
+          name,
+          title,
+          address1,
+          address2,
+          city,
+          state,
+          zip,
+          country,
+          bankname,
+          bankaddress,
+          bankcity,
+          bankstate,
+          bankzip,
+          bankcountry,
+          routing,
+          account,
+          swift,
+          taxid,
+          datecreated
+          )
+          VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);`, [
+            payload.legalentityname,
+            payload.email1099,
+            payload.name,
+            payload.title,
+            payload.address1,
+            payload.address2,
+            payload.city,
+            payload.state,
+            payload.zip,
+            payload.country,
+            payload.bankname,
+            payload.bankaddress,
+            payload.bankcity,
+            payload.bankstate,
+            payload.bankzip,
+            payload.bankcountry,
+            payload.routing,
+            payload.account,
+            payload.swift,
+            payload.taxid,
+            now.toLocaleDateString()
+          ]).run();
+
+          //console.log(insert);
+          var update = new Query(`UPDATE vendorurl
+        set datesubmitted=?,
+            ip=?
+        WHERE
+              token=? and datesubmitted is null;`, [
+            new Date().toLocaleDateString(),
+            req.headers['x-forwarded-for'] || req.connection.remoteAddress,
+            payload.token + '.0'
+          ]).run();*/
+
+          res.send({ msg: '' });
+        });
+
+    }
+    catch (err) {
+
+      console.log(err);
+      res.status(500);
+      res.send(err);
+    }
+  });
+
 
   /**
    * Jorge Medina 12/05/2018 Handle 404 requests -> DO NOT REMOVE FROM BOTTOM OF SCRIPT!
@@ -1374,11 +1729,35 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
           });
         }
 
+        //Payee name can’t over 70 characters
+        if (!validator.isLength(payload.payeename, { min: 1, max: 70 })) {
+          validationErrors.push({
+            field: 'payeename',
+            msg: 'Length should be between 1 and 70 spaces'
+          });
+        }
+
+        //Payee address can’t over 70 characters
+        if (!validator.isEmpty(payload.payeeaddress, { ignore_whitespace: true }) && !validator.isLength(payload.payeeaddress, { min: 1, max: 70 })) {
+          validationErrors.push({
+            field: 'payeeaddress',
+            msg: 'Length should be between 1 and 70 spaces'
+          });
+        }
+
         //Payee city is required
         if (['US', 'CA'].indexOf(payload.payeecountry) !== -1 && validator.isEmpty(payload.payeecity, { ignore_whitespace: true })) {
           validationErrors.push({
             field: 'payeecity',
             msg: 'Cannot be blank'
+          });
+        }
+
+        //Payee city is can’t over 35 characters
+        if (['US', 'CA'].indexOf(payload.payeecountry) !== -1 && !validator.isLength(payload.payeecity, { min: 1, max: 35 })) {
+          validationErrors.push({
+            field: 'payeecity',
+            msg: 'Length should be between 1 and 35 spaces'
           });
         }
 
@@ -1421,12 +1800,27 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
           });
         }
 
+        //Bank address can’t over 70 characters
+        if (!validator.isEmpty(payload.bankaddress, { ignore_whitespace: true }) && !validator.isLength(payload.bankaddress, { min: 1, max: 70 })) {
+          validationErrors.push({
+            field: 'bankaddress',
+            msg: 'Length should be between 1 and 70 spaces'
+          });
+        }
 
         //bank city cannot be empty
         if (validator.isEmpty(payload.bankcity, { ignore_whitespace: true })) {
           validationErrors.push({
             field: 'bankcity',
             msg: 'Cannot be blank'
+          });
+        }
+
+        //Bank city can’t over 35 characters
+        if (!validator.isEmpty(payload.bankcity, { ignore_whitespace: true }) && !validator.isLength(payload.bankcity, { min: 1, max: 35 })) {
+          validationErrors.push({
+            field: 'bankcity',
+            msg: 'Length should be between 1 and 35 spaces'
           });
         }
 
@@ -1552,6 +1946,23 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
           });
         }
 
+        //InterBank address can’t over 70 characters
+        if (!validator.isEmpty(payload.interbankaddress, { ignore_whitespace: true }) && !validator.isLength(payload.interbankaddress, { min: 1, max: 70 })) {
+          validationErrors.push({
+            field: 'interbankaddress',
+            msg: 'Length should be between 1 and 70 spaces'
+          });
+        }
+
+
+        //InterBank city can’t over 70 characters
+        if (!validator.isEmpty(payload.interbankcity, { ignore_whitespace: true }) && !validator.isLength(payload.interbankcity, { min: 1, max: 70 })) {
+          validationErrors.push({
+            field: 'interbankcity',
+            msg: 'Length should be between 1 and 70 spaces'
+          });
+        }
+
 
 
 
@@ -1582,20 +1993,146 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
               msg: 'Invalid Characters found ("," , # , \" or \')'
             });
           }
-
-          if (key !== 'address2' && validator.isEmpty(value, { ignore_whitespace: true })) {
-            validationErrors.push({
-              field: key,
-              msg: 'Cannot be blank'
-            });
-          }
-
         });
 
-        if (payload.email1099 && !validator.isEmail(payload.email1099)) {
+
+
+
+        if (validator.isEmpty(payload.legalentityname, { ignore_whitespace: true })) {
           validationErrors.push({
-            field: 'email1099',
-            msg: 'Invalid Email address found'
+            field: 'legalentityname',
+            msg: 'Cannot be blank'
+          });
+        }
+
+        //Payee city is required
+        if (['US', 'CA'].indexOf(payload.country) !== -1 && validator.isEmpty(payload.city, { ignore_whitespace: true })) {
+          validationErrors.push({
+            field: 'country',
+            msg: 'Cannot be blank'
+          });
+        }
+
+        //Payee Postal Code is required
+        if (['US', 'CA'].indexOf(payload.country) !== -1 && validator.isEmpty(payload.zip, { ignore_whitespace: true })) {
+          validationErrors.push({
+            field: 'zip',
+            msg: 'Cannot be blank'
+          });
+        }
+
+        //Payee Country can’t be empty. Use only 2 letters ISO codes, examples: United States = US
+        if (!validator.isISO31661Alpha2(payload.country)) {
+          validationErrors.push({
+            field: 'country',
+            msg: 'Invalid value, please use only 2 letters ISO codes'
+          });
+        }
+
+
+        //Payee State is required. For US and CA, use two letters for states, example: Florida = FL
+        if (['US', 'CA'].indexOf(payload.country) !== -1 && !validator.isLength(payload.state, { min: 2, max: 2 })) {
+          validationErrors.push({
+            field: 'state',
+            msg: 'Use only 2 letter state code'
+          });
+        }
+        else if (['US', 'CA'].indexOf(payload.country) !== -1 && validator.isEmpty(payload.state, { ignore_whitespace: true })) {
+          validationErrors.push({
+            field: 'state',
+            msg: 'Cannot be blank'
+          });
+        }
+
+        //bank name is required
+        if (validator.isEmpty(payload.bankname, { ignore_whitespace: true })) {
+          validationErrors.push({
+            field: 'bankname',
+            msg: 'Cannot be blank'
+          });
+        }
+
+
+        //bank city cannot be empty
+        if (validator.isEmpty(payload.bankcity, { ignore_whitespace: true })) {
+          validationErrors.push({
+            field: 'bankcity',
+            msg: 'Cannot be blank'
+          });
+        }
+
+
+
+
+
+        //bank country only allows 2 letters ISO codes
+        if (!validator.isISO31661Alpha2(payload.bankcountry)) {
+          validationErrors.push({
+            field: 'bankcountry',
+            msg: 'Invalid value, please use only 2 letters ISO codes'
+          });
+        }
+
+        //Bank Account can’t be empty, is required
+        if (validator.isEmpty(payload.account, { ignore_whitespace: true })) {
+          validationErrors.push({
+            field: 'account',
+            msg: 'Cannot be blank'
+          });
+        }
+        //account cannot include special characters
+        if (payload.account.indexOf('-') !== -1 || payload.account.indexOf('_') !== -1) {
+          validationErrors.push({
+            field: 'account',
+            msg: 'Invalid characters found ("-" or "_")'
+          });
+        }
+
+        //Bank State is required. For US and CA, use two letters for states, example: Florida = FL
+        if (['US', 'CA'].indexOf(payload.bankcountry) !== -1 && !validator.isLength(payload.bankstate, { min: 2, max: 2 })) {
+          validationErrors.push({
+            field: 'bankstate',
+            msg: 'Use only 2 letter state code'
+          });
+        }
+
+
+
+        //If the Bank Account is international and the country uses IBAN code, the IBAN code must be used, do not include the word IBAN as part of the account number
+        if (payload.bankcountry !== 'US' && payload.account.indexOf('IBAN') !== -1) {
+          validationErrors.push({
+            field: 'account',
+            msg: 'Remove word "IBAN" from account number'
+          });
+        }
+
+
+
+
+
+
+
+
+
+        //If Payee Country is not ‘US’ then SWIFT can’t be empty
+        if (payload.bankcountry !== 'US' && (validator.isEmpty(payload.swift, { ignore_whitespace: true }))) {
+          validationErrors.push({
+            field: 'swift',
+            msg: 'Swift is required for non US banks'
+          });
+        }
+
+        //If Payee Country is ‘US’ then Routing number can’t be empty
+        if (payload.bankcountry === 'US' && (validator.isEmpty(payload.routing, { ignore_whitespace: true }))) {
+          validationErrors.push({
+            field: 'routing',
+            msg: 'Routing is required for US banks'
+          });
+        }
+        if (payload.bankcountry === 'US' && !(validator.isEmpty(payload.routing, { ignore_whitespace: true })) && !validRoutingNumber(payload.routing)) {
+          validationErrors.push({
+            field: 'routing',
+            msg: 'Invalid routing number'
           });
         }
 
@@ -1671,7 +2208,7 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
 
 
         var sqlBes = `
-select e1.id, e1.vendorid, e1.paytype || ' : ' || e1.vendorid || '-' ||  e1.payeename || ' ' || e1.forfurthercredit || ' : ' || e1.bankname || '-' || substr(e1.account,-4) sdesc, e1.*
+select e1.id, e1.vendorid, e1.paytype || ' : ' || e1.vendorid || '-' ||  e1.payeename || ' ' || e1.forfurthercredit || ' : ' || e1.bankname || '-' || substr(e1.account,-4) sdesc,s.id wf_step, e1.*
 from eftpayee e1
 	left join
 		(
@@ -1681,38 +2218,46 @@ from eftpayee e1
 		) z on z.fk_object_id = e1.id
 	left join wfaction a2 on a2.id = z.fk_faction_id
 	left join wfstep s on s.id = a2.fk_wfstep_id
-	WHERE s.id = 5 and s.fk_wf_id = 1 and  e1.id=?
+	WHERE s.id in(5,1) and s.fk_wf_id = 1 and  e1.id=?
 	order by e1.id asc;`;
 
         var besJSON = new Query(sqlBes, [besId]).all();
-        console.log(JSON.stringify(besJSON));
-        var options = {
-          "method": "POST",
-          "hostname": config.bespush.url,
-          "path": "/db/bescode",
-          "headers": {
-            "Content-Type": "application/json",
-            "cache-control": "no-cache",
-            'Authorization': 'Basic ' + new Buffer(config.bespush.username + ':' + config.bespush.password).toString('base64')
-          }
-        };
-        var req = https.request(options, (res) => {
-          var chunks = [];
+        //console.log(JSON.stringify(besJSON));
+        /*var insert = new besQuery(`
+          INSERT INTO bestransaction
+          (
+          payload,
+          datecreated,
+          processing
+          )
+          values(?,?,?);`, [
+          JSON.stringify(besJSON),
+          new Date().toLocaleDateString(),
+          'N'
+        ]).run();*/
 
-          res.on("data", function (chunk) {
-            chunks.push(chunk);
+        //BES Push Socket
+        //Socket Initialize
+        var socket = require('socket.io-client')(config.besapi_url);
+
+        socket.on('connect', function () {
+          console.log('connected');
+          socket.emit('authentication', { username: config.socketAuth.username, password: config.socketAuth.password });
+          socket.on('authenticated', function () {
+            // use the socket as usual
+            console.log('auth done');
+            socket.emit('message', besJSON);
           });
 
-          res.on("end", function () {
-            var body = Buffer.concat(chunks);
-            console.log(body.toString());
-            resolve();
-          });
+        });
+        socket.on('message', function (data) {
+          console.log(data);
+        });
+        socket.on('disconnect', function () {
+          console.log('disconnected');
         });
 
-        req.write(JSON.stringify(besJSON));
-        req.end();
-        //req.end(besJSON);
+        resolve();
       }
       catch (err) {
         console.log(err);
@@ -1723,3 +2268,314 @@ from eftpayee e1
   }
 
 };
+
+
+// Methods for External Vendor form
+
+/**
+ * Jorge Medina 01/04/2019
+ * Valitate payload for External Vendor Request form
+ * */
+
+function validateExternalVendorForm(payload) {
+  return new Promise((resolve, reject) => {
+    var validationErrors = [];
+    try {
+
+
+
+      if (validator.isEmpty(payload.legalname, { ignore_whitespace: true })) {
+        validationErrors.push({
+          field: 'legalname',
+          container: 'legalname',
+          msg: 'Cannot be blank'
+        });
+      }
+
+      if (validator.isEmpty(payload.dba, { ignore_whitespace: true })) {
+        validationErrors.push({
+          field: 'dba',
+          container: 'dba',
+          msg: 'Cannot be blank'
+        });
+      }
+
+      if (validator.isEmpty(payload.contactname, { ignore_whitespace: true })) {
+        validationErrors.push({
+          field: 'contactname',
+          container: 'contactname',
+          msg: 'Cannot be blank'
+        });
+      }
+      if (validator.isEmpty(payload.contacttitle, { ignore_whitespace: true })) {
+        validationErrors.push({
+          field: 'contacttitle',
+          container: 'contacttitle',
+          msg: 'Cannot be blank'
+        });
+      }
+      if (validator.isEmpty(payload.contactemail, { ignore_whitespace: true })) {
+        validationErrors.push({
+          field: 'contactemail',
+          container: 'contactemail',
+          msg: 'Cannot be blank'
+        });
+      }
+
+      if (payload.contactemail && !validator.isEmail(payload.contactemail)) {
+        validationErrors.push({
+          field: 'contactemail',
+          container: 'contactemail',
+          msg: 'Invalid email format'
+        });
+      }
+
+      if (validator.isEmpty(payload.contactphone, { ignore_whitespace: true })) {
+        validationErrors.push({
+          field: 'contactphone',
+          container: 'contactphone',
+          msg: 'Cannot be blank'
+        });
+      }
+      if (validator.isEmpty(payload.fieldname, { ignore_whitespace: true })) {
+        validationErrors.push({
+          field: 'fieldname',
+          container: 'fieldname',
+          msg: 'Cannot be blank'
+        });
+      }
+      if (validator.isEmpty(payload.fieldtitle, { ignore_whitespace: true })) {
+        validationErrors.push({
+          field: 'fieldtitle',
+          container: 'fieldtitle',
+          msg: 'Cannot be blank'
+        });
+      }
+
+      if (validator.isEmpty(payload.fieldemail, { ignore_whitespace: true })) {
+        validationErrors.push({
+          field: 'fieldemail',
+          container: 'fieldemail',
+          msg: 'Cannot be blank'
+        });
+      }
+
+      if (payload.fieldemail && !validator.isEmail(payload.fieldemail)) {
+        validationErrors.push({
+          field: 'fieldemail',
+          container: 'fieldemail',
+          msg: 'Invalid email format'
+        });
+      }
+
+      if (validator.isEmpty(payload.fieldphone, { ignore_whitespace: true })) {
+        validationErrors.push({
+          field: 'fieldphone',
+          container: 'fieldphone',
+          msg: 'Cannot be blank'
+        });
+      }
+
+      if (validator.isEmpty(payload.project_legal_entity, { ignore_whitespace: true })) {
+        validationErrors.push({
+          field: 'project_legal_entity',
+          container: 'project_legal_entity',
+          msg: 'Cannot be blank'
+        });
+      }
+
+      if (validator.isEmpty(payload.project_code, { ignore_whitespace: true })) {
+        validationErrors.push({
+          field: 'project_code',
+          container: 'project_code',
+          msg: 'Cannot be blank'
+        });
+      }
+
+      if (validator.isEmpty(payload.po, { ignore_whitespace: true })) {
+        validationErrors.push({
+          field: 'po',
+          container: 'po',
+          msg: 'Cannot be blank'
+        });
+      }
+
+      if (validator.isEmpty(payload.accountingname, { ignore_whitespace: true })) {
+        validationErrors.push({
+          field: 'accountingname',
+          container: 'accountingname',
+          msg: 'Cannot be blank'
+        });
+      }
+
+      if (validator.isEmpty(payload.accountingtitle, { ignore_whitespace: true })) {
+        validationErrors.push({
+          field: 'accountingtitle',
+          container: 'accountingtitle',
+          msg: 'Cannot be blank'
+        });
+      }
+
+      if (validator.isEmpty(payload.accountingemail, { ignore_whitespace: true })) {
+        validationErrors.push({
+          field: 'accountingemail',
+          container: 'accountingemail',
+          msg: 'Cannot be blank'
+        });
+      }
+      if (validator.isEmpty(payload.project_name, { ignore_whitespace: true })) {
+        validationErrors.push({
+          field: 'project_name',
+          container: 'project_name',
+          msg: 'Cannot be blank'
+        });
+      }
+      if (validator.isEmpty(payload.project_code, { ignore_whitespace: true })) {
+        validationErrors.push({
+          field: 'project_code',
+          container: 'project_code',
+          msg: 'Cannot be blank'
+        });
+      }
+      if (validator.isEmpty(payload.project_legal_entity, { ignore_whitespace: true })) {
+        validationErrors.push({
+          field: 'project_legal_entity',
+          container: 'project_legal_entity',
+          msg: 'Cannot be blank'
+        });
+      }
+      if (validator.isEmpty(payload.po, { ignore_whitespace: true })) {
+        validationErrors.push({
+          field: 'po',
+          container: 'po',
+          msg: 'Cannot be blank'
+        });
+      }
+
+      if (payload.accountingemail && !validator.isEmail(payload.accountingemail)) {
+        validationErrors.push({
+          field: 'accountingemail',
+          container: 'accountingemail',
+          msg: 'Invalid email format'
+        });
+      }
+
+      if (validator.isEmpty(payload.accountingphone, { ignore_whitespace: true })) {
+        validationErrors.push({
+          field: 'accountingphone',
+          container: 'accountingphone',
+          msg: 'Cannot be blank'
+        });
+      }
+
+      if (validator.isEmpty(payload.email1099, { ignore_whitespace: true })) {
+        validationErrors.push({
+          field: 'email1099',
+          container: 'email1099',
+          msg: 'Cannot be blank'
+        });
+      }
+
+      if (validator.isEmpty(payload.taxid, { ignore_whitespace: true })) {
+        validationErrors.push({
+          field: 'taxid',
+          container: 'taxid',
+          msg: 'Cannot be blank'
+        });
+      }
+
+      var ssnOrTinRegex = /^(?:\d{3}-\d{2}-\d{4}|\d{2}-\d{7})$/; //regex for SSN or TIN
+      if (!ssnOrTinRegex.test(payload.taxid)) {
+        validationErrors.push({
+          field: 'taxid',
+          container: 'taxid',
+          msg: 'Invalid value'
+        });
+      }
+
+      if (payload.remitAddress_Yes === 'no' && payload.remitAddress_No === 'no') {
+        validationErrors.push({
+          field: 'remitAddress',
+          container: 'remitAddress',
+          msg: 'Cannot be blank'
+        });
+      }
+
+      /*if (validator.isEmpty(payload.services, { ignore_whitespace: true })) {
+        validationErrors.push({
+          field: 'services',
+          container: 'services',
+          msg: 'Cannot be blank'
+        });
+      }*/
+
+      if (payload.personalRelation_Yes === 'no' && payload.personalRelation_No === 'no') {
+        validationErrors.push({
+          field: 'personalRelation',
+          container: 'personalRelation',
+          msg: 'Cannot be blank'
+        });
+      }
+
+      if (payload.personalRelation_Yes === 'yes' && !payload.employee_relation_explanation) {
+        validationErrors.push({
+          field: 'employee_relation_explanation',
+          container: 'employee_relation_explanation',
+          msg: 'Explanation required since Yes was selected'
+        });
+      }
+
+
+      if (payload.w9Attachment < 1 && !payload.no_w9_expl) {
+        validationErrors.push({
+          field: 'w9Attachment',
+          container: 'w9Div',
+          msg: 'Missing W9/W8 Attachment'
+        });
+      }
+
+      if (payload.coiAttachment < 1 && !payload.no_coi_expl) {
+        validationErrors.push({
+          field: 'coiAttachment',
+          container: 'coiDiv',
+          msg: 'Missing COIs Attachment'
+        });
+      }
+
+      if (payload.workCompAttachment < 1 && payload.workCompExempt < 1) {
+        validationErrors.push({
+          field: 'workCompAttachment',
+          container: 'workCompDiv',
+          msg: 'Missing Workers Compensation Attachment'
+        });
+      }
+
+      if (payload.otherAttachment < 1) {
+        validationErrors.push({
+          field: 'otherAttachment',
+          container: 'otherAttachDiv',
+          msg: 'Missing Contract/Quote/PO/Invoice Attachment'
+        });
+      }
+
+      if (payload.agreementChk === 'no') {
+        validationErrors.push({
+          field: 'agreement',
+          container: 'agreement',
+          msg: 'Agreement is required'
+        });
+      }
+
+
+
+
+
+      resolve(validationErrors);
+    }
+    catch (err) {
+      reject(err);
+    }
+
+  });
+
+}

@@ -19,11 +19,11 @@
           </h2>
           <table id="searchFilter" class="ui very compact celled table">
             <thead>
-                <th>BES ID</th>
-                <th>Workflow Step</th>
-                <th>EFT Type</th>
-                <th>Source System</th>
-                <th>System Payee Name or ID</th>
+                <th class='tableColumn'>BES ID</th>
+                <th class='tableColumn'>Workflow Step</th>
+                <th class='tableColumn'>EFT Type</th>
+                <th class='tableColumn'>Source System</th>
+                <th class='tableColumn'>System Payee Name or ID</th>
                 <th>Bank Name</th>
             </thead>
             <tbody>
@@ -59,7 +59,7 @@
                 <td><input type="text" value="" id="filter_bank" class="input is-info" placeholder="Bank Name"/></td>
               </tr>
               <tr>
-                <td><button type="button" id="btnFilter" class="button is-info">Search</button>
+                <td colspan="4"><button type="button" id="btnFilter" class="button is-info">Search</button>
                 <p class="control" id="newBtn">
                  <a class="button is-info" onclick="newEntry();">
                    <span class="icon is-small">

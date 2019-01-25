@@ -1,4 +1,9 @@
 tests/
 test/
 treasury.db
+treasury.db_01102019
 .env
+bessync/.env
+bessync.db
+.samples.config.json
+socket_server

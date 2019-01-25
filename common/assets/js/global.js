@@ -13,6 +13,19 @@ $(document).ready(function () {
     $('#btnAttachAuditLog').on('click', populateFilesAudit);
     $('#btnClear').on('click', clearInputs);
     $('#btnClearForm').on('click', clearAllInputs);
+    $('#btnBESCreate').on('click', newEntryFromVendor);
+
+
+
+    //if BES id sent on URL then auto filter
+    if ($("#filter_id").val()) {
+        $("#btnFilter").click();
+        setTimeout(function () {
+            if ($('#userList button').length > 0) {
+                $('#userList button').first().click();
+            }
+        }, 1000)
+    }
 
     $(document).on('click', '#userList button', function () {
         getEdit($(this).val());
@@ -26,6 +39,13 @@ $(document).ready(function () {
     Setup files drag and drop
     */
 
+    if ($("#vendorFormHdr").html() && $("#vendorFormHdr").html().indexOf("Vendor") != -1) { // in vendor form
+        $("body").css("overflow", "auto");
+        validateVendorUrl();
+    }
+    if ($("#vendorExternalHdr").html() && $("#vendorExternalHdr").html().indexOf("Vendor") != -1) { // in vendor form
+        $("body").css("overflow", "auto");
+    }
     document.getElementById("filesDiv").ondragover = document.getElementById("filesDiv").ondragenter = function (evt) {
         evt.preventDefault();
     };
@@ -38,15 +58,7 @@ $(document).ready(function () {
 
     };
 
-    //if BES id sent on URL then auto filter
-    if ($("#filter_id").val()) {
-        $("#btnFilter").click();
-        setTimeout(function () {
-            if ($('#userList button').length > 0) {
-                $('#userList button').first().click();
-            }
-        }, 1000)
-    }
+
 
 });
 
@@ -192,6 +204,8 @@ function getEdit(id) {
     //clear pending attachments
     $("#attachment")[0].value = "";
     $("#btnClear").hide();
+    $("#userList button").removeClass('is-danger').addClass('is-primary');
+    $("#row_" + id + " button").removeClass('is-primary').addClass('is-danger');
     setFileName();
     $.getJSON('/payinfo/' + id, function (data) {
 
@@ -335,7 +349,8 @@ function doAction(event) {
             'interswift': $('#interswift').val(),
             'notes': $('#notes').val(),
             'wf_stepnext': $('#wf_stepnext').val(),
-            'wf_notes': $('#wf_notes').val()
+            'wf_notes': $('#wf_notes').val(),
+            'vendor_id': ($("#vendorId") ? $("#vendorId").val() : '')
         }
 
         //alert(JSON.stringify(newUser));
@@ -417,7 +432,12 @@ function doAction(event) {
                     }
                     else {
                         //no files attached
-                        populateTable();
+                        if ($("#vendorId").val() === undefined) {
+                            populateTable();
+                        }
+                        else {
+                            alert('BES ' + response.id + ' was created');
+                        }
                     }
                     // Update the table
 
@@ -536,14 +556,20 @@ function attachFiles(id, action) {
             $("#btnUploadFile").prop("disabled", true);
             if (action === "edit")
                 getEdit(id);
-            else if (action !== "none")
+            else if (action !== "none") {
                 populateTable();
+                //alert("BES " + id + " was created");
+            }
             $("#attachment")[0].value = "";
             setFileName();
         }
         else {
             alert('Attachment Error: ' + response.msg);
         }
+    }).fail(function (err) {
+        alert('Unable to attach files ' + err);
+        $("#btnUploadFile, #attachment").prop("disabled", false);
+        $("#overlay").hide();
     })
 }
 
@@ -557,6 +583,7 @@ Export to CSV end
  */
 
 function hideDiv(divId) {
+    $("#userList button").removeClass('is-danger').addClass('is-primary');
     $("#" + divId).hide();
 }
 
@@ -636,6 +663,8 @@ function newEntry() {
     $('#btnAttachAuditLog').on('click', populateFilesAudit);
     $('#btnUploadFile').on('click', uploadFiles).prop("disabled", true);
     $('#btnClear').on('click', clearInputs);
+    $("#userList button").removeClass('is-danger').addClass('is-primary');
+
 
     $("#btnClear").show();
     $(document).on('click', '#userList button', function () {
@@ -688,15 +717,45 @@ function clearAllInputs() {
 /**
  * Jorge Medina 12/12/2018 Vendor Forms Helper functions
  * */
-function generateVendorUrl() {
+function generateVendorEFTUrl() {
     var str = "https://treasurynode-test-innersphere.c9users.io/vendorform";
-    const el = document.createElement('textarea');
-    el.value = str;
-    document.body.appendChild(el);
-    el.select();
-    document.execCommand('copy');
-    document.body.removeChild(el);
-    alert('Link copied to clipboard');
+
+    $.getJSON('/vendorEFTURL', function (data) {
+
+        if (data.msg !== '') {
+            alert('Unable to generate vendor url');
+            return;
+        }
+        $("#clipboard").val(data.url.toString());
+
+        $("#clipboard")[0].select();
+        document.execCommand('copy');
+        alert('URL: ' + $("#clipboard").val());
+
+    })
+
+}
+
+/**
+ * Jorge Medina 12/12/2018 Vendor Forms Helper functions
+ * */
+function generateVendorUrl() {
+    var str = "https://treasurynode-test-innersphere.c9users.io/vendorexternal";
+
+    $.getJSON('/vendorURL', function (data) {
+
+        if (data.msg !== '') {
+            alert('Unable to generate vendor url');
+            return;
+        }
+        $("#clipboard").val(data.url.toString());
+
+        $("#clipboard")[0].select();
+        document.execCommand('copy');
+        alert('URL: ' + $("#clipboard").val());
+
+    })
+
 }
 
 
@@ -715,17 +774,33 @@ function doVendorAction(event) {
     // Assemble object to save
     var newVendor = {
         'legalentityname': $('#legalentityname').val(),
-        'dba': $('#dba').val(),
-        'taxid': $('#taxid').val(),
-        'email1099': $('#email1099').val(),
-        'vendorname': $('#vendorname').val(),
-        'title': $('#title').val(),
         'address1': $('#address1').val(),
         'address2': $('#address2').val(),
         'city': $('#city').val(),
         'state': $('#state').val(),
-        'zip': $('#zip').val()
-    }
+        'zip': $('#zip').val(),
+        'country': $('#country').val(),
+        'bankname': $('#bankname').val(),
+        'bankaddress': $('#bankaddress').val(),
+        'bankname': $('#bankname').val(),
+        'bankcity': $('#bankcity').val(),
+        'bankstate': $('#bankstate').val(),
+        'bankzip': $('#bankzip').val(),
+        'bankcountry': $('#bankcountry').val(),
+        'routing': $('#routing').val(),
+        'account': $('#account').val(),
+        'swift': $('#swift').val(),
+        'interbankname': $('#bankname').val(),
+        'interbankaddress': $('#interbankaddress').val(),
+        'interbankname': $('#interbankname').val(),
+        'interbankcity': $('#interbankcity').val(),
+        'interbankstate': $('#interbankstate').val(),
+        'interbankzip': $('#interbankzip').val(),
+        'interbankcountry': $('#interbankcountry').val(),
+        'interrouting': $('#interbankcountry').val(),
+        'interswift': $('#interswift').val(),
+        'token': $('#token').val()
+    };
 
     $.ajax({
         url: '/vendor/new',
@@ -749,12 +824,8 @@ function doVendorAction(event) {
         }
         // Check for successful (blank) response
         else if (response.msg === '') {
+            attachVendorFiles(response.id);
 
-            //attachments
-            $("#notificationDiv .header").html("Confirmation");
-            $("#notificationDiv .content").html("<p>Form was succesfully submitted</p>");
-            $("#notificationDiv").modal("show");
-            $("#vendorform").html("<p>Form was succesfully submitted</p>");
         }
         else {
             // If something goes wrong, alert the error message that our service returned
@@ -774,8 +845,7 @@ function populateVendorTable() {
     //build a list of filter values
     var filters = {
         'id': $('#vendor_id').val(),
-        'legalentityname': $('#legal_entity_name').val(),
-        'taxid': $('#tax_id').val()
+        'legalentityname': $('#legal_entity_name').val()
     }
 
     //drop any filters that are blank
@@ -803,16 +873,29 @@ function populateVendorTable() {
             tableContent += '<tr id="vendor_' + this.id + '">'
             tableContent += '<td><button class="button is-primary" value="' + this.id + '">' + this.id + '</button></td>';
             tableContent += '<td>' + this.legalentityname + '</td>';
-            tableContent += '<td>' + this.dba + '</td>';
-            tableContent += '<td>' + this.taxid + '</td>';
-            tableContent += '<td>' + this.email1099 + '</td>';
-            tableContent += '<td>' + this.vendorname + '</td>';
-            tableContent += '<td>' + this.title + '</td>';
             tableContent += '<td>' + this.address1 + '</td>';
             tableContent += '<td>' + this.address2 + '</td>';
             tableContent += '<td>' + this.city + '</td>';
             tableContent += '<td>' + this.state + '</td>';
             tableContent += '<td>' + this.zip + '</td>';
+            tableContent += '<td>' + this.country + '</td>';
+            tableContent += '<td>' + this.bankname + '</td>';
+            tableContent += '<td>' + this.bankaddress + '</td>';
+            tableContent += '<td>' + this.bankcity + '</td>';
+            tableContent += '<td>' + this.bankstate + '</td>';
+            tableContent += '<td>' + this.bankzip + '</td>';
+            tableContent += '<td>' + this.bankcountry + '</td>';
+            tableContent += '<td>' + this.routing + '</td>';
+            tableContent += '<td>' + this.account + '</td>';
+            tableContent += '<td>' + this.swift + '</td>';
+            tableContent += '<td>' + this.interbankname + '</td>';
+            tableContent += '<td>' + this.interbankaddress + '</td>';
+            tableContent += '<td>' + this.interbankcity + '</td>';
+            tableContent += '<td>' + this.interbankstate + '</td>';
+            tableContent += '<td>' + this.interbankzip + '</td>';
+            tableContent += '<td>' + this.interbankcountry + '</td>';
+            tableContent += '<td>' + this.interrouting + '</td>';
+            tableContent += '<td>' + this.interswift + '</td>';
             tableContent += '</tr>';
         });
 
@@ -825,24 +908,193 @@ function populateVendorTable() {
 
 // Get record to edit
 function getVendorEdit(id) {
-
+    $("#rightbar").html('<h3 id="recordInfoHdr">Vendor Info</h3>  <button class="delete is-danger" id="rightClose" aria-label="close" onclick="hideDiv(\"rightbar\")"></button>  <span class="icon" id="rightMaxim" onclick="showFullDiv(\"rightbar\");">   <i class="fa fa-arrows-alt" aria-hidden="true"></i> </span>  <span class="icon" id="rightMin" onclick="showMinDiv(\"rightbar\");">   <i class="fa fa-window-minimize" aria-hidden="true"></i> </span>   <table class="ui table compact" id="payinfofields">     <thead>  <tr>    <th>Setting</th>    <th>Value</th>  </tr>     </thead>     <tbody>  <tr>    <td>Vendor ID</td>    <td id="vendorid"></td>  </tr>  <tr>    <td>Legal Entity Name</td>    <td id="legalentityname"></td>  </tr>  <tr>    <td>Address Line 1</td>    <td id="address1"></td>  </tr>  <tr>    <td>Address Line 2</td>    <td id="address2"></td>  </tr>  <tr>    <td>City</td>    <td id="city"></td>  </tr>  <tr>    <td>State</td>    <td id="state"></td>  </tr>  <tr>    <td>Zip Code</td>    <td id="zip"></td>  </tr>  <tr>    <td>Country</td>    <td id="country"></td>  </tr>  <tr>    <td>Bank Name</td>    <td id="bankname"></td>  </tr>  <tr>    <td>Bank Address</td>    <td id="bankaddress"></td>  </tr>  <tr>    <td>Bank City</td>    <td id="bankcity"></td>  </tr>  <tr>    <td>Bank State/Province</td>    <td id="bankstate"></td>  </tr>  <tr>    <td>Bank ZIP/Postal</td>    <td id="bankzip"></td>  </tr>  <tr>    <td>Bank Country</td>    <td id="bankcountry"></td>  </tr>  <tr>    <td>Routing Number</td>    <td id="routing"></td>  </tr>  <tr>    <td>Account Number</td>    <td id="account"></td>  </tr>  <tr>    <td>Swift</td>    <td id="swift"></td>  </tr>  <tr>      <td>Intermediary Bank Name</td>      <td id="interbankname"></td>    </tr>    <tr>      <td>Intermediary Bank Address</td>      <td id="interbankaddress"></td>    </tr>    <tr>      <td>Intermediary Bank City</td>      <td id="interbankcity"></td>    </tr>    <tr>      <td>Intermediary Bank State/Province</td>      <td id="interbankstate"></td>    </tr>    <tr>      <td>Intermediary Bank ZIP/Postal</td>      <td id="interbankzip"></td>    </tr>    <tr>      <td>Intermediary Bank Country</td>      <td id="interbankcountry"></td>    </tr>    <tr>      <td>Intermediary Routing Number</td>      <td id="interrouting"></td>    </tr>    <tr>      <td>Intermediary Swift</td>      <td id="interswift"></td>    </tr>  <tr>    <td>Date Created:</td>    <td id="datecreated"></td>  </tr>      </tbody>   </table>  <table class="ui table compact collapsing" id="attachmentsTable"><thead><tr><th>Filename</th><th>Date</th><th>View</th></tr></thead><tbody></tbody></table> <div>  <button type="button" id="btnBESCreate" class="button is-info">Create BES</button> </div>');
+    $('#btnBESCreate').on('click', newEntryFromVendor);
     $.getJSON('/vendor/' + id, function (data) {
 
         $('#vendorid').html(data.obj.id);
         $('#legalentityname').html(data.obj.legalentityname);
-        $('#dba').html(data.obj.dba);
-        $('#taxid').html(data.obj.taxid);
-        $('#email1099').html(data.obj.email1099);
-        $('#vendorname').html(data.obj.vendorname);
-        $('#title').html(data.obj.title);
         $('#address1').html(data.obj.address1);
         $('#address2').html(data.obj.address2);
         $('#city').html(data.obj.city);
         $('#state').html(data.obj.state);
         $('#zip').html(data.obj.zip);
+        $('#country').html(data.obj.country);
+        $('#bankname').html(data.obj.bankname);
+        $('#bankaddress').html(data.obj.bankaddress);
+        $('#bankcity').html(data.obj.bankcity);
+        $('#bankstate').html(data.obj.bankstate);
+        $('#bankzip').html(data.obj.bankzip);
+        $('#bankcountry').html(data.obj.bankcountry);
+        $('#routing').html(data.obj.routing);
+        $('#account').html(data.obj.account);
+        $('#swift').html(data.obj.swift);
+        $('#interbankname').html(data.obj.interbankname);
+        $('#interbankaddress').html(data.obj.inter);
+        $('#interbankcity').html(data.obj.interbankcity);
+        $('#interbankstate').html(data.obj.interbankstate);
+        $('#interbankzip').html(data.obj.interbankzip);
+        $('#interbankcountry').html(data.obj.interbankcountry);
+        $('#interrouting').html(data.obj.interrouting);
+        $('#interswift').html(data.obj.interswift);
+        $('#datecreated').html(data.obj.datecreated);
 
         $("#rightbar").show(); //Allow users to show/hide details panel
 
+        //load attachments
+        var attachmentsHTML = '';
+        data.attachments.forEach(item => {
+            attachmentsHTML += '<tr>';
+            attachmentsHTML += '<td>' + item.filename.substring(item.filename.indexOf('_', 5) + 1) + '</td>';
+            attachmentsHTML += '<td>' + item.dateadded + '</td>';
+            attachmentsHTML += '<td><a href="/file/' + item.filename + '" target="_blank">View</a>';
+            attachmentsHTML += '</tr>';
+        });
+        $('#attachmentsTable tbody').html(attachmentsHTML);
+
+
     });
 
+};
+
+
+
+function newEntryFromVendor() {
+    var payload = {
+        legalentityname: $("#legalentityname").html(),
+        address1: $("#address1").html(),
+        address2: $("#address2").html(),
+        city: $("#city").html(),
+        state: $("#state").html(),
+        zip: $("#zip").html(),
+        country: $("#country").html(),
+        bankname: $("#bankname").html(),
+        bankaddress: $("#bankaddress").html(),
+        bankcity: $("#bankcity").html(),
+        bankstate: $("#bankstate").html(),
+        bankzip: $("#bankzip").html(),
+        bankcountry: $("#bankcountry").html(),
+        routing: $("#routing").html(),
+        account: $("#account").html(),
+        swift: $("#swift").html(),
+        interbankname: $("#interbankname").html(),
+        interbankaddress: $("#interbankaddress").html(),
+        interbankcity: $("#interbankcity").html(),
+        interbankstate: $("#interbankstate").html(),
+        interbankzip: $("#interbankzip").html(),
+        interbankcountry: $("#interbankcountry").html(),
+        interrouting: $("#interrouting").html(),
+        interswift: $("#interswift").html(),
+        vendorId: $("#vendorid").html()
+    };
+    var attachmentHTMLTemp = $('#attachmentsTable tbody').html();
+    $("#rightbar").html('<h3 id="recordInfoHdr">Record Info</h3>  <input type=\"hidden\" id=\"vendorId\" /> <button class="delete is-danger" id="rightClose" aria-label="close" onclick="hideDiv(\'rightbar\')"></button>     <span class="icon" id="rightMaxim" onclick="showFullDiv(\'rightbar\');">  <i class="fa fa-arrows-alt" aria-hidden="true"></i></span> <span class="icon" id="rightMin" onclick="showMinDiv(\'rightbar\');">  <i class="fa fa-window-minimize" aria-hidden="true"></i></span>  <table class="ui table compact" id="payinfofields">    <thead>      <tr>        <th>Setting</th>        <th>Value</th>      </tr>    </thead>    <tbody>      <tr>        <td>BES ID</td>        <td id="rowid">**New**</td>      </tr>      <tr>        <td>Workflow Status</td>        <td id="wfstatus"></td>      </tr>      <tr>        <td>Pay Type</td>        <td>             <div class="select is-info">            <select name="paytype" id="paytype" onclick="inputShow(this)">              <option value="ACH">ACH</option>              <option value="Wire">Wire</option>            </select>            </div>        </td>      </tr>      <tr>        <td>ACH SEC</td>        <td>             <div class="select is-info">            <select name="achsec" id="achsec" onclick="inputShow(this)">              <option value="CCD">CCD</option>              <option value="PPD">PPD</option>            </select>            </div>        </td>      </tr>      <tr>        <td>Source System</td>        <td><input type="text" value="EXAMPLE" id="sourcesystem" class="input is-info" onclick="inputShow(this)"/></td>      </tr>      <tr>        <td>System Payee ID</td>        <td><input type="text" value="V000000" id="vendorid" class="input is-info" onclick="inputShow(this)"/></td>      </tr>      <tr>        <td>Beneficiary Name</td>        <td><input type="text" value="VENDOR NAME HERE" id="payeename" class="input is-info" onclick="inputShow(this)"/></td>      </tr>      <tr>        <td>Beneficiary Address</td>        <td><input type="text" value="123 MAIN STREET" id="payeeaddress" class="input is-info" onclick="inputShow(this)"/></td>      </tr>      <tr>        <td>Beneficiary City</td>        <td><input type="text" value="ANYWHERE" id="payeecity" class="input is-info" onclick="inputShow(this)"/></td>      </tr>      <tr>        <td>Beneficiary State/Province</td>        <td><input type="text" value="CA" id="payeestate" class="input is-info" onclick="inputShow(this)"/></td>      </tr>      <tr>        <td>Beneficiary ZIP/Postal</td>        <td><input type="text" value="92000" id="payeezip" class="input is-info" onclick="inputShow(this)"/></td>      </tr>      <tr>        <td>Beneficiary Country</td>        <td><input type="text" value="US" id="payeecountry" class="input is-info" onclick="inputShow(this)"/></td>      </tr>      <tr>        <td>For Further Credit To</td>        <td><input type="text" value="SOMEONE ELSE" id="forfurthercredit" class="input is-info" onclick="inputShow(this)"/></td>      </tr>      <tr>        <td>Bank Name</td>        <td><input type="text" value="INSTITUTION NAME HERE" id="bankname" class="input is-info" onclick="inputShow(this)"/></td>      </tr>      <tr>        <td>Bank Address</td>        <td><input type="text" value="9000 WALL STREET" id="bankaddress" class="input is-info" onclick="inputShow(this)"/></td>      </tr>      <tr>        <td>Bank City</td>        <td><input type="text" value="SOMEWHERESVILLE" id="bankcity" class="input is-info" onclick="inputShow(this)"/></td>      </tr>      <tr>        <td>Bank State/Province</td>        <td><input type="text" value="NY" id="bankstate" class="input is-info" onclick="inputShow(this)"/></td>      </tr>      <tr>        <td>Bank ZIP/Postal</td>        <td><input type="text" value="10101" id="bankzip" class="input is-info" onclick="inputShow(this)"/></td>      </tr>      <tr>        <td>Bank Country</td>        <td><input type="text" value="US" id="bankcountry" class="input is-info" onclick="inputShow(this)"/></td>      </tr>      <tr>        <td>Routing Number</td>        <td><input type="text" value="123456789" id="routing" class="input is-info" onclick="inputShow(this)"/></td>      </tr>      <tr>        <td>Account Number</td>        <td><input type="text" value="1000200030004000" id="account" class="input is-info" onclick="inputShow(this)"/></td>      </tr>      <tr>        <td>Swift</td>        <td><input type="text" value="ABCDEFGHIJK" id="swift" class="input is-info" onclick="inputShow(this)"/></td>      </tr>      <tr>        <td>Intermediary Bank Name</td>        <td><input type="text" value="INTERMED BANK" id="interbankname" class="input is-info" onclick="inputShow(this)"/></td>      </tr>      <tr>        <td>Intermediary Bank Address</td>        <td><input type="text" value="5YJ INTERNATIONAL ST" id="interbankaddress" class="input is-info" onclick="inputShow(this)"/></td>      </tr>      <tr>        <td>Intermediary Bank City</td>        <td><input type="text" value="SOMEWHERE" id="interbankcity" class="input is-info" onclick="inputShow(this)"/></td>      </tr>      <tr>        <td>Intermediary Bank State/Province</td>        <td><input type="text" value="NS" id="interbankstate" class="input is-info" onclick="inputShow(this)"/></td>      </tr>      <tr>        <td>Intermediary Bank ZIP/Postal</td>        <td><input type="text" value="XJY5YA" id="interbankzip" class="input is-info" onclick="inputShow(this)"/></td>      </tr>      <tr>        <td>Intermediary Bank Country</td>        <td><input type="text" value="CA" id="interbankcountry" class="input is-info" onclick="inputShow(this)"/></td>      </tr>      <tr>        <td>Intermediary Bank Routing</td>        <td><input type="text" value="ABC123456XYZ" id="interrouting" class="input is-info" onclick="inputShow(this)"/></td>      </tr>      <tr>        <td>Intermediary Bank Swift</td>        <td><input type="text" value="ABABABABABA" id="interswift" class="input is-info" onclick="inputShow(this)"/></td>      </tr>      <tr>        <td>Validation Notes</td>        <td><input type="text" value="Some notes here" id="notes" class="input is-info" onclick="inputShow(this)"/></td>      </tr>    </tbody>  </table> <div><button type="button" id="btnClear" class="button is-info">Clear Text</button></div> <table class="ui table compact collapsing" id="payinfoactions">    <tbody>        <tr>          <td>            Action          </td>          <td>            <div class="select is-info">                <select name="action" id="action">                  <option value="New">New</option>                </select>            </div>          </td>          <td><button type="button" id="btnAuditLog" class="button is-info">Show Audit Log</button></td>        </tr>    </tbody>  </table><table class="ui table compact collapsing" id="attachmentsTable">    <thead>      <tr>        <th>Filename</th>        <th>Date</th>        <th>View</th>      </tr>    </thead>    <tbody></tbody>    </table> <div class="file is-boxed is-primary" id="filesDiv">  <label class="file-label">    <input class="file-input" type="file" name="attachment" id="attachment" onchange="setFileName();" multiple>    <span class="file-cta">      <span class="file-icon">        <i class="fas fa-upload"></i>      </span>      <span class="file-label">Select File to Upload      </span>    </span>      <span class="file-name" id="uploadFileName">    </span>  </label></div><button type="button" id="btnUploadFile" class="button is-info">Upload File</button> <button type="button" id="btnAttachAuditLog" class="button is-info">Show File Log</button> <table class="ui table compact collapsing" id="workflow">    <tbody>      <tr>        <td>Workflow</td>        <td id="wf_name"></td>      </tr>      <tr>        <td>Current Step</td>        <td id="wf_currentstep"></td>      </tr>      <tr>        <td>          Next Step        </td>        <td>          <div class="select is-info">           <select name="wf_stepnext" id="wf_stepnext">           </select>         </div>        </td>      </tr>      <tr>        <td>WF Notes</td>        <td><input type="text" value="" id="wf_notes" class="input is-info "/></td>      </tr>      <tr>        <td>          <button type="button" id="btnSave" class="button is-info">Save</button>        </td>      </tr>    </tbody>  <table class="ui table compact collapsing" id="wf_history">    <thead>      <tr>        <th>Step</th>        <th>User</th>        <th>Date</th>        <th>Notes</th>      </tr>    </thead>    <tbody></tbody>  </table>');
+    $('#btnSave').on('click', doAction);
+    $('#btnSave').on('click', (e) => {
+        e.preventDefault();
+        $("#rightbar").hide();
+    });
+
+    //set data
+    $("#payeename").val(payload.legalentityname);
+    $("#payeeaddress").val(payload.address1 + " " + payload.address2);
+    $("#payeecity").val(payload.city);
+    $("#payeestate").val(payload.state);
+    $("#payeezip").val(payload.zip);
+    $("#payeecountry").val(payload.country);
+    $("#bankname").val(payload.bankname);
+    $("#bankaddress").val(payload.bankaddress);
+    $("#bankcity").val(payload.bankcity);
+    $("#bankstate").val(payload.bankstate);
+    $("#bankzip").val(payload.bankzip);
+    $("#bankcountry").val(payload.bankcountry);
+    $("#routing").val(payload.routing);
+    $("#account").val(payload.account);
+    $("#swift").val(payload.swift);
+    $("#interbankname").val(payload.interbankname);
+    $("#interbankaddress").val(payload.interbankaddress);
+    $("#interbankcity").val(payload.interbankcity);
+    $("#interbankstate").val(payload.interbankstate);
+    $("#interbankzip").val(payload.interbankzip);
+    $("#interbankcountry").val(payload.interbankcountry);
+    $("#interrouting").val(payload.interrouting);
+    $("#interswift").val(payload.interswift);
+    $("#vendorId").val(payload.vendorId);
+
+    $('#attachmentsTable tbody').html(attachmentHTMLTemp);
+
+    $("#rightbar").show();
+    $('#btnUploadFile').on('click', uploadFiles).prop("disabled", true);
+
+    document.getElementById("filesDiv").ondragover = document.getElementById("filesDiv").ondragenter = function (evt) {
+        evt.preventDefault();
+    };
+
+    document.getElementById("filesDiv").ondrop = function (evt) {
+        // pretty simple -- but not for IE :(
+        document.getElementById("attachment").files = evt.dataTransfer.files;
+        evt.preventDefault();
+        setFileName();
+
+    };
+}
+
+
+
+
+
+
+/**
+ * Jorge Medina : 12/17/2018 - Helper function to save attachment by Vendor ID
+ *
+ */
+function attachVendorFiles(vendorId) {
+    var data = new FormData();
+    for (var i = 0; i < $("#wiringInstructionsAttachment")[0].files.length; i++) {
+        data.append("file_" + i, $("#wiringInstructionsAttachment")[0].files[i]);
+    }
+    data.append("id", vendorId);
+    var settings = {
+        "async": true,
+        "crossDomain": true,
+        "url": "/attachVendor/",
+        "method": "POST",
+        "headers": {
+            "Cache-Control": "no-cache",
+        },
+        "processData": false,
+        "contentType": false,
+        "mimeType": "multipart/form-data",
+        "data": data
+    }
+
+    $.ajax(settings).done(function (response) {
+        response = JSON.parse(response);
+        if (response.msg === '') {
+            //attachments
+            $("#notificationDiv .header").html("Confirmation");
+            $("#notificationDiv .content").html("<p>Form was succesfully submitted</p>");
+            $("#notificationDiv").modal("show");
+            $("#vendorform").html("<p>Form was succesfully submitted</p>");
+        }
+        else {
+            alert('Attachment Error: ' + response.msg);
+        }
+    })
+};
+
+/***
+ * Jorge Medina 12/17/2018 Validate Valid Vendor URL before allowing access to form
+ * */
+function validateVendorUrl() {
+
+    $.getJSON('/validateUrl/' + $("#token").val(), function (data) {
+        if (data.msg === '') {
+            return true;
+        }
+        else {
+            $("body").html("Invalid URL");
+        }
+
+    });
 };

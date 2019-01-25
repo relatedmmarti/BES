@@ -1,0 +1,581 @@
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    {{>head}}
+    <script src="/assets/js/vendorForm.js"></script>
+
+  </head>
+  <body>
+    <section class="hero banner">
+  <div class="hero-body" style="text-align:center;">
+    <div>
+      <img src="/assets/images/related_logo.svg" class="bannerImg"/>
+      <label class="label"></label>
+    </div>
+  </div>
+</section>
+    <div id="vendorExternalform" class="ui very wide center vertical visible">
+  <h3 id="vendorExternalHdr">Vendor Request Form</h3><h3 style="color:red">**DRAFT**</h3>
+  <div id="instructionsDiv">
+    <button class="button is-rounded is-primary" style="float:right;" onclick="showInstructions();" id="viewInstrBtn">View Instructions</button>
+  </div>
+    <div class="control" id="formTypeDiv">
+      <label class="radio">
+        <input type="radio" name="formType" style="-webkit-appearance: radio">New Vendor
+      </label>
+      <label class="radio" style="margin-left: 20px;">
+        <input type="radio" name="formType" style="-webkit-appearance: radio">Modify Vendor Information
+        </label>
+    </div>
+    <hr/>
+    <label class="label">Please provide the following information</label>
+    <div><i>Hover over fields for details</i></div>
+    <table class="table is-fullwith is-narrow ui compact" id="vendorInformationTbl">
+      <thead></thead>
+      <tbody>
+        <tr class="headingTR">
+          <td colspan="5">
+            <label class="label">I. Who engaged vendor services?</label>
+          </td>
+        </tr>
+        <tr class="fieldTR">
+          <td>
+            <label class="label">Project Legal Entity</label>
+          </td>
+          <td>
+            <input class="input is-info" type="text" id="project_legal_entity" placeholder="Project Legal Entity" title="Project in which the Vendor will be working on"/>
+          </td>
+          <td style="width:5%;">
+          </td>
+          <td>
+            <label class="label">Project Name</label>
+          </td>
+          <td>
+            <input class="input is-info" type="text" id="project_name" placeholder="Project Name" title="Project Code in which the Vendor will be working on"/>
+          </td>
+        </tr>
+        <tr class="fieldTR">
+          <td>
+            <label class="label">Name</label>
+          </td>
+          <td>
+            <input class="input is-info" type="text" id="fieldname" placeholder="Contact Name" title="Name of Owners Rep from PRH Investments and/or TRG Management Company of Florida that hired the vendor"/>
+          </td>
+          <td style="width:5%;">
+          </td>
+          <td>
+            <label class="label">Title</label>
+          </td>
+          <td>
+            <input class="input is-info" type="text" id="fieldtitle" placeholder="Contact Title" title="Business Title of Owners Rep from PRH Investments and/or TRG Management Company of Florida that hired the vendor"/>
+          </td>
+        </tr>
+        <tr class="fieldTR">
+          <td>
+            <label class="label">Email</label>
+          </td>
+          <td>
+            <input class="input is-info" type="text" id="fieldemail" placeholder="Contact Email" title="Email of Owners Rep from PRH Investments and/or TRG Management Company of Florida that hired the vendor"/>
+          </td>
+          <td style="width:5%;">
+          </td>
+          <td>
+            <label class="label">Phone</label>
+          </td>
+          <td>
+            <input class="input is-info" type="text" id="fieldphone" placeholder="Contact Phone" title="Phone of Owners Rep from PRH Investments and/or TRG Management Company of Florida that hired the vendor"/>
+          </td>
+        </tr>
+        <tr class="fieldTR">
+          <td>
+            <label class="label">Project Code</label>
+          </td>
+          <td>
+            <input class="input is-info" type="text" id="project_code" placeholder="Project Code" title="Project Code in which the Vendor will be working on"/>
+          </td>
+          <td style="width:5%;">
+          <td>
+            <label class="label">PO #</label>
+          </td>
+          <td>
+            <input class="input is-info" type="text" id="po" placeholder="PO #" title="PO# provided to Vendor"/>
+          </td>
+        </tr>
+         <tr>
+          <td colspan="5">
+           <hr style="margin:0"/>
+          </td>
+        </tr>
+        <tr class="headingTR">
+          <td colspan="5">
+            <label class="label">II. Vendor Information - Main Contact</label>
+          </td>
+        </tr>
+        <tr class="vendorTR">
+          <td>
+            <label class="label">Legal Entity Name</label>
+          </td>
+          <td style="width:30%;">
+            <input class="input is-info" type="text" id="legalname" placeholder="Entity Legal Name" title="Vendor Legal Name"/>
+          </td>
+          <td style="width:5%;">
+          </td>
+          <td>
+            <label class="label">DBA</label>
+          </td>
+          <td>
+            <input class="input is-info" type="text" id="dba" placeholder="DBA" title="Doing Business As"/>
+          </td>
+        </tr>
+        <tr class="vendorTR">
+          <td>
+            <label class="label">Name</label>
+          </td>
+          <td>
+            <input class="input is-info" type="text" id="contactname" placeholder="Main Contact Name" title="Name of employee that will serve as main contact on Vendor's side"/>
+          </td>
+          <td style="width:5%;">
+          </td>
+          <td>
+            <label class="label">Title</label>
+          </td>
+          <td>
+            <input class="input is-info" type="text" id="contacttitle" placeholder="Main Contact Title" title="Business Title of employee that will serve as main contact on Vendor's side"/>
+          </td>
+        </tr>
+        <tr class="vendorTR">
+          <td>
+            <label class="label">Email</label>
+          </td>
+          <td>
+            <input class="input is-info" type="text" id="contactemail" placeholder="Main Contact Email" title="Email of employee that will serve as main contact on Vendor's side"/>
+          </td>
+          <td style="width:5%;">
+          </td>
+          <td>
+            <label class="label">Phone</label>
+          </td>
+          <td>
+            <input class="input is-info" type="text" id="contactphone" placeholder="Main Contact Phone" title="Phone of employee that will serve as main contact on Vendor's side"/>
+          </td>
+        </tr>
+        <tr>
+          <td colspan="5">
+           <hr style="margin:0"/>
+          </td>
+        </tr>
+        <tr class="headingTR">
+          <td colspan="5">
+            <label class="label">III. Vendor Accounting Contact</label>
+          </td>
+        </tr>
+        <tr class="accountingTR">
+          <td>
+            <label class="label">Name</label>
+          </td>
+          <td>
+            <input class="input is-info" type="text" id="accountingname" placeholder="Accounting Contact Name" title="Name Main Contact on Vendor's Accounting Department"/>
+          </td>
+          <td style="width:5%;">
+          </td>
+          <td>
+            <label class="label">Title</label>
+          </td>
+          <td>
+            <input class="input is-info" type="text" id="accountingtitle" placeholder="Accounting Contact Title" title="Business Title Main Contact on Vendor's Accounting Department"/>
+          </td>
+        </tr>
+        <tr class="accountingTR">
+          <td>
+            <label class="label">Email</label>
+          </td>
+          <td>
+            <input class="input is-info" type="text" id="accountingemail" placeholder="Accounting Contact Email" title="Email Main Contact on Vendor's Accounting Department"/>
+          </td>
+          <td style="width:5%;">
+          </td>
+          <td>
+            <label class="label">Phone</label>
+          </td>
+          <td>
+            <input class="input is-info" type="text" id="accountingphone" placeholder="Accounting Contact Phone" title="Phone Main Contact on Vendor's Accounting Department"/>
+          </td>
+        </tr>
+        <tr class="accountingTR">
+          <td>
+            <label class="label">Email for 1099 purposes</label>
+          </td>
+          <td>
+            <input class="input is-info" type="text" id="email1099" placeholder="Email for 1099" title="Email address to use when emailing 1099s to Vendor"/>
+          </td>
+          <td style="width:5%;">
+          </td>
+          <td>
+            <label class="label">Tax ID or SSN</label>
+          </td>
+          <td>
+            <input class="input is-info" type="text" id="taxid" placeholder="Tax ID or SSN" title="Vendor's Tax ID/SSN"/>
+          </td>
+        </tr>
+         <tr class="print_page_delimiter">
+          <td colspan="5">
+           <hr style="margin:0"/>
+          </td>
+        </tr>
+        <tr class="addressTR">
+          <td>
+            <label class="label">Remittance address same as W-9 address</label>
+          </td>
+          <td colspan="4">
+            <div class="control">
+              <label class="radio">
+                <input type="radio" name="remitAddress" style="-webkit-appearance: radio" id="remitAddress_Yes">Yes
+              </label>
+              <label class="radio">
+                <input type="radio" name="remitAddress" style="-webkit-appearance: radio" id="remitAddress_No">No
+                </label>
+            </div>
+          </td>
+        </tr>
+        <tr class="addressTR">
+          <td colspan="5">** If different please complete section below. If you have more than one mailing address, please enter them as well.
+          </td>
+        </tr>
+      <tr name="addressTR" class="addressTR">
+        <td><label class="label">Address Line:</label>
+        </td>
+        <td colspan="4">
+          <input class="input is-info" type="text" name="addressLine1" placeholder="Address 1"/>
+        </td>
+      </tr>
+      <tr class="addressTR">
+        <td>
+          <label class="label">City</label>
+        </td>
+        <td>
+          <input type="text" class="input is-info" name="city" placeholder="City"/>
+        </td>
+        <td colspan="3">
+          <label class="label inlineLbl">State</label>
+            <div class="select">
+              <select name="state">
+                <option value="">Select state</option>
+                <option value="AL">Alabama</option>
+	              <option value="AK">Alaska</option>
+	              <option value="AZ">Arizona</option>
+	              <option value="AR">Arkansas</option>
+	              <option value="CA">California</option>
+	              <option value="CO">Colorado</option>
+	              <option value="CT">Connecticut</option>
+	              <option value="DE">Delaware</option>
+	              <option value="DC">District Of Columbia</option>
+	              <option value="FL">Florida</option>
+	              <option value="GA">Georgia</option>
+	              <option value="HI">Hawaii</option>
+	              <option value="ID">Idaho</option>
+	              <option value="IL">Illinois</option>
+	              <option value="IN">Indiana</option>
+	              <option value="IA">Iowa</option>
+	              <option value="KS">Kansas</option>
+	              <option value="KY">Kentucky</option>
+	              <option value="LA">Louisiana</option>
+	              <option value="ME">Maine</option>
+	              <option value="MD">Maryland</option>
+	              <option value="MA">Massachusetts</option>
+	              <option value="MI">Michigan</option>
+	              <option value="MN">Minnesota</option>
+	              <option value="MS">Mississippi</option>
+	              <option value="MO">Missouri</option>
+	              <option value="MT">Montana</option>
+	              <option value="NE">Nebraska</option>
+	              <option value="NV">Nevada</option>
+	              <option value="NH">New Hampshire</option>
+	              <option value="NJ">New Jersey</option>
+	              <option value="NM">New Mexico</option>
+	              <option value="NY">New York</option>
+	              <option value="NC">North Carolina</option>
+	              <option value="ND">North Dakota</option>
+	              <option value="OH">Ohio</option>
+	              <option value="OK">Oklahoma</option>
+	              <option value="OR">Oregon</option>
+	              <option value="PA">Pennsylvania</option>
+	              <option value="RI">Rhode Island</option>
+	              <option value="SC">South Carolina</option>
+	              <option value="SD">South Dakota</option>
+	              <option value="TN">Tennessee</option>
+	              <option value="TX">Texas</option>
+	              <option value="UT">Utah</option>
+	              <option value="VT">Vermont</option>
+	              <option value="VA">Virginia</option>
+	              <option value="WA">Washington</option>
+	              <option value="WV">West Virginia</option>
+	              <option value="WI">Wisconsin</option>
+	              <option value="WY">Wyoming</option>
+              </select>
+            </div>
+            <label class="label inlineLbl">Zip Code</label>
+            <input class="input is-info" type="text" name="zipcode" placeholder="Zip Code"/>
+        </td>
+      </tr>
+      <tr class="addressTR" id="addressActionsTR">
+        <td colspan="5" style="text-align:right;">
+          <button class="button is-info" type="button" onclick="addAddress();">+ Add Address</button>
+          <button class="button is-danger" type="button" onclick="removeAddress();">- Remove Address</button>
+        </td>
+      </tr>
+      <tr>
+        <td colspan="5"></td>
+      </tr>
+      <tr class="servicesTR">
+        <td colspan="5">
+         <label class="label">List projects vendor is working on and services provided for each:</label>
+        </td>
+      </tr>
+      <tr class="servicesTR">
+        <td colspan="5">
+          <!--<textarea class="textarea" id="services" title="Detailed Description of all services you will provide"></textarea>-->
+          <table id="servicesTbl" class="table full_width">
+            <thead>
+              <tr>
+                <th>Project Name
+                </th>
+                <th>
+                  Services Provided
+                </th>
+                <th>
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>
+                  <input type="text" class="input is-info" name="project" placeholder="Project Name">
+                </td>
+                 <td>
+                  <input type="text" class="input is-info" name="services" placeholder="Services Provided">
+                </td>
+                <td>
+                  <button class="button is-info" onclick="addServiceRow(this)">+</button>
+                  <button class="button is-danger" onclick="removeServiceRow(this)">-</button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </td>
+      </tr>
+      <tr class="relationTR">
+          <td colspan="5">
+            <label class="label">Does vendor have any business, financial or personal relationship with any employee or relative of any employee of PRH Investments and/or TRG Management Company of Florida or any of its affiliates?</label>
+            <div class="control">
+              <label class="radio">
+                <input type="radio" name="personalRelation" style="-webkit-appearance: radio" id="personalRelation_Yes">Yes
+              </label>
+              <label class="radio">
+                <input type="radio" name="personalRelation" style="-webkit-appearance: radio" id="personalRelation_No">No
+                </label>
+            </div>
+          </td>
+        </tr>
+        <tr class="relationTR">
+          <td>
+            <label class="label">Explanation if Yes:</label>
+          </td>
+          <td colspan="4">
+            <input type="text" class="input is-info" id="employee_relation_explanation"/>
+          </td>
+        </tr>
+        <tr class="print_page_delimiter">
+          <td colspan="5">
+
+          </td>
+        </tr>
+        <tr class="headingTR">
+          <td colspan="5">
+            <label class="label">IV. Attachments:</label>
+          </td>
+        </tr>
+        <tr class="attachTR">
+          <td colspan="2">
+            1. W9/W8 (Most recent, signed with the current year)
+          </td>
+          <td colspan="3">
+            <div class="file is-boxed is-primary" id="w9Div">
+              <label class="file-label" id="w9Lbl">
+                <input class="file-input" type="file" name="attachment" id="w9Attachment" onchange="setFileNamesExternal('w9Div');" multiple>
+                <span class="file-cta">
+                  <span class="file-icon">
+                    <i class="fas fa-upload"></i>
+                  </span>
+                  <span class="file-label">
+                   W9/W8
+                  </span>
+                </span>
+                  <span class="file-name" id="w9FileName">
+
+                </span>
+              </label>
+            </div>
+          </td>
+        </tr>
+       <tr class="attachTR">
+          <td>
+            <label class="label">Explanation if No:</label>
+          </td>
+          <td colspan="4">
+            <input type="text" class="input is-info" id="no_w9_expl"/>
+          </td>
+        </tr>
+         <tr class="attachTR">
+          <td colspan="2">
+            2. Certificates of Insurance (COI) (Commercial and Automobile Liabilities):
+          </td>
+          <td colspan="3">
+            <div class="file is-boxed is-primary" id="coiDiv">
+              <label class="file-label" id="w9Lbl">
+                <input class="file-input" type="file" name="attachment" id="coiAttachment" onchange="setFileNamesExternal('coiDiv');" multiple>
+                <span class="file-cta">
+                  <span class="file-icon">
+                    <i class="fas fa-upload"></i>
+                  </span>
+                  <span class="file-label">
+                   COI
+                  </span>
+                </span>
+                  <span class="file-name" id="coiFileName">
+
+                </span>
+              </label>
+            </div>
+          </td>
+        </tr>
+       <tr class="attachTR">
+          <td>
+            <label class="label">Explanation if No:</label>
+          </td>
+          <td colspan="4">
+            <input type="text" class="input is-info" id="no_coi_expl"/>
+          </td>
+        </tr>
+         <tr class="attachTR">
+          <td colspan="2">
+            3. Certificate of Insurance - Worker's Compensation:
+          </td>
+          <td colspan="3">
+            <div class="file is-boxed is-primary" id="workCompDiv">
+              <label class="file-label" id="w9Lbl">
+                <input class="file-input" type="file" name="attachment" id="workCompAttachment" onchange="setFileNamesExternal('workCompDiv');" multiple>
+                <span class="file-cta">
+                  <span class="file-icon">
+                    <i class="fas fa-upload"></i>
+                  </span>
+                  <span class="file-label">
+                   Worker's Compensation
+                  </span>
+                </span>
+                  <span class="file-name" id="workCompFileName">
+
+                </span>
+              </label>
+            </div>
+          </td>
+        </tr>
+        <tr class="attachTR">
+          <td colspan="5">
+            **If applicable, please attach Exemption document for Worker's Compensation. You can apply for an exemption here: <a href="https://apps.fldfs.com/bocexempt/" target="_blank">https://apps.fldfs.com/bocexempt/</a>
+            <div class="file is-boxed is-primary" id="workCompDiv2">
+              <label class="file-label" id="w9Lbl">
+                <input class="file-input" type="file" name="attachment" id="workCompExempt" multiple>
+                <span class="file-cta">
+                  <span class="file-icon">
+                    <i class="fas fa-upload"></i>
+                  </span>
+                  <span class="file-label">
+                  Attach Exemption
+                  </span>
+                </span>
+              </label>
+            </div>
+          </td>
+        </tr>
+        <tr class="attachTR">
+          <td colspan="2">
+            4. Contract/Quote/PO/Invoice
+          </td>
+          <td colspan="3">
+            <div class="file is-boxed is-primary" id="otherAttachDiv">
+              <label class="file-label" id="w9Lbl">
+                <input class="file-input" type="file" name="attachment" id="otherAttachAttachment" onchange="setFileNamesExternal('otherAttachDiv');" multiple>
+                <span class="file-cta">
+                  <span class="file-icon">
+                    <i class="fas fa-upload"></i>
+                  </span>
+                  <span class="file-label">
+                   Other Documents
+                  </span>
+                </span>
+                  <span class="file-name" id="otherAttachFileName">
+
+                </span>
+              </label>
+            </div>
+          </td>
+        </tr>
+        <tr class="print_hidden">
+          <td colspan="5"></td>
+        </tr>
+       <tr class="headingTR">
+          <td colspan="5"><label class="label">V. Notes</label></td>
+        </tr>
+        <tr class="notesTR">
+          <td colspan="5">
+            1. Please make sure you are billing the legal name of the project (not project DBA or The Related Group)
+          </td>
+        </tr>
+        <tr class="notesTR">
+          <td colspan="5">
+           <!-- 2. Please send ACH and Wire Instructions form via separate email to <i>vendorrequest@domain.com</i>. (Use email subject: <u>Payment Instructions_<i>Vendor Name</i></u>)-->
+            2. Please click the following link to submit <a id="eftURL" href="#" target="_blank">ACH and Wire Instructions form</a>.
+            <label class="checkbox" style="width:100%"><input type="checkbox" style="-webkit-appearance: checkbox;width:3%"><b>Select this option if you decline to provide ACH and Wire Instructions</b></label>
+          </td>
+        </tr>
+        <tr class="notesTR print_hidden">
+          <td colspan="5">
+            3. We will be sending you billing instructions via email along with an invitation to our vendor cafe portal
+          </td>
+        </tr>
+         <tr>
+          <td colspan="5">
+           <hr style="margin:0"/>
+          </td>
+        </tr>
+        <tr>
+          <td colspan="5">
+           <label class="checkbox" style="width:100%" id="agreeementLbl"><input type="checkbox" style="-webkit-appearance: checkbox;width:3%" id="agreementChk"><b>By clicking here you agree we may add you as additional insured with a waiver of subrogation on all applicable policies.</b></label>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div id="vendoractionsDiv">
+      <button type="button" id="externalVendor_btnClearForm" class="button is-info" onclick="clearForm();">Clear Form</button>
+      <button type="button" id="externalVendor_btnSubmitVendor" class="button is-info" onclick="vendorForm_validateForm()">Submit Form</button>
+  </div>
+
+<div class="ui longer modal" id="notificationDiv">
+      <div class="header"></div>
+      <div class="scrolling content">
+
+      </div>
+      <div class="actions">
+      <div class="ui primary ok button">
+        OK
+        <i class="right chevron icon"></i>
+      </div>
+      </div>
+    </div>
+    <input type="hidden" value='{{token}}' id="token"/>
+    <input type="hidden" value='{{efttoken}}' id="efttoken"/>
+    <div id="overlay"><h1 id="loadingH1">Saving Form...</h1></div>
+  </body>
+</html>
