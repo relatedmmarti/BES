@@ -746,8 +746,8 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
       //where += ' AND s.name=\'' + req.query.workflow + '\'';
 
       if (req.query.workflow === 'Pending') {
-        where += ' AND NOT s.name = ?';
-        queryParams.push('Approved');
+        where += ' AND NOT s.name in (?,?)';
+        queryParams.push('Approved', 'Inactive');
       }
       else if (req.query.workflow === 'All') {
         //do nothing, all BES including incative ones
