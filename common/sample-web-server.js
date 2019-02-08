@@ -1963,6 +1963,28 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
           });
         }
 
+        //JM  02/08/2019 Validate Vendor ID - Type combination does not exists already BEGIN
+        var id_type_validation = new Query(
+          `SELECT e1.id from eftpayee e1 left join
+		      (
+		      	select e2.id fk_object_id, max(a.id) fk_faction_id from eftpayee e2
+		      	left join wfaction a on a.fk_object_id = e2.id and a.fk_objtype_id = 1
+		      	group by e2.id
+		      ) z on z.fk_object_id = e1.id
+	        left join wfaction a2 on a2.id = z.fk_faction_id
+	        left join wfstep s on s.id = a2.fk_wfstep_id
+	        where lower(vendorid)=? and lower(paytype)=? and s.id not in(1,6)`
+
+          , [payload.vendorid.toLowerCase(), payload.paytype.toLowerCase()]).get();
+        if (id_type_validation) {
+          validationErrors.push({
+            field: 'vendorid',
+            msg: 'Vendor ID and Type already exists on the system: ' + id_type_validation.id
+          });
+        }
+        //JM  02/08/2019 Validate Vendor ID - Type combination does not exists already END
+
+
 
 
 
