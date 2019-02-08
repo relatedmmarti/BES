@@ -204,8 +204,9 @@ function getEdit(id) {
     //clear pending attachments
     $("#attachment")[0].value = "";
     $("#btnClear").hide();
-    $("#userList button").removeClass('is-danger').addClass('is-primary');
-    $("#row_" + id + " button").removeClass('is-primary').addClass('is-danger');
+    //$("#userList button").removeClass('is-danger').addClass('is-primary');
+    $(".is-danger").removeClass('is-danger');
+    $("#row_" + id + " button") /*.removeClass('is-primary')*/ .addClass('is-danger');
     setFileName();
     $.getJSON('/payinfo/' + id, function (data) {
 
@@ -305,7 +306,7 @@ function doAction(event) {
     event.preventDefault();
 
 
-    $('.is-danger').addClass('is-info').removeClass('is-danger'); //clear error warnings
+    //$('.is-danger') /*.addClass('is-info')*/ .removeClass('is-danger'); //clear error warnings
     // Super basic validation - increase errorCount variable if any fields are blank
     var errorCount = 0;
     /*
@@ -371,7 +372,7 @@ function doAction(event) {
                 if (response.validationErrors) {
                     var errorHTML = "<div>";
                     response.validationErrors.forEach((field) => {
-                        $("#" + field.field).removeClass('is-info').addClass('is-danger');
+                        $("#" + field.field) /*.removeClass('is-info')*/ .addClass('is-danger');
                         errorHTML += 'Field: ' + field.field + '<ul><li> Error: ' + field.msg + '</li></ul>';
                     })
                     errorHTML += "</div>";
@@ -383,10 +384,12 @@ function doAction(event) {
                 else if (response.msg === '') {
                     if ($("#attachment")[0].files.length > 0) {
                         attachFiles($('#rowid').html(), 'edit');
+                        $('input .is-danger') /*.addClass('is-info')*/ .removeClass('is-danger'); //clear error warnings
                         //populateTable();
                     }
                     else {
                         //reload the datatable and the record info in case of workflow change
+                        $('input .is-danger') /*.addClass('is-info')*/ .removeClass('is-danger'); //clear error warnings
                         getEdit(object_id);
                         populateTable();
                     }
