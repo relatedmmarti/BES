@@ -377,7 +377,7 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
         `SELECT 'x' from wfstepusers
 	        where lower(username)=? and fk_wfstep_id= 5`, [req.userContext.userinfo.preferred_username.toString().toLowerCase()]).get();
       if (!user_validation) {
-        res.status(401).send({ msg: "You are not authorized to delete attachments" });
+        res.status(401).send({ msg: "You are not authorized to delete attachments, please ask Treasury to delete it." });
         return;
       }
       else {

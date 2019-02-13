@@ -10,7 +10,7 @@ updates the database
 
 gulp.task('default', ['compress']);
 
-gulp.task('initdb', function () {
+/*gulp.task('initdb', function () {
 
   var options = {
     continueOnError: false,
@@ -32,7 +32,7 @@ gulp.task('initdb', function () {
     .pipe(exec('node updateDb.js', options))
     .pipe(exec.reporter(reportOptions));
 });
-
+*/
 
 /**
  * Jorge Medina 12/12/2018 -> Gulp Task to minimize js
