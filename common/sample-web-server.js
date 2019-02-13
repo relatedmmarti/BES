@@ -1117,7 +1117,8 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
          interrouting = ?,
          interswift = ?,
          notes = ?,
-         modified= ?
+         modified= ?,
+         je_eligible=?
          WHERE id = ?;`, [
               payload.vendorid,
               payload.sourcesystem,
@@ -1149,6 +1150,7 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
               payload.interswift,
               payload.notes,
               timestamp,
+              payload.je_eligible,
               req.params.id
             ]).run();
 
@@ -1221,7 +1223,7 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
       //console.log(payload);
 
       try {
-
+        //console.log(payload);
         validatePayload(payload)
           .then(function (validationErrors) {
 
@@ -1258,9 +1260,10 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
           interbankcountry,
           interrouting,
           interswift,
-          notes
+          notes,
+          je_eligible
           )
-          VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);`, [
+          VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);`, [
               payload.vendorid,
               payload.sourcesystem,
               payload.payeename,
@@ -1289,7 +1292,8 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
               payload.interbankcountry,
               payload.interrouting,
               payload.interswift,
-              payload.notes
+              payload.notes,
+              payload.je_eligible
             ]).run();
 
             //console.log(insert);
