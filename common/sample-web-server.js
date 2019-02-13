@@ -1729,6 +1729,14 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
           });
         }
 
+        //Payee name cannot contain & - JM 02/13/19
+        if (payload.payeename.indexOf("&") != -1) {
+          validationErrors.push({
+            field: 'payeename',
+            msg: 'Cannot contain special character : &'
+          });
+        }
+
         //Payee name can’t over 70 characters
         if (!validator.isLength(payload.payeename, { min: 1, max: 70 })) {
           validationErrors.push({
