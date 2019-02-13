@@ -291,7 +291,8 @@ function getEdit(id) {
             attachmentsHTML += '<tr>';
             attachmentsHTML += '<td>' + item.filename.substring(item.filename.indexOf('_', 5) + 1) + '</td>';
             attachmentsHTML += '<td>' + item.dateadded + '</td>';
-            attachmentsHTML += '<td><a href="/file/' + item.filename + '" target="_blank">View</a>';
+            attachmentsHTML += '<td><a href="/file/' + item.filename + '" target="_blank"><button class="button is-info is-rounded" type="button">View</button></a>';
+            attachmentsHTML += '<td><button class="button is-info is-rounded" type="button" onclick="removeAttachment(\'' + data.obj.id + '\',\'' + item.filename + '\')">Remove</button></td>';
             attachmentsHTML += '</tr>';
         });
         $('#attachmentsTable tbody').html(attachmentsHTML);
@@ -300,6 +301,41 @@ function getEdit(id) {
 
 };
 
+
+/***
+ * JM 02/13/2019 Call delete attachment API
+ * */
+
+function removeAttachment(id, filename) {
+
+    var settings = {
+        "async": true,
+        "crossDomain": true,
+        "url": "/attach/" + id + "/" + filename,
+        "method": "DELETE",
+        "contentType": 'application/json',
+        "headers": {
+            "Cache-Control": "no-cache",
+        }
+    }
+
+    $.ajax(settings).done(function (response) {
+        $("#btnUploadFile, #attachment").prop("disabled", false);
+        $("#overlay").hide();
+        console.log(response);
+        console.log(response.msg);
+        //response = JSON.parse(response);
+        if (response.msg === '') {
+            alert('File was removed');
+            getEdit(id);
+        }
+        else {
+            alert('Attachment Error: ' + response.msg);
+        }
+    }).fail(function (err) {
+        alert('Unable to delete files: ' + ((err.responseJSON.msg) ? err.responseJSON.msg : 'Unauthorized'));
+    })
+}
 
 // Write
 function doAction(event) {
@@ -911,7 +947,7 @@ function populateVendorTable() {
 
 // Get record to edit
 function getVendorEdit(id) {
-    $("#rightbar").html('<h3 id="recordInfoHdr">Vendor Info</h3>  <button class="delete is-danger" id="rightClose" aria-label="close" onclick="hideDiv(\"rightbar\")"></button>  <span class="icon" id="rightMaxim" onclick="showFullDiv(\"rightbar\");">   <i class="fa fa-arrows-alt" aria-hidden="true"></i> </span>  <span class="icon" id="rightMin" onclick="showMinDiv(\"rightbar\");">   <i class="fa fa-window-minimize" aria-hidden="true"></i> </span>   <table class="ui table compact" id="payinfofields">     <thead>  <tr>    <th>Setting</th>    <th>Value</th>  </tr>     </thead>     <tbody>  <tr>    <td>Vendor ID</td>    <td id="vendorid"></td>  </tr>  <tr>    <td>Legal Entity Name</td>    <td id="legalentityname"></td>  </tr>  <tr>    <td>Address Line 1</td>    <td id="address1"></td>  </tr>  <tr>    <td>Address Line 2</td>    <td id="address2"></td>  </tr>  <tr>    <td>City</td>    <td id="city"></td>  </tr>  <tr>    <td>State</td>    <td id="state"></td>  </tr>  <tr>    <td>Zip Code</td>    <td id="zip"></td>  </tr>  <tr>    <td>Country</td>    <td id="country"></td>  </tr>  <tr>    <td>Bank Name</td>    <td id="bankname"></td>  </tr>  <tr>    <td>Bank Address</td>    <td id="bankaddress"></td>  </tr>  <tr>    <td>Bank City</td>    <td id="bankcity"></td>  </tr>  <tr>    <td>Bank State/Province</td>    <td id="bankstate"></td>  </tr>  <tr>    <td>Bank ZIP/Postal</td>    <td id="bankzip"></td>  </tr>  <tr>    <td>Bank Country</td>    <td id="bankcountry"></td>  </tr>  <tr>    <td>Routing Number</td>    <td id="routing"></td>  </tr>  <tr>    <td>Account Number</td>    <td id="account"></td>  </tr>  <tr>    <td>Swift</td>    <td id="swift"></td>  </tr>  <tr>      <td>Intermediary Bank Name</td>      <td id="interbankname"></td>    </tr>    <tr>      <td>Intermediary Bank Address</td>      <td id="interbankaddress"></td>    </tr>    <tr>      <td>Intermediary Bank City</td>      <td id="interbankcity"></td>    </tr>    <tr>      <td>Intermediary Bank State/Province</td>      <td id="interbankstate"></td>    </tr>    <tr>      <td>Intermediary Bank ZIP/Postal</td>      <td id="interbankzip"></td>    </tr>    <tr>      <td>Intermediary Bank Country</td>      <td id="interbankcountry"></td>    </tr>    <tr>      <td>Intermediary Routing Number</td>      <td id="interrouting"></td>    </tr>    <tr>      <td>Intermediary Swift</td>      <td id="interswift"></td>    </tr>  <tr>    <td>Date Created:</td>    <td id="datecreated"></td>  </tr>      </tbody>   </table>  <table class="ui table compact collapsing" id="attachmentsTable"><thead><tr><th>Filename</th><th>Date</th><th>View</th></tr></thead><tbody></tbody></table> <div>  <button type="button" id="btnBESCreate" class="button is-info">Create BES</button> </div>');
+    $("#rightbar").html('<h3 id="recordInfoHdr">Vendor Info</h3>  <button class="delete is-danger" id="rightClose" aria-label="close" onclick="hideDiv(\"rightbar\")"></button>  <span class="icon" id="rightMaxim" onclick="showFullDiv(\"rightbar\");">   <i class="fa fa-arrows-alt" aria-hidden="true"></i> </span>  <span class="icon" id="rightMin" onclick="showMinDiv(\"rightbar\");">   <i class="fa fa-window-minimize" aria-hidden="true"></i> </span>   <table class="ui table compact" id="payinfofields">     <thead>  <tr>    <th>Setting</th>    <th>Value</th>  </tr>     </thead>     <tbody>  <tr>    <td>Vendor ID</td>    <td id="vendorid"></td>  </tr>  <tr>    <td>Legal Entity Name</td>    <td id="legalentityname"></td>  </tr>  <tr>    <td>Address Line 1</td>    <td id="address1"></td>  </tr>  <tr>    <td>Address Line 2</td>    <td id="address2"></td>  </tr>  <tr>    <td>City</td>    <td id="city"></td>  </tr>  <tr>    <td>State</td>    <td id="state"></td>  </tr>  <tr>    <td>Zip Code</td>    <td id="zip"></td>  </tr>  <tr>    <td>Country</td>    <td id="country"></td>  </tr>  <tr>    <td>Bank Name</td>    <td id="bankname"></td>  </tr>  <tr>    <td>Bank Address</td>    <td id="bankaddress"></td>  </tr>  <tr>    <td>Bank City</td>    <td id="bankcity"></td>  </tr>  <tr>    <td>Bank State/Province</td>    <td id="bankstate"></td>  </tr>  <tr>    <td>Bank ZIP/Postal</td>    <td id="bankzip"></td>  </tr>  <tr>    <td>Bank Country</td>    <td id="bankcountry"></td>  </tr>  <tr>    <td>Routing Number</td>    <td id="routing"></td>  </tr>  <tr>    <td>Account Number</td>    <td id="account"></td>  </tr>  <tr>    <td>Swift</td>    <td id="swift"></td>  </tr>  <tr>      <td>Intermediary Bank Name</td>      <td id="interbankname"></td>    </tr>    <tr>      <td>Intermediary Bank Address</td>      <td id="interbankaddress"></td>    </tr>    <tr>      <td>Intermediary Bank City</td>      <td id="interbankcity"></td>    </tr>    <tr>      <td>Intermediary Bank State/Province</td>      <td id="interbankstate"></td>    </tr>    <tr>      <td>Intermediary Bank ZIP/Postal</td>      <td id="interbankzip"></td>    </tr>    <tr>      <td>Intermediary Bank Country</td>      <td id="interbankcountry"></td>    </tr>    <tr>      <td>Intermediary Routing Number</td>      <td id="interrouting"></td>    </tr>    <tr>      <td>Intermediary Swift</td>      <td id="interswift"></td>    </tr>  <tr>    <td>Date Created:</td>    <td id="datecreated"></td>  </tr>      </tbody>   </table>  <table class="ui table compact collapsing" id="attachmentsTable"><thead><tr><th>Filename</th><th>Date</th><th>View</th><th>Delete</th></tr></thead><tbody></tbody></table> <div>  <button type="button" id="btnBESCreate" class="button is-info">Create BES</button> </div>');
     $('#btnBESCreate').on('click', newEntryFromVendor);
     $.getJSON('/vendor/' + id, function (data) {
 
@@ -950,7 +986,7 @@ function getVendorEdit(id) {
             attachmentsHTML += '<tr>';
             attachmentsHTML += '<td>' + item.filename.substring(item.filename.indexOf('_', 5) + 1) + '</td>';
             attachmentsHTML += '<td>' + item.dateadded + '</td>';
-            attachmentsHTML += '<td><a href="/file/' + item.filename + '" target="_blank">View</a>';
+            attachmentsHTML += '<td><a href="/file/' + item.filename + '" target="_blank">View</a></td>';
             attachmentsHTML += '</tr>';
         });
         $('#attachmentsTable tbody').html(attachmentsHTML);

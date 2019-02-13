@@ -361,6 +361,46 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
 
 
   /**
+   * Jorge Medina:  02/13/02019 Added route to delete attachments
+   *
+   *
+   */
+
+  app.delete('/attach/:id/:filename', oidc.ensureAuthenticated(), (req, res) => {
+    console.log(req.method + ' ' + req.url + ' ' + req.userContext.userinfo.preferred_username + ' ' + req.headers['x-real-ip']);
+    try {
+      var payload = {
+        id: req.params.id,
+        file: req.params.filename
+      };
+      var user_validation = new Query(
+        `SELECT 'x' from wfstepusers
+	        where lower(username)=? and fk_wfstep_id= 5`, [req.userContext.userinfo.preferred_username.toString().toLowerCase()]).get();
+      if (!user_validation) {
+        res.status(401).send({ msg: "You are not authorized to delete attachments" });
+        return;
+      }
+      else {
+        //console.log('calling delete file');
+        deleteFile(req.params.filename, req.params.id, req.userContext.userinfo.preferred_username, req, payload)
+          .then((msg) => {
+            console.log('delete done');
+            res.send({ msg: '' });
+          })
+          .catch((err) => {
+            console.log(err);
+            res.status(500).send({ msg: err });
+          })
+      }
+    }
+    catch (err) {
+      console.log(err);
+      res.status(500).send({ msg: err });
+
+    }
+  })
+
+  /**
    *  Jorge Medina  12/03/2018 Route to store attachments into folder
    * */
 
@@ -385,7 +425,7 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
            datedeleted,
            user
            )
-           VALUES(?,?,?,?,?,?);`, [
+    /      VALUES(?,?,?,?,?,?);`, [
              fields.id[0],
              fields.id[0] + '_' + fileStamp + '_' + file[0].originalFilename,
              now.toLocaleDateString(),
@@ -441,6 +481,37 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
     }
   });
 
+
+  //JM: Delete Blob Container 02/13/2019
+  function deleteFile(filename, id, username, req, payload) {
+    return new Promise((resolve, reject) => {
+      try {
+
+        blobService.deleteBlob(config.blobContainer, config.blobPath + filename, (err) => {
+
+          if (err) {
+            console.log(err);
+            reject(err);
+
+          }
+          //console.log('calling query: ' + id + " " + filename);
+          del = new Query('DELETE FROM eftattach WHERE fk_object_id=? and filename=?;', [id, filename]).run();
+
+          new Query().audit(req, [{ 'attachments': payload }], null, id, 1);
+          resolve();
+        });
+      }
+      catch (err) {
+        console.log(err);
+        reject(err);
+      }
+
+
+    });
+
+  }
+
+  //JM: Upload blob container
   function uploadFile(file, fields, username, req, payload) {
     return new Promise((resolve, reject) => {
       var now = new Date();
