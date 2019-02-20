@@ -361,6 +361,46 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
 
 
   /**
+   * Jorge Medina:  02/13/02019 Added route to delete attachments
+   *
+   *
+   */
+
+  app.delete('/attach/:id/:filename', oidc.ensureAuthenticated(), (req, res) => {
+    console.log(req.method + ' ' + req.url + ' ' + req.userContext.userinfo.preferred_username + ' ' + req.headers['x-real-ip']);
+    try {
+      var payload = {
+        id: req.params.id,
+        file: req.params.filename
+      };
+      var user_validation = new Query(
+        `SELECT 'x' from wfstepusers
+	        where lower(username)=? and fk_wfstep_id= 5`, [req.userContext.userinfo.preferred_username.toString().toLowerCase()]).get();
+      if (!user_validation) {
+        res.status(401).send({ msg: "You are not authorized to delete attachments, please ask Treasury to delete it." });
+        return;
+      }
+      else {
+        //console.log('calling delete file');
+        deleteFile(req.params.filename, req.params.id, req.userContext.userinfo.preferred_username, req, payload)
+          .then((msg) => {
+            console.log('delete done');
+            res.send({ msg: '' });
+          })
+          .catch((err) => {
+            console.log(err);
+            res.status(500).send({ msg: err });
+          })
+      }
+    }
+    catch (err) {
+      console.log(err);
+      res.status(500).send({ msg: err });
+
+    }
+  })
+
+  /**
    *  Jorge Medina  12/03/2018 Route to store attachments into folder
    * */
 
@@ -385,7 +425,7 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
            datedeleted,
            user
            )
-           VALUES(?,?,?,?,?,?);`, [
+    /      VALUES(?,?,?,?,?,?);`, [
              fields.id[0],
              fields.id[0] + '_' + fileStamp + '_' + file[0].originalFilename,
              now.toLocaleDateString(),
@@ -441,6 +481,37 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
     }
   });
 
+
+  //JM: Delete Blob Container 02/13/2019
+  function deleteFile(filename, id, username, req, payload) {
+    return new Promise((resolve, reject) => {
+      try {
+
+        blobService.deleteBlob(config.blobContainer, config.blobPath + filename, (err) => {
+
+          if (err) {
+            console.log(err);
+            reject(err);
+
+          }
+          //console.log('calling query: ' + id + " " + filename);
+          del = new Query('DELETE FROM eftattach WHERE fk_object_id=? and filename=?;', [id, filename]).run();
+
+          new Query().audit(req, [{ 'attachments': payload }], null, id, 1);
+          resolve();
+        });
+      }
+      catch (err) {
+        console.log(err);
+        reject(err);
+      }
+
+
+    });
+
+  }
+
+  //JM: Upload blob container
   function uploadFile(file, fields, username, req, payload) {
     return new Promise((resolve, reject) => {
       var now = new Date();
@@ -746,8 +817,8 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
       //where += ' AND s.name=\'' + req.query.workflow + '\'';
 
       if (req.query.workflow === 'Pending') {
-        where += ' AND NOT s.name = ?';
-        queryParams.push('Approved');
+        where += ' AND NOT s.name in (?,?)';
+        queryParams.push('Approved', 'Inactive');
       }
       else if (req.query.workflow === 'All') {
         //do nothing, all BES including incative ones
@@ -1046,7 +1117,8 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
          interrouting = ?,
          interswift = ?,
          notes = ?,
-         modified= ?
+         modified= ?,
+         je_eligible=?
          WHERE id = ?;`, [
               payload.vendorid,
               payload.sourcesystem,
@@ -1078,6 +1150,7 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
               payload.interswift,
               payload.notes,
               timestamp,
+              payload.je_eligible,
               req.params.id
             ]).run();
 
@@ -1150,7 +1223,7 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
       //console.log(payload);
 
       try {
-
+        //console.log(payload);
         validatePayload(payload)
           .then(function (validationErrors) {
 
@@ -1187,9 +1260,10 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
           interbankcountry,
           interrouting,
           interswift,
-          notes
+          notes,
+          je_eligible
           )
-          VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);`, [
+          VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);`, [
               payload.vendorid,
               payload.sourcesystem,
               payload.payeename,
@@ -1218,7 +1292,8 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
               payload.interbankcountry,
               payload.interrouting,
               payload.interswift,
-              payload.notes
+              payload.notes,
+              payload.je_eligible
             ]).run();
 
             //console.log(insert);
@@ -1729,6 +1804,14 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
           });
         }
 
+        //Payee name cannot contain & - JM 02/13/19
+        if (payload.payeename.indexOf("&") != -1) {
+          validationErrors.push({
+            field: 'payeename',
+            msg: 'Cannot contain special character : &'
+          });
+        }
+
         //Payee name can’t over 70 characters
         if (!validator.isLength(payload.payeename, { min: 1, max: 70 })) {
           validationErrors.push({
@@ -1962,6 +2045,28 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
             msg: 'Length should be between 1 and 70 spaces'
           });
         }
+
+        //JM  02/08/2019 Validate Vendor ID - Type combination does not exists already BEGIN
+        var id_type_validation = new Query(
+          `SELECT e1.id from eftpayee e1 left join
+		      (
+		      	select e2.id fk_object_id, max(a.id) fk_faction_id from eftpayee e2
+		      	left join wfaction a on a.fk_object_id = e2.id and a.fk_objtype_id = 1
+		      	group by e2.id
+		      ) z on z.fk_object_id = e1.id
+	        left join wfaction a2 on a2.id = z.fk_faction_id
+	        left join wfstep s on s.id = a2.fk_wfstep_id
+	        where lower(vendorid)=? and lower(paytype)=? and s.id not in(1,6)`
+
+          , [payload.vendorid.toLowerCase(), payload.paytype.toLowerCase()]).get();
+        if (id_type_validation) {
+          validationErrors.push({
+            field: 'vendorid',
+            msg: 'Vendor ID and Type already exists on the system: ' + id_type_validation.id
+          });
+        }
+        //JM  02/08/2019 Validate Vendor ID - Type combination does not exists already END
+
 
 
 
