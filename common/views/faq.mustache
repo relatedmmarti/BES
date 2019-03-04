@@ -3,7 +3,7 @@
   <head>
     {{>head}}
   </head>
-  <body>
+  <body style="overflow:scroll">
 
     {{>menu}}
 
@@ -13,6 +13,121 @@
         <h1>Rules Associated with TM5 Payments</h1>
 
         <br/>
+       <!-- <label class='label font-16'>BES Fields Description</label>
+         <ol class="font-16">
+           <li><u>Pay Type</u><sup>*</sup>
+           <ul class="mt-10">
+             <li>Allowed Values: ACH, Wire</li>
+           </ul>
+
+           </li>
+           <hr/>
+           <li><u>JE Eligible?</u>
+           <ul class="mt-10">
+             <li>Select 'Yes' if BES Code will be used for NON taxable transactions, BES will appear on JE Beneficiary segment options</li>
+             <li>Select 'No' if BES should not appear on JE Beneficiary segment options</li>
+           </ul>
+            </li>
+           <hr/>
+           <li><u>System Payee ID</u><sup>*</sup>
+           <ul class="mt-10">
+             <li>Yardi Vendor, Remittance Vendor or Affiliate code</li>
+           </ul>
+            </li>
+           <hr/>
+           <li><u>Beneficiary Name</u><sup>*</sup>
+           <ul class="mt-10">
+             <li>
+               Cannot contain <i>&</i> characters
+             </li>
+           </ul>
+            </li>
+           <hr/>
+           <li><u>Beneficiary City</u>
+           <ul class="mt-10">
+             <li>
+               Required if Beneficiary Country is <i>US</i>
+             </li>
+           </ul>
+            </li>
+           <hr/>
+           <li><u>Beneficiary State/Province</u>
+           <ul class="mt-10">
+             <li>
+               Required if Beneficiary Country is <i>US</i> or <i>CA</i>
+             </li>
+             <li>
+               For US and CA, use two letters for states, example: Florida = FL
+             </li>
+           </ul>
+            </li>
+           <hr/>
+           <li><u>Beneficiary ZIP/Postal</u>
+           <ul class="mt-10">
+             <li>
+               Required if Beneficiary Country is <i>US</i>
+             </li>
+           </ul>
+            </li>
+           <hr/>
+           <li><u>Beneficiary Country</u><sup>*</sup>
+           <ul class="mt-10">
+             <li>
+                Use only 2 letters ISO codes, examples: United States = <i>US</i>
+             </li>
+           </ul>
+            </li>
+           <hr/>
+           <li><u>Bank Name</u><sup>*</sup>
+           <ul class="mt-10">
+             <li>
+             </li>
+           </ul>
+            </li>
+           <hr/>
+           <li><u>Bank City</u><sup>*</sup>
+           <ul class="mt-10">
+             <li>
+               If for some reason you don’t have the city of the bank account, you can use the same city as the Payee
+             </li>
+           </ul>
+           </li>
+           <hr/>
+           <li><u>Bank State/Province</u>
+           <ul class="mt-10">
+             <li>
+               For US and CA, use two letters for states, example: Florida = <i>FL</i>
+             </li>
+           </ul>
+           </li>
+           <hr/>
+           <li><u>Bank ZIP/Postal</u>
+           <ul class="mt-10">
+             <li>
+               Required if Bank Country is <i>US</i>
+             </li>
+           </ul>
+           </li>
+           <hr/>
+           <li><u>Bank Country</u><sup>*</sup>
+           <ul class="mt-10">
+             <li>
+               Use only 2 letters ISO codes, examples: United States = US; Canada = CA
+             </li>
+           </ul>
+           </li>
+           <hr/>
+           <li><u>Routing Number</u>
+           <ul class="mt-10">
+             <li>
+              Required if Payee Country is <i>US</i>
+             </li>
+           </ul>
+           </li>
+         </ol>
+         <div class="mt-10">
+           <label><sup>*</sup> Required fields</label>
+         </div> -->
         <label class='label font-16'>BES Codes</label>
         <ol class="font-16">
           <li>Do not include commas “,” in any of the fields, a comma will damage the format of the file that will be sent</li>
@@ -24,7 +139,7 @@
           <li>Bank Accounts can’t have any special characters (examples: ‘-‘,’/’,’_’) or spaces</li>
           <li>If the Bank Account is international and the country uses IBAN code, the IBAN code must be used, do not include the word IBAN as part of the account number</li>
           <li>Payee name can’t be empty</li>
-          <li>Payee name cannot contain & symbols</li> <!-- JM 02/13/2019 -->
+          <li>Payee name cannot contain & symbols</li>  <!-- JM 02/13/2019 -->
           <li>Payee Country can’t be empty. Use only 2 letters ISO codes, examples: United States = US</li>
           <li>If Payee Country is not ‘US’ then SWIFT can’t be empty</li>
           <li>If Payee Country is ‘US’ then Routing number can’t be empty</li>

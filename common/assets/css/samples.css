@@ -475,6 +475,10 @@ CSS for Vendor Form
     font-size:20px;
 }
 
+.mt-10{
+    margin-top: 10px!important;
+}
+
 @media print {
   body{
       width: 95%;

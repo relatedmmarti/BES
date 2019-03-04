@@ -15,7 +15,7 @@ $(document).ready(function () {
     $('#btnClearForm').on('click', clearAllInputs);
     $('#btnBESCreate').on('click', newEntryFromVendor);
 
-
+    //$(".bes_collapsed").hide() //JM 02282019 -> Allow to expand collapse fields
 
     //if BES id sent on URL then auto filter
     if ($("#filter_id").val()) {
@@ -191,13 +191,33 @@ function populateTable() {
 
         // Inject the whole content string into our existing HTML table
         $('#userList tbody').html(tableContent);
+        /* if ($("#expand_collapse_lbl").attr("bstate") === 'collapsed') {
+             $(".bes_collapsed").hide();
+         }*/
     });
 
 };
 
 
+/**
+ * JM 02282019 Added expand/collapsed tool
+ * */
 
-
+/*function expand_collapse() {
+    if ($("#expand_collapse_lbl").attr("bstate") === 'collapsed') {
+        //expand
+        $("#expand_collapse_i").removeClass('fa-expand').addClass('fa-compress');
+        $("#expand_collapse_lbl").text("Collapse").attr('bstate', 'expanded');
+        $(".bes_collapsed").show();
+    }
+    else {
+        //collapse
+        $("#expand_collapse_i").removeClass('fa-compress').addClass('fa-expand');
+        $("#expand_collapse_lbl").text("Expand").attr('bstate', 'collapsed');
+        $(".bes_collapsed").hide();
+    }
+}
+*/
 
 
 // Get record to edit
