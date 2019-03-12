@@ -203,14 +203,14 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
       , a.username approver
       , s.name
       from wfaction a
-      left join wfstepusers u on u.fk_wfstep_id = a.fk_wfstep_id and u.username = ?
+      left join wfstepusers u on u.fk_wfstep_id = a.fk_wfstep_id and lower(u.username) = ?
       left join wfstep s on s.id = a.fk_wfstep_id
       where
       a.fk_object_id = ?
       and a.fk_objtype_id = ?
       order by a.id desc
       limit 1;`, [
-        username, id, objtype
+        username.toLowerCase(), id, objtype //JM 03042019 Fix bug for user validation been case sensitive
       ]).get();
 
       this.CurrentStep = CurrentStep;

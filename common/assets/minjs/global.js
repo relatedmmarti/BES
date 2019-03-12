@@ -15,7 +15,7 @@ $(document).ready(function () {
     $('#btnClearForm').on('click', clearAllInputs);
     $('#btnBESCreate').on('click', newEntryFromVendor);
 
-
+    $(".bes_collapsed").hide() //JM 02282019 -> Allow to expand collapse fields
 
     //if BES id sent on URL then auto filter
     if ($("#filter_id").val()) {
@@ -157,9 +157,9 @@ function populateTable() {
             tableContent += '<td><button class="button is-primary" value="' + this.id + '">' + this.id + '</button></td>';
             tableContent += '<td>' + this.wfstep_name + '</td>';
             tableContent += '<td>' + this.paytype + '</td>';
-            tableContent += '<td>' + this.achsec + '</td>';
+            tableContent += '<td class="bes_collapsed">' + this.achsec + '</td>';
             tableContent += '<td>' + ((this.je_eligible) ? this.je_eligible : 'no') + '</td>';
-            tableContent += '<td>' + this.sourcesystem + '</td>';
+            tableContent += '<td class="bes_collapsed">' + this.sourcesystem + '</td>';
             tableContent += '<td>' + this.vendorid + '</td>';
             tableContent += '<td>' + this.payeename + '</td>';
             tableContent += '<td>' + this.payeeaddress + '</td>';
@@ -167,7 +167,7 @@ function populateTable() {
             tableContent += '<td>' + this.payeestate + '</td>';
             tableContent += '<td>' + this.payeezip + '</td>';
             tableContent += '<td>' + this.payeecountry + '</td>';
-            tableContent += '<td>' + this.forfurthercredit + '</td>';
+            tableContent += '<td class="bes_collapsed">' + this.forfurthercredit + '</td>';
             tableContent += '<td>' + this.bankname + '</td>';
             tableContent += '<td>' + this.bankaddress + '</td>';
             tableContent += '<td>' + this.bankcity + '</td>';
@@ -177,26 +177,46 @@ function populateTable() {
             tableContent += '<td>' + this.routing + '</td>';
             tableContent += '<td>' + this.account + '</td>';
             tableContent += '<td>' + this.swift + '</td>';
-            tableContent += '<td>' + this.interbankname + '</td>';
-            tableContent += '<td>' + this.interbankaddress + '</td>';
-            tableContent += '<td>' + this.interbankcity + '</td>';
-            tableContent += '<td>' + this.interbankstate + '</td>';
-            tableContent += '<td>' + this.interbankzip + '</td>';
-            tableContent += '<td>' + this.interbankcountry + '</td>';
-            tableContent += '<td>' + this.interrouting + '</td>';
-            tableContent += '<td>' + this.interswift + '</td>';
+            tableContent += '<td class="bes_collapsed">' + this.interbankname + '</td>';
+            tableContent += '<td class="bes_collapsed">' + this.interbankaddress + '</td>';
+            tableContent += '<td class="bes_collapsed">' + this.interbankcity + '</td>';
+            tableContent += '<td class="bes_collapsed">' + this.interbankstate + '</td>';
+            tableContent += '<td class="bes_collapsed">' + this.interbankzip + '</td>';
+            tableContent += '<td class="bes_collapsed">' + this.interbankcountry + '</td>';
+            tableContent += '<td class="bes_collapsed">' + this.interrouting + '</td>';
+            tableContent += '<td class="bes_collapsed">' + this.interswift + '</td>';
             tableContent += '<td>' + this.notes + '</td>';
             tableContent += '</tr>';
         });
 
         // Inject the whole content string into our existing HTML table
         $('#userList tbody').html(tableContent);
+        if ($("#expand_collapse_lbl").attr("bes_state") === 'collapsed') {
+            $(".bes_collapsed").hide();
+        }
     });
 
 };
 
 
+/**
+ * JM 02282019 Added expand/collapsed tool
+ * */
 
+function expand_collapse() {
+    if ($("#expand_collapse_lbl").attr("bes_state") === 'collapsed') {
+        //expand
+        $("#expand_collapse_i").removeClass('fa-expand').addClass('fa-compress');
+        $("#expand_collapse_lbl").text("Collapse").attr('bstate', 'expanded');
+        $(".bes_collapsed").show();
+    }
+    else {
+        //collapse
+        $("#expand_collapse_i").removeClass('fa-compress').addClass('fa-expand');
+        $("#expand_collapse_lbl").text("Expand").attr('bstate', 'collapsed');
+        $(".bes_collapsed").hide();
+    }
+}
 
 
 
