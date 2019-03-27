@@ -5,6 +5,7 @@ module.exports = config;
 config.attachmentPath = __dirname + '/../temp/';
 
 config.blobPath = process.env.blobPath;
+config.db_blobPath = process.env.db_blobpath;
 
 config.blobContainer = 'files';
 
@@ -57,3 +58,8 @@ config.bespush = {
 config.reviewEmail = process.env.reviewEmail;
 
 config.treasuryEmail = process.env.treasuryEmail;
+
+config.db_path = '../db/treasury.db'; //DB file path for Daily Azure backups
+config.db_filename = 'treasury.db'; //DB file name for Daily Azure backups
+
+config.fsg_forms = process.env.fsg_forms_url; //URL to FSG forms web app.

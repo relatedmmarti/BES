@@ -128,6 +128,13 @@ module.exports = function SampleWebServer(sampleConfig, extraOidcOptions, homePa
     });
   });
 
+  /***
+   * JM 03132019 Created route for FSG forms integrations
+   * */
+  app.get('/fsgforms', oidc.ensureAuthenticated(), (req, res) => {
+    res.redirect(config.fsg_forms);
+  });
+
   /**
    * Jorge Medina 12/12/2018 Added Vendors routes to review external vendor forms
    * */

@@ -497,6 +497,7 @@ function doAction(event) {
                     else {
                         //no files attached
                         if ($("#vendorId").val() === undefined) {
+                            getEdit(response.id); //JM 03152019 Prevent move on to new BES screen when user hits save
                             populateTable();
                         }
                         else {
@@ -618,7 +619,7 @@ function attachFiles(id, action) {
         response = JSON.parse(response);
         if (response.msg === '') {
             $("#btnUploadFile").prop("disabled", true);
-            if (action === "edit")
+            if (action === "edit" || action === 'new')
                 getEdit(id);
             else if (action !== "none") {
                 populateTable();
