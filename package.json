@@ -19,7 +19,7 @@
     "gulp": "^3.9.1",
     "gulp-confirm": "^1.0.8",
     "gulp-exec": "^3.0.2",
-    "lodash": "^4.17.11",
+    "lodash": "^4.17.19",
     "multiparty": "^4.2.1",
     "mustache-express": "^1.2.7",
     "nodemailer": "^4.7.0",
