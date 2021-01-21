@@ -23,7 +23,7 @@
     "multiparty": "^4.2.1",
     "mustache-express": "^1.2.7",
     "nodemailer": "^4.7.0",
-    "socket.io": "^2.2.0",
+    "socket.io": "^2.4.0",
     "tedious": "^3.0.1",
     "validator": "^10.9.0"
   },
